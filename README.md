@@ -2,6 +2,8 @@
 
 一个可直接部署到 GitHub Pages 的中文足球联赛管理网页（俱乐部版）。
 
+> 在线预览：https://se6het.github.io/efootball-club/
+
 ## 功能
 
 - 左右两侧分别配置玩家 A、玩家 B
