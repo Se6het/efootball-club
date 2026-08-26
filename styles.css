@@ -1,0 +1,823 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --panel-alt: #f1f4f9;
+  --text: #172033;
+  --muted: #5f6b84;
+  --border: #d8e0ed;
+  --primary: #2457d6;
+  --primary-weak: #e7eefc;
+  --danger: #c0392b;
+  --success: #1f8a5b;
+  --warning: #a46b00;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+#app {
+  width: min(1440px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.app-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: grid;
+  gap: 4px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.brand p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.button.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.button.ghost {
+  background: transparent;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 16px;
+}
+
+.tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.grid-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel h2,
+.panel h3 {
+  margin: 0 0 12px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.field-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--text);
+}
+
+.team-list,
+.match-list,
+.leader-list {
+  display: grid;
+  gap: 8px;
+}
+
+.row-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--panel-alt);
+}
+
+.row-card.compact {
+  padding: 10px 12px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.success {
+  color: var(--success);
+}
+
+.warning {
+  color: var(--warning);
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+th, td {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  z-index: 1;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: var(--primary-weak);
+  color: var(--primary);
+}
+
+.award-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.award-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff, #f2f6ff);
+  border: 1px solid var(--border);
+}
+
+.award-amount {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.award-winners {
+  display: grid;
+  gap: 10px;
+}
+
+.award-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .grid-two,
+  .grid-three,
+  .award-input-grid,
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #app {
+    width: min(100vw - 20px, 1440px);
+    padding-top: 12px;
+  }
+}
+
+/* ---------- 俱乐部视觉：队徽 + 主题色行 ---------- */
+
+.team-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.team-avatar {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
+}
+
+.team-avatar-fallback {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.team-crest-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* 下一场对阵 */
+.next-match-card {
+  background:
+    linear-gradient(180deg, var(--panel-alt), #ffffff);
+}
+
+.next-match-teams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.next-match-teams .team-name {
+  font-size: 17px;
+}
+
+.next-match-card .team-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.next-match-card .team-avatar-fallback {
+  font-size: 16px;
+}
+
+.vs-sep {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* 球队榜 / 球员榜：按俱乐部主题色的行底色 */
+tbody tr[class*="row-bg-"] {
+  background: var(--row-primary);
+  box-shadow: inset 4px 0 0 var(--row-secondary);
+  transition: filter 0.15s ease;
+}
+
+tbody tr[class*="row-bg-"] td {
+  color: var(--row-text);
+  border-bottom-color: color-mix(in srgb, var(--row-text) 14%, transparent);
+}
+
+tbody tr[class*="row-bg-"]:hover {
+  filter: brightness(1.04);
+}
+
+/* 每支俱乐部的配色变量 */
+tbody tr.row-bg-皇马 { --row-primary: #f5f6f8; --row-secondary: #c9a22b; --row-text: #1a1a2e; }
+tbody tr.row-bg-巴萨 { --row-primary: #a50044; --row-secondary: #004d98; --row-text: #ffffff; }
+tbody tr.row-bg-马竞 { --row-primary: #cb3524; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-塞维 { --row-primary: #f2f3f6; --row-secondary: #e30613; --row-text: #1a1a2e; }
+tbody tr.row-bg-贝蒂 { --row-primary: #00954c; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-巴伦 { --row-primary: #f2a100; --row-secondary: #1a1a1a; --row-text: #3a2a00; }
+tbody tr.row-bg-黄潜 { --row-primary: #f5c500; --row-secondary: #3b3f47; --row-text: #3a2a00; }
+tbody tr.row-bg-社会 { --row-primary: #f0f4fa; --row-secondary: #0a4da3; --row-text: #1a2a4a; }
+tbody tr.row-bg-雄狮 { --row-primary: #e32636; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-曼城 { --row-primary: #6caddf; --row-secondary: #f5f5f5; --row-text: #12324d; }
+tbody tr.row-bg-红魔 { --row-primary: #e8261e; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-红军 { --row-primary: #c8102e; --row-secondary: #00b2a9; --row-text: #ffffff; }
+tbody tr.row-bg-蓝军 { --row-primary: #034694; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-枪手 { --row-primary: #ef0107; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-热刺 { --row-primary: #f2f2f2; --row-secondary: #0c2340; --row-text: #1a2a4a; }
+tbody tr.row-bg-喜鹊 { --row-primary: #1a1a1a; --row-secondary: #f2f2f2; --row-text: #f2f2f2; }
+tbody tr.row-bg-维拉 { --row-primary: #670e36; --row-secondary: #95bfe5; --row-text: #ffffff; }
+tbody tr.row-bg-铁锤 { --row-primary: #7a263a; --row-secondary: #1bb1e7; --row-text: #ffffff; }
+tbody tr.row-bg-海鸥 { --row-primary: #0057b8; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-尤文 { --row-primary: #f2f2f2; --row-secondary: #0c0c0c; --row-text: #1a1a1a; }
+tbody tr.row-bg-国米 { --row-primary: #0068a8; --row-secondary: #0d0d0d; --row-text: #ffffff; }
+tbody tr.row-bg-米兰 { --row-primary: #e81b33; --row-secondary: #111111; --row-text: #ffffff; }
+tbody tr.row-bg-天蓝 { --row-primary: #12a0d7; --row-secondary: #f2f2f2; --row-text: #12324d; }
+tbody tr.row-bg-罗马 { --row-primary: #8e1f2f; --row-secondary: #f2b91e; --row-text: #ffffff; }
+tbody tr.row-bg-拉齐 { --row-primary: #c0cad9; --row-secondary: #69b7e2; --row-text: #1a2a4a; }
+tbody tr.row-bg-百合 { --row-primary: #5a2d82; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-亚特 { --row-primary: #0b1f3a; --row-secondary: #1f5da8; --row-text: #ffffff; }
+tbody tr.row-bg-拜仁 { --row-primary: #dc052d; --row-secondary: #0066b2; --row-text: #ffffff; }
+tbody tr.row-bg-多特 { --row-primary: #fde100; --row-secondary: #111111; --row-text: #3a2a00; }
+tbody tr.row-bg-药厂 { --row-primary: #e32219; --row-secondary: #111111; --row-text: #ffffff; }
+tbody tr.row-bg-法兰 { --row-primary: #f2f2f2; --row-secondary: #e7000f; --row-text: #1a1a2e; }
+tbody tr.row-bg-红牛 { --row-primary: #f2f2f2; --row-secondary: #d2042d; --row-text: #1a1a2e; }
+tbody tr.row-bg-斯图 { --row-primary: #e8e8e8; --row-secondary: #a11f22; --row-text: #1a1a2e; }
+tbody tr.row-bg-巴黎 { --row-primary: #004170; --row-secondary: #da291c; --row-text: #ffffff; }
+tbody tr.row-bg-马赛 { --row-primary: #2faee0; --row-secondary: #f2f2f2; --row-text: #0f2b5e; }
+tbody tr.row-bg-里昂 { --row-primary: #2e3a8c; --row-secondary: #e7131a; --row-text: #ffffff; }
+tbody tr.row-bg-摩纳 { --row-primary: #eaeaea; --row-secondary: #e62b3a; --row-text: #1a1a1a; }
+tbody tr.row-bg-里尔 { --row-primary: #e01e35; --row-secondary: #0f4fa3; --row-text: #ffffff; }
+tbody tr.row-bg-本菲 { --row-primary: #e8101f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-波尔 { --row-primary: #0d3f8e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-阿贾 { --row-primary: #d31145; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-埃因 { --row-primary: #f2f2f2; --row-secondary: #dd1f2d; --row-text: #1a1a2e; }
+tbody tr.row-bg-费耶 { --row-primary: #ed1a3b; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-凯尔 { --row-primary: #018749; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row-text: #1a2a4a; }
+
+/* ---------- 第二轮美化：视觉层级 / 品牌顶栏 / 进度 / 奖牌 / 空态 / 弹窗 / 动效 ---------- */
+
+/* 品牌化顶栏 */
+.brand-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 22px 24px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(120deg, #2457d6 0%, #1d3f9e 55%, #0f2459 100%);
+  box-shadow: 0 8px 24px rgba(36, 87, 214, 0.28);
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px 160px at 85% -30%, rgba(255, 255, 255, 0.18), transparent 70%);
+  pointer-events: none;
+}
+
+.brand-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12);
+  flex: none;
+}
+
+.brand-banner h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0.3px;
+}
+
+.brand-banner .brand-sub {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+}
+
+.banner-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.banner-toolbar .button {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.banner-toolbar .button:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* 赛季进度卡片 */
+.progress-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.progress-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.progress-nums {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.progress-nums .done {
+  color: var(--success);
+}
+
+.progress-nums .total {
+  color: var(--muted);
+}
+
+.progress-track {
+  flex: 1;
+  min-width: 160px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--panel-alt);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4aa86a, var(--success));
+  transition: width 0.6s ease;
+}
+
+.progress-fill.done {
+  background: linear-gradient(90deg, #f2c14e, #d99a1b);
+}
+
+.progress-badge {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--success);
+  color: #fff;
+}
+
+.progress-badge.finished {
+  background: linear-gradient(90deg, #f2c14e, #d99a1b);
+}
+
+/* 面板视觉层级升级 */
+.panel {
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  border-radius: 14px;
+}
+
+.row-card {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.row-card:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+/* 表头更清晰 */
+thead th {
+  background: var(--panel-alt);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+/* 奖牌与前三名 */
+.rank-medal {
+  font-size: 18px;
+  line-height: 1;
+}
+
+tbody tr.rank-top {
+  box-shadow: inset 4px 0 0 #d99a1b, inset 0 0 40px rgba(217, 154, 27, 0.08);
+}
+
+tbody tr.rank-top td:first-child {
+  font-weight: 700;
+}
+
+/* 颁奖页前三名奖牌边框 */
+.award-card.gold {
+  border-color: #e2b93b;
+  background: linear-gradient(135deg, #fffaf0, #fdf3d7);
+}
+
+.award-card.silver {
+  border-color: #b8c0cc;
+  background: linear-gradient(135deg, #fbfcfe, #eef1f6);
+}
+
+.award-card.bronze {
+  border-color: #cd8a52;
+  background: linear-gradient(135deg, #fdf7f2, #f6e6d8);
+}
+
+.award-podium-medal {
+  font-size: 26px;
+}
+
+.award-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup-tips {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.setup-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--panel-alt);
+}
+
+/* 空状态 */
+.empty-state {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  text-align: center;
+  padding: 40px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--panel-alt);
+  color: var(--muted);
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.empty-state-hint {
+  font-size: 13px;
+}
+
+/* 真模态弹窗 */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.modal {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--panel);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+  position: relative;
+  animation: fadeInUp 0.25s ease;
+}
+
+.modal-close {
+  position: sticky;
+  top: 12px;
+  float: right;
+  z-index: 2;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin: 12px;
+}
+
+.modal-close:hover {
+  background: var(--panel-alt);
+  color: var(--text);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+/* 交互动效 */
+.button,
+.tab {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+}
+
+.button:focus-visible,
+.tab:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-weak);
+}
+
+/* 淡入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.4s ease both;
+}
+
+/* 尊重减少动态效果偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill,
+  .row-card,
+  .button,
+  .tab,
+  .modal,
+  .fade-in {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* 窄屏适配 */
+@media (max-width: 640px) {
+  .brand-banner {
+    padding: 16px;
+  }
+
+  .brand-banner h1 {
+    font-size: 19px;
+  }
+
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+    font-size: 22px;
+  }
+
+  .progress-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .progress-track {
+    min-width: 0;
+  }
+
+  .modal-backdrop {
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}
