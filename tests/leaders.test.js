@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeLeaders, computePlayerStats, validateContributionTotals, validateMvpSelection } from '../src/leaders.js';
+import { computeLeaders, computePlayerStats, computeTeamLeaders, validateContributionTotals, validateMvpSelection } from '../src/leaders.js';
 
 describe('validateContributionTotals', () => {
   it('accepts matching scorer totals', () => {
@@ -293,5 +293,57 @@ describe('computePlayerStats', () => {
       { name: '张三', team: '皇家马德里', goals: 2, assists: 0, mvpCount: 1, mvpScoreTotal: 8.5 },
       { name: '张三', team: '拜仁慕尼黑', goals: 1, assists: 0, mvpCount: 1, mvpScoreTotal: 7.5 },
     ]);
+  });
+});
+
+describe('computeTeamLeaders', () => {
+  const matches = [
+    {
+      isPlayed: true,
+      homeTeam: '皇家马德里',
+      awayTeam: '巴塞罗那',
+      homeScorers: [{ name: '张三', count: 2 }],
+      awayScorers: [{ name: '李四', count: 1 }],
+      homeAssists: [{ name: '王五', count: 1 }],
+      awayAssists: [{ name: '赵六', count: 1 }],
+      mvp: { name: '张三', team: '皇家马德里', score: 8.4 },
+    },
+    {
+      isPlayed: true,
+      homeTeam: '拜仁慕尼黑',
+      awayTeam: '皇家马德里',
+      homeScorers: [{ name: '孙八', count: 1 }],
+      awayScorers: [{ name: '张三', count: 1 }],
+      homeAssists: [{ name: '钱七', count: 1 }],
+      awayAssists: [{ name: '王五', count: 1 }],
+      mvp: { name: '张三', team: '皇家马德里', score: 8.0 },
+    },
+  ];
+
+  it('returns only the requested team players', () => {
+    const leaders = computeTeamLeaders(matches, '皇家马德里');
+
+    expect(leaders.scorerList).toEqual([
+      { name: '张三', team: '皇家马德里', goals: 3, assists: 0, mvpCount: 2, averageScore: 8.2, count: 3 },
+    ]);
+    expect(leaders.assistList).toEqual([
+      { name: '王五', team: '皇家马德里', goals: 0, assists: 2, mvpCount: 0, averageScore: 0, count: 2 },
+    ]);
+    expect(leaders.mvpList).toEqual([
+      { name: '张三', team: '皇家马德里', count: 2, averageScore: 8.2 },
+    ]);
+  });
+
+  it('excludes players from other teams', () => {
+    const leaders = computeTeamLeaders(matches, '皇家马德里');
+    const names = [...leaders.scorerList, ...leaders.assistList, ...leaders.mvpList].map((item) => item.name);
+    expect(names).not.toContain('李四');
+    expect(names).not.toContain('赵六');
+    expect(names).not.toContain('孙八');
+    expect(names).not.toContain('钱七');
+  });
+
+  it('returns empty lists for a team with no data', () => {
+    expect(computeTeamLeaders(matches, '曼城')).toEqual({ scorerList: [], assistList: [], mvpList: [] });
   });
 });

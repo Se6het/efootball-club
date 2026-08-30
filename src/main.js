@@ -1,5 +1,5 @@
 import { createInitialState } from './schedule.js';
-import { computeLeaders, computePlayerStats } from './leaders.js';
+import { computeLeaders, computePlayerStats, computeTeamLeaders } from './leaders.js';
 import { loadState, saveState, clearState, updateMatch, updateAwards } from './store.js';
 import { clear, el } from './ui.js';
 import { fadeIn } from './animate.js';
@@ -9,6 +9,7 @@ import { renderScheduleView } from './views/schedule.js';
 import { renderStandingsView } from './views/standings.js';
 import { renderLeadersView } from './views/leaders.js';
 import { renderAwardsView } from './views/awards.js';
+import { renderTeamDetailView } from './views/teamDetail.js';
 import { openMatchForm } from './views/matchForm.js';
 import { rankTeams } from './standings.js';
 import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAwardSettings } from './awards.js';
@@ -114,6 +115,56 @@ function openEditor(match) {
   }
 }
 
+function openTeamDetail(team) {
+  const trigger = document.activeElement;
+
+  const close = () => {
+    document.removeEventListener('keydown', onKeyDown);
+    backdrop.remove();
+    document.body.classList.remove('modal-open');
+    if (trigger && typeof trigger.focus === 'function') {
+      trigger.focus();
+    }
+  };
+
+  const onKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      close();
+    }
+  };
+
+  const modal = el('div', {
+    className: 'modal',
+    role: 'dialog',
+    'aria-modal': 'true',
+    'aria-label': `${team} 队内数据`,
+    tabindex: '-1',
+  }, [
+    el('button', {
+      className: 'modal-close',
+      type: 'button',
+      text: '✕',
+      'aria-label': '关闭',
+      onClick: close,
+    }),
+    renderTeamDetailView(team, computeTeamLeaders(state.matches, team)),
+  ]);
+
+  const backdrop = el('div', {
+    className: 'modal-backdrop',
+    onClick: (event) => {
+      if (event.target === backdrop) {
+        close();
+      }
+    },
+  }, [modal]);
+
+  document.body.classList.add('modal-open');
+  document.body.append(backdrop);
+  document.addEventListener('keydown', onKeyDown);
+  modal.focus();
+}
+
 function renderSetup() {
   clear(app);
   const sampleConfig = {
@@ -161,7 +212,7 @@ function renderLeague() {
   const content = {
     next: renderNextMatchView(nextMatch, openEditor),
     schedule: renderScheduleView(state.matches, openEditor),
-    standings: renderStandingsView(rankedTeams),
+    standings: renderStandingsView(rankedTeams, openTeamDetail),
     leaders: renderLeadersView(leaders),
     awards: renderAwardsView({
       seasonFinished,

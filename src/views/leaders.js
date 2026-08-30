@@ -10,7 +10,7 @@ function numCell(value, item) {
   });
 }
 
-function renderList(title, items, emptyText, columns, emptyHint = '') {
+export function renderList(title, items, emptyText, columns, emptyHint = '') {
   return el('div', { className: 'panel' }, [
     el('h2', { text: title }),
     items.length

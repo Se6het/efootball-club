@@ -55,9 +55,7 @@ export function validateMvpSelection(match) {
   return null;
 }
 
-export function computeLeaders(matches) {
-  const playerStats = computePlayerStats(matches);
-
+function buildLeaderLists(playerStats) {
   const scorerList = playerStats
     .filter((item) => item.goals > 0)
     .sort((left, right) => right.goals - left.goals || right.assists - left.assists || left.name.localeCompare(right.name, 'zh-Hans-CN'))
@@ -100,6 +98,15 @@ export function computeLeaders(matches) {
     );
 
   return { scorerList, assistList, mvpList };
+}
+
+export function computeLeaders(matches) {
+  return buildLeaderLists(computePlayerStats(matches));
+}
+
+export function computeTeamLeaders(matches, team) {
+  const playerStats = computePlayerStats(matches).filter((item) => item.team === team);
+  return buildLeaderLists(playerStats);
 }
 
 export function computePlayerStats(matches) {

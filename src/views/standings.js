@@ -20,7 +20,7 @@ function numberCell(value) {
   });
 }
 
-export function renderStandingsView(rankedTeams) {
+export function renderStandingsView(rankedTeams, onTeamClick) {
   return el('div', { className: 'panel' }, [
     el('h2', { text: '球队榜' }),
     rankedTeams.length
@@ -46,7 +46,16 @@ export function renderStandingsView(rankedTeams) {
               className: `${teamRowClass(team.team)} ${team.rank <= 3 ? 'rank-top' : ''}`.trim(),
             }, [
               rankCell(team),
-              el('td', {}, [teamCell(team.team)]),
+              el('td', {}, [
+                onTeamClick
+                  ? el('button', {
+                      className: 'team-link',
+                      type: 'button',
+                      title: '点击查看队内数据',
+                      onClick: () => onTeamClick(team.team),
+                    }, [teamCell(team.team)])
+                  : teamCell(team.team),
+              ]),
               numberCell(team.played),
               numberCell(team.wins),
               numberCell(team.draws),

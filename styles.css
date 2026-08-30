@@ -821,3 +821,45 @@ select:focus-visible {
     border-radius: 0;
   }
 }
+
+/* ---------- 球队榜：点击球队查看队内数据 ---------- */
+
+.team-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px -6px;
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.team-link:hover {
+  background: rgba(127, 127, 127, 0.16);
+}
+
+.team-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  background: rgba(127, 127, 127, 0.16);
+}
+
+/* 队内数据弹窗 */
+.team-detail {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.team-detail-head h2 {
+  margin: 0;
+}
+
+.team-detail-head .muted {
+  margin: 4px 0 0;
+}
