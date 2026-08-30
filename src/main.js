@@ -3,6 +3,7 @@ import { collectKnownPlayers, computeLeaders, computePlayerDetail, computePlayer
 import { clearState, loadState, parseBackup, saveState, serializeState, updateAwards, updateMatch } from './store.js';
 import { clear, el } from './ui.js';
 import { fadeIn } from './animate.js';
+import { showToast } from './toast.js';
 import { renderSetupView } from './views/setup.js';
 import { renderNextMatchView } from './views/nextMatch.js';
 import { renderScheduleView } from './views/schedule.js';
@@ -122,6 +123,7 @@ function openEditor(match) {
         }
         closeTop();
         persist(nextState);
+        showToast('已保存比赛');
       },
       onCancel: () => closeTop(),
     }),
@@ -158,6 +160,7 @@ function exportBackup() {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+  showToast('已导出备份文件');
 }
 
 function importBackup() {
@@ -180,6 +183,7 @@ function importBackup() {
         return;
       }
       persist(result.state);
+      showToast('已导入备份');
     });
     reader.readAsText(file);
   });
@@ -254,6 +258,7 @@ function renderLeague() {
         }
         isEditingAwards = false;
         persist(updateAwards(state, normalized));
+        showToast('已保存颁奖设置');
       },
     }),
   }[activeTab];

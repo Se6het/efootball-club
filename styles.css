@@ -779,7 +779,8 @@ select:focus-visible {
   .button,
   .tab,
   .modal,
-  .fade-in {
+  .fade-in,
+  .toast {
     transition: none !important;
     animation: none !important;
   }
@@ -935,4 +936,77 @@ select:focus-visible {
   .stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ---------- Toast 提示 ---------- */
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 200;
+  max-width: min(320px, calc(100vw - 40px));
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #172033;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 赛程按轮次分组 ---------- */
+
+.schedule-rounds {
+  display: grid;
+  gap: 12px;
+}
+
+.round-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.round-group > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  background: var(--panel-alt);
+}
+
+.round-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.round-group > summary::before {
+  content: '▸';
+  transition: transform 0.15s ease;
+  color: var(--muted);
+}
+
+.round-group[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.round-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.round-group > .table-wrap {
+  border-top: 1px solid var(--border);
 }
