@@ -5,7 +5,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function isValidState(value) {
+export function isValidState(value) {
   const allowedTeams = [
     ...(Array.isArray(value?.config?.teamsA) ? value.config.teamsA : []),
     ...(Array.isArray(value?.config?.teamsB) ? value.config.teamsB : []),
@@ -80,4 +80,20 @@ export function updateAwards(state, awards) {
     ...state,
     awards: clone(awards),
   };
+}
+
+export function serializeState(state) {
+  return JSON.stringify(state, null, 2);
+}
+
+export function parseBackup(text) {
+  try {
+    const parsed = JSON.parse(text);
+    if (!isValidState(parsed)) {
+      return { state: null, error: '备份文件无效：数据结构不匹配或版本不兼容' };
+    }
+    return { state: parsed, error: null };
+  } catch {
+    return { state: null, error: '无法读取备份文件：不是有效的 JSON 格式' };
+  }
 }

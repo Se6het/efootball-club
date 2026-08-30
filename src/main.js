@@ -1,6 +1,6 @@
 import { createInitialState } from './schedule.js';
-import { computeLeaders, computePlayerStats, computeTeamLeaders } from './leaders.js';
-import { loadState, saveState, clearState, updateMatch, updateAwards } from './store.js';
+import { collectKnownPlayers, computeLeaders, computePlayerDetail, computePlayerStats, computeTeamLeaders } from './leaders.js';
+import { clearState, loadState, parseBackup, saveState, serializeState, updateAwards, updateMatch } from './store.js';
 import { clear, el } from './ui.js';
 import { fadeIn } from './animate.js';
 import { renderSetupView } from './views/setup.js';
@@ -10,6 +10,7 @@ import { renderStandingsView } from './views/standings.js';
 import { renderLeadersView } from './views/leaders.js';
 import { renderAwardsView } from './views/awards.js';
 import { renderTeamDetailView } from './views/teamDetail.js';
+import { renderPlayerDetailView } from './views/playerDetail.js';
 import { openMatchForm } from './views/matchForm.js';
 import { rankTeams } from './standings.js';
 import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAwardSettings } from './awards.js';
@@ -48,96 +49,16 @@ function getNextMatch(matches) {
   return matches.find((match) => !match.isPlayed) ?? null;
 }
 
-function openEditor(match) {
-  const trigger = document.activeElement;
-  const close = () => {
-    document.removeEventListener('keydown', onKeyDown);
-    backdrop.remove();
-    document.body.classList.remove('modal-open');
-    if (trigger && typeof trigger.focus === 'function') {
-      trigger.focus();
-    }
-    render();
-  };
+const modalStack = [];
 
-  const onKeyDown = (event) => {
-    if (event.key === 'Escape') {
-      close();
-    }
-  };
+function pushModal({ ariaLabel, content }) {
+  const trigger = document.activeElement;
 
   const modal = el('div', {
     className: 'modal',
     role: 'dialog',
     'aria-modal': 'true',
-    'aria-label': '录入比分',
-  }, [
-    el('button', {
-      className: 'modal-close',
-      type: 'button',
-      text: '✕',
-      'aria-label': '关闭',
-      onClick: close,
-    }),
-  ]);
-  modal.append(
-    openMatchForm(match, {
-      onSave: (nextMatch) => {
-        const nextState = updateMatch(state, match.id, () => nextMatch);
-        if (isSeasonFinished(nextState.matches)) {
-          activeTab = 'awards';
-          isEditingAwards = !nextState.awards;
-        }
-        close();
-        persist(nextState);
-      },
-      onCancel: close,
-    })
-  );
-
-  const backdrop = el('div', {
-    className: 'modal-backdrop',
-    onClick: (event) => {
-      if (event.target === backdrop) {
-        close();
-      }
-    },
-  }, [modal]);
-
-  document.body.classList.add('modal-open');
-  document.body.append(backdrop);
-  document.addEventListener('keydown', onKeyDown);
-
-  // 打开后聚焦弹窗内第一个可输入控件，方便键盘用户直接录入
-  const firstInput = modal.querySelector('input, select, textarea, button');
-  if (firstInput) {
-    firstInput.focus();
-  }
-}
-
-function openTeamDetail(team) {
-  const trigger = document.activeElement;
-
-  const close = () => {
-    document.removeEventListener('keydown', onKeyDown);
-    backdrop.remove();
-    document.body.classList.remove('modal-open');
-    if (trigger && typeof trigger.focus === 'function') {
-      trigger.focus();
-    }
-  };
-
-  const onKeyDown = (event) => {
-    if (event.key === 'Escape') {
-      close();
-    }
-  };
-
-  const modal = el('div', {
-    className: 'modal',
-    role: 'dialog',
-    'aria-modal': 'true',
-    'aria-label': `${team} 队内数据`,
+    'aria-label': ariaLabel,
     tabindex: '-1',
   }, [
     el('button', {
@@ -145,24 +66,124 @@ function openTeamDetail(team) {
       type: 'button',
       text: '✕',
       'aria-label': '关闭',
-      onClick: close,
+      onClick: () => closeTop(),
     }),
-    renderTeamDetailView(team, computeTeamLeaders(state.matches, team)),
   ]);
+  modal.append(content());
 
   const backdrop = el('div', {
     className: 'modal-backdrop',
     onClick: (event) => {
       if (event.target === backdrop) {
-        close();
+        closeTop();
       }
     },
   }, [modal]);
 
   document.body.classList.add('modal-open');
   document.body.append(backdrop);
-  document.addEventListener('keydown', onKeyDown);
-  modal.focus();
+  modalStack.push({ backdrop, modal, trigger });
+
+  const firstInput = modal.querySelector('input, select, textarea');
+  const focusTarget = firstInput || modal.querySelector('button');
+  (focusTarget ?? modal).focus();
+}
+
+function closeTop() {
+  const top = modalStack.pop();
+  if (!top) {
+    return;
+  }
+  top.backdrop.remove();
+  if (modalStack.length === 0) {
+    document.body.classList.remove('modal-open');
+  }
+  if (top.trigger && typeof top.trigger.focus === 'function' && top.trigger.isConnected) {
+    top.trigger.focus();
+  }
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeTop();
+  }
+});
+
+function openEditor(match) {
+  pushModal({
+    ariaLabel: '录入比分',
+    content: () => openMatchForm(match, {
+      knownPlayers: collectKnownPlayers(state.matches),
+      onSave: (nextMatch) => {
+        const nextState = updateMatch(state, match.id, () => nextMatch);
+        if (isSeasonFinished(nextState.matches)) {
+          activeTab = 'awards';
+          isEditingAwards = !nextState.awards;
+        }
+        closeTop();
+        persist(nextState);
+      },
+      onCancel: () => closeTop(),
+    }),
+  });
+}
+
+function openTeamDetail(team) {
+  pushModal({
+    ariaLabel: `${team} 队内数据`,
+    content: () => renderTeamDetailView(team, computeTeamLeaders(state.matches, team), openPlayerDetail),
+  });
+}
+
+function openPlayerDetail(player) {
+  const detail = computePlayerDetail(state.matches, player.name, player.team);
+  if (!detail) {
+    return;
+  }
+  pushModal({
+    ariaLabel: `${player.name} 球员数据`,
+    content: () => renderPlayerDetailView(detail),
+  });
+}
+
+function exportBackup() {
+  const data = serializeState(state);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  anchor.href = url;
+  anchor.download = `efootball-league-备份-${stamp}.json`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      const result = parseBackup(String(reader.result ?? ''));
+      if (result.error) {
+        window.alert(result.error);
+        return;
+      }
+      if (!window.confirm('导入将覆盖当前所有数据，确定继续吗？')) {
+        return;
+      }
+      persist(result.state);
+    });
+    reader.readAsText(file);
+  });
+  input.click();
 }
 
 function renderSetup() {
@@ -178,6 +199,7 @@ function renderSetup() {
     renderSetupView({
       onStart: startLeague,
       sampleConfig,
+      onImport: importBackup,
     })
   );
 }
@@ -213,7 +235,7 @@ function renderLeague() {
     next: renderNextMatchView(nextMatch, openEditor),
     schedule: renderScheduleView(state.matches, openEditor),
     standings: renderStandingsView(rankedTeams, openTeamDetail),
-    leaders: renderLeadersView(leaders),
+    leaders: renderLeadersView(leaders, openPlayerDetail),
     awards: renderAwardsView({
       seasonFinished,
       summary,
@@ -277,6 +299,8 @@ function renderLeague() {
           ]),
         ]),
         el('div', { className: 'banner-toolbar' }, [
+          el('button', { className: 'button', type: 'button', text: '导出', onClick: exportBackup }),
+          el('button', { className: 'button', type: 'button', text: '导入', onClick: importBackup }),
           el('button', { className: 'button', type: 'button', text: '重置', onClick: resetLeague }),
         ]),
       ]),

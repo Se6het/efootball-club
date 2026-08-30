@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeLeaders, computePlayerStats, computeTeamLeaders, validateContributionTotals, validateMvpSelection } from '../src/leaders.js';
+import { collectKnownPlayers, computeLeaders, computePlayerDetail, computePlayerStats, computeTeamLeaders, validateContributionTotals, validateMvpSelection } from '../src/leaders.js';
 
 describe('validateContributionTotals', () => {
   it('accepts matching scorer totals', () => {
@@ -345,5 +345,113 @@ describe('computeTeamLeaders', () => {
 
   it('returns empty lists for a team with no data', () => {
     expect(computeTeamLeaders(matches, '曼城')).toEqual({ scorerList: [], assistList: [], mvpList: [] });
+  });
+});
+
+describe('computePlayerDetail', () => {
+  const matches = [
+    {
+      isPlayed: true,
+      matchNumber: 1,
+      round: 1,
+      homeTeam: '皇家马德里',
+      awayTeam: '巴塞罗那',
+      homeGoals: 2,
+      awayGoals: 1,
+      homeScorers: [{ name: '张三', count: 2 }],
+      awayScorers: [{ name: '李四', count: 1 }],
+      homeAssists: [{ name: '王五', count: 1 }],
+      awayAssists: [],
+      mvp: { name: '张三', team: '皇家马德里', score: 8.5 },
+    },
+    {
+      isPlayed: true,
+      matchNumber: 2,
+      round: 2,
+      homeTeam: '皇家马德里',
+      awayTeam: '曼城',
+      homeGoals: 0,
+      awayGoals: 3,
+      homeScorers: [],
+      awayScorers: [{ name: '赵六', count: 3 }],
+      homeAssists: [],
+      awayAssists: [],
+      mvp: { name: '赵六', team: '曼城', score: 9 },
+    },
+    {
+      isPlayed: false,
+      matchNumber: 3,
+      round: 3,
+      homeTeam: '皇家马德里',
+      awayTeam: '利物浦',
+      homeScorers: [{ name: '无效', count: 9 }],
+      awayScorers: [],
+      homeAssists: [],
+      awayAssists: [],
+    },
+  ];
+
+  it('aggregates stats and lists per-match contributions', () => {
+    const detail = computePlayerDetail(matches, '张三', '皇家马德里');
+    expect(detail).toMatchObject({ name: '张三', team: '皇家马德里', goals: 2, assists: 0, mvpCount: 1 });
+    expect(detail.averageScore).toBe(8.5);
+    expect(detail.matches).toEqual([
+      { matchNumber: 1, round: 1, opponent: '巴塞罗那', forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, mvpScore: 8.5 },
+    ]);
+  });
+
+  it('computes the result from the player team perspective', () => {
+    const detail = computePlayerDetail(matches, '李四', '巴塞罗那');
+    expect(detail.matches[0]).toMatchObject({ opponent: '皇家马德里', forGoals: 1, againstGoals: 2, result: '负', goals: 1, assists: 0 });
+    expect(detail.matches[0].mvpScore).toBeNull();
+  });
+
+  it('returns null for a player with no recorded contributions', () => {
+    expect(computePlayerDetail(matches, '不存在', '皇家马德里')).toBeNull();
+  });
+});
+
+describe('collectKnownPlayers', () => {
+  it('collects distinct player names per team from played matches', () => {
+    const result = collectKnownPlayers([
+      {
+        isPlayed: true,
+        homeTeam: '皇家马德里',
+        awayTeam: '巴塞罗那',
+        homeScorers: [{ name: '张三', count: 1 }],
+        awayScorers: [{ name: '李四', count: 1 }],
+        homeAssists: [{ name: '张三', count: 1 }],
+        awayAssists: [],
+        mvp: { name: '张三', team: '皇家马德里', score: 8 },
+      },
+      {
+        isPlayed: false,
+        homeTeam: '皇家马德里',
+        awayTeam: '曼城',
+        homeScorers: [{ name: '无效', count: 1 }],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+      },
+    ]);
+
+    expect(result['皇家马德里']).toEqual(['张三']);
+    expect(result['巴塞罗那']).toEqual(['李四']);
+    expect(result['曼城']).toBeUndefined();
+  });
+
+  it('trims and deduplicates names', () => {
+    const result = collectKnownPlayers([
+      {
+        isPlayed: true,
+        homeTeam: 'A',
+        awayTeam: 'B',
+        homeScorers: [{ name: ' 张三 ', count: 1 }, { name: '张三', count: 1 }],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+      },
+    ]);
+    expect(result['A']).toEqual(['张三']);
   });
 });

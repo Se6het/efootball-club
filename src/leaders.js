@@ -144,3 +144,92 @@ export function computePlayerStats(matches) {
 
   return [...stats.values()];
 }
+
+export function computePlayerDetail(matches, name, team) {
+  const stats = computePlayerStats(matches).find((item) => item.name === name && item.team === team);
+  if (!stats) {
+    return null;
+  }
+
+  const lines = [];
+  for (const match of matches) {
+    if (!match.isPlayed) {
+      continue;
+    }
+
+    const isHome = match.homeTeam === team;
+    const isAway = match.awayTeam === team;
+    if (!isHome && !isAway) {
+      continue;
+    }
+
+    const scorers = isHome ? match.homeScorers : match.awayScorers;
+    const assisters = isHome ? match.homeAssists : match.awayAssists;
+    const goals = (scorers ?? []).find((item) => item.name === name)?.count ?? 0;
+    const assists = (assisters ?? []).find((item) => item.name === name)?.count ?? 0;
+    const isMvp = match.mvp?.name === name && match.mvp?.team === team;
+
+    if (goals === 0 && assists === 0 && !isMvp) {
+      continue;
+    }
+
+    const forGoals = isHome ? match.homeGoals : match.awayGoals;
+    const againstGoals = isHome ? match.awayGoals : match.homeGoals;
+    lines.push({
+      matchNumber: match.matchNumber,
+      round: match.round,
+      opponent: isHome ? match.awayTeam : match.homeTeam,
+      forGoals,
+      againstGoals,
+      result: forGoals > againstGoals ? '胜' : forGoals < againstGoals ? '负' : '平',
+      goals,
+      assists,
+      mvpScore: isMvp ? match.mvp.score : null,
+    });
+  }
+
+  lines.sort((left, right) => left.matchNumber - right.matchNumber);
+
+  return {
+    name: stats.name,
+    team: stats.team,
+    goals: stats.goals,
+    assists: stats.assists,
+    mvpCount: stats.mvpCount,
+    mvpScoreTotal: stats.mvpScoreTotal,
+    averageScore: stats.mvpCount > 0 ? Number((stats.mvpScoreTotal / stats.mvpCount).toFixed(2)) : 0,
+    matches: lines,
+  };
+}
+
+export function collectKnownPlayers(matches) {
+  const byTeam = new Map();
+
+  const add = (team, name) => {
+    const normalized = String(name ?? '').trim();
+    if (!team || !normalized) {
+      return;
+    }
+    if (!byTeam.has(team)) {
+      byTeam.set(team, new Set());
+    }
+    byTeam.get(team).add(normalized);
+  };
+
+  for (const match of matches) {
+    if (!match.isPlayed) {
+      continue;
+    }
+    for (const item of match.homeScorers ?? []) add(match.homeTeam, item?.name);
+    for (const item of match.homeAssists ?? []) add(match.homeTeam, item?.name);
+    for (const item of match.awayScorers ?? []) add(match.awayTeam, item?.name);
+    for (const item of match.awayAssists ?? []) add(match.awayTeam, item?.name);
+    add(match.mvp?.team, match.mvp?.name);
+  }
+
+  const result = {};
+  for (const [team, names] of byTeam) {
+    result[team] = [...names].sort((left, right) => left.localeCompare(right, 'zh-Hans-CN'));
+  }
+  return result;
+}

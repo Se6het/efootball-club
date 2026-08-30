@@ -50,7 +50,7 @@ function buildPrizeInputs(prizes, onChange) {
   ]);
 }
 
-export function renderSetupView({ onStart, initialConfig = null, sampleConfig = null, error = '' }) {
+export function renderSetupView({ onStart, initialConfig = null, sampleConfig = null, error = '', onImport }) {
   const root = el('div', { className: 'grid-two' });
   const leftTeams = initialConfig?.teamsA ?? [''];
   const rightTeams = initialConfig?.teamsB ?? [''];
@@ -168,6 +168,9 @@ export function renderSetupView({ onStart, initialConfig = null, sampleConfig = 
                 state.teamsB = [...sampleConfig.teamsB];
                 render();
               } })
+            : null,
+          onImport
+            ? el('button', { className: 'button', type: 'button', text: '导入备份', onClick: onImport })
             : null,
         ]),
       ]),

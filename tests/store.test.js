@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clearState, loadState, saveState, updateAwards, updateMatch } from '../src/store.js';
+import { clearState, loadState, parseBackup, saveState, serializeState, updateAwards, updateMatch } from '../src/store.js';
 import { STATE_KEY } from '../src/schedule.js';
 
 beforeEach(() => {
@@ -131,5 +131,33 @@ describe('store', () => {
     global.window.localStorage.setItem(STATE_KEY, 'x');
     clearState();
     expect(loadState()).toBeNull();
+  });
+});
+
+describe('serializeState / parseBackup', () => {
+  const validState = {
+    version: 1,
+    config: {
+      playerA: 'A',
+      playerB: 'B',
+      teamsA: ['皇家马德里'],
+      teamsB: ['巴塞罗那'],
+      matchesPerPair: 2,
+    },
+    matches: [],
+  };
+
+  it('round-trips a valid state', () => {
+    const result = parseBackup(serializeState(validState));
+    expect(result.error).toBeNull();
+    expect(result.state).toEqual(validState);
+  });
+
+  it('rejects invalid JSON', () => {
+    expect(parseBackup('{broken').error).toBeTruthy();
+  });
+
+  it('rejects a structurally invalid state', () => {
+    expect(parseBackup(JSON.stringify({ version: 2, matches: [] })).error).toBeTruthy();
   });
 });
