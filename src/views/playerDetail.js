@@ -16,6 +16,9 @@ export function renderPlayerDetailView(detail) {
     ['助攻', detail.assists],
     ['MVP 场次', detail.mvpCount],
     ['MVP 平均分', detail.mvpCount > 0 ? detail.averageScore.toFixed(2) : '—'],
+    ['黄牌', detail.yellowCards ?? 0],
+    ['红牌', detail.redCards ?? 0],
+    ['待停赛', detail.pendingSuspension ?? 0],
   ];
 
   return el('div', { className: 'player-detail' }, [
@@ -31,7 +34,7 @@ export function renderPlayerDetailView(detail) {
     )),
     el('div', { className: 'panel' }, [
       el('h3', { text: '赛季明细' }),
-      el('p', { className: 'muted', text: '仅列出该球员有进球、助攻或当选 MVP 的比赛' }),
+      el('p', { className: 'muted', text: '仅列出该球员有进球、助攻、牌务或当选 MVP 的比赛' }),
       detail.matches.length
         ? el('div', { className: 'table-wrap' }, [
             el('table', {}, [
@@ -43,6 +46,8 @@ export function renderPlayerDetailView(detail) {
                   el('th', { text: '赛果' }),
                   el('th', { text: '进球' }),
                   el('th', { text: '助攻' }),
+                  el('th', { text: '黄牌' }),
+                  el('th', { text: '红牌' }),
                   el('th', { text: 'MVP 评分' }),
                 ]),
               ]),
@@ -53,6 +58,8 @@ export function renderPlayerDetailView(detail) {
                 el('td', {}, [el('span', { className: resultClass(line.result), text: `${line.result} ${line.forGoals}:${line.againstGoals}` })]),
                 el('td', { text: String(line.goals) }),
                 el('td', { text: String(line.assists) }),
+                el('td', { text: String(line.yellowCards ?? 0) }),
+                el('td', { text: String(line.redCards ?? 0) }),
                 el('td', { text: line.mvpScore == null ? '—' : String(line.mvpScore) }),
               ]))),
             ]),
