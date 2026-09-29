@@ -1,3 +1,4 @@
+import { getSuspensionsBeforeMatch } from './discipline.js';
 import { createInitialState } from './schedule.js';
 import { collectKnownPlayers, computeLeaders, computePlayerDetail, computePlayerStats, computeTeamLeaders } from './leaders.js';
 import { clearState, loadState, parseBackup, saveState, serializeState, updateAwards, updateMatch } from './store.js';
@@ -31,6 +32,10 @@ let isEditingAwards = false;
 function persist(nextState) {
   state = saveState(nextState);
   render();
+  if (!saveState.lastPersisted) {
+    showToast(saveState.lastError, 'error');
+  }
+  return saveState.lastPersisted;
 }
 
 function startLeague(nextState) {
@@ -39,7 +44,13 @@ function startLeague(nextState) {
 }
 
 function resetLeague() {
-  clearState();
+  if (!window.confirm('确定重置当前赛季吗？所有赛程、比分和球员数据都会被删除。建议先导出备份。')) {
+    return;
+  }
+  if (!clearState()) {
+    showToast('无法清除浏览器中的联赛数据', 'error');
+    return;
+  }
   state = null;
   activeTab = 'next';
   isEditingAwards = false;
@@ -115,6 +126,7 @@ function openEditor(match) {
     ariaLabel: '录入比分',
     content: () => openMatchForm(match, {
       knownPlayers: collectKnownPlayers(state.matches),
+      suspensions: getSuspensionsBeforeMatch(state.matches, match),
       onSave: (nextMatch) => {
         const nextState = updateMatch(state, match.id, () => nextMatch);
         if (isSeasonFinished(nextState.matches)) {
@@ -122,8 +134,9 @@ function openEditor(match) {
           isEditingAwards = !nextState.awards;
         }
         closeTop();
-        persist(nextState);
-        showToast('已保存比赛');
+        if (persist(nextState)) {
+          showToast('已保存比赛');
+        }
       },
       onCancel: () => closeTop(),
     }),
@@ -141,6 +154,11 @@ function openPlayerDetail(player) {
   const detail = computePlayerDetail(state.matches, player.name, player.team);
   if (!detail) {
     return;
+  }
+  const nextTeamMatch = state.matches.find((match) => !match.isPlayed && (match.homeTeam === player.team || match.awayTeam === player.team));
+  if (nextTeamMatch) {
+    const suspension = getSuspensionsBeforeMatch(state.matches, nextTeamMatch).find((item) => item.name === player.name && item.team === player.team);
+    detail.pendingSuspension = suspension?.pendingSuspension ?? 0;
   }
   pushModal({
     ariaLabel: `${player.name} 球员数据`,
@@ -182,8 +200,9 @@ function importBackup() {
       if (!window.confirm('导入将覆盖当前所有数据，确定继续吗？')) {
         return;
       }
-      persist(result.state);
-      showToast('已导入备份');
+      if (persist(result.state)) {
+        showToast('已导入备份');
+      }
     });
     reader.readAsText(file);
   });
@@ -236,7 +255,7 @@ function renderLeague() {
   })));
 
   const content = {
-    next: renderNextMatchView(nextMatch, openEditor),
+    next: renderNextMatchView(nextMatch, openEditor, nextMatch ? getSuspensionsBeforeMatch(state.matches, nextMatch) : []),
     schedule: renderScheduleView(state.matches, openEditor),
     standings: renderStandingsView(rankedTeams, openTeamDetail),
     leaders: renderLeadersView(leaders, openPlayerDetail),
@@ -257,8 +276,9 @@ function renderLeague() {
           return;
         }
         isEditingAwards = false;
-        persist(updateAwards(state, normalized));
-        showToast('已保存颁奖设置');
+        if (persist(updateAwards(state, normalized))) {
+          showToast('已保存颁奖设置');
+        }
       },
     }),
   }[activeTab];

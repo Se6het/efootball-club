@@ -227,8 +227,8 @@ describe('computeLeaders', () => {
         },
       ]).mvpList
     ).toEqual([
-      { name: '李四', team: '拜仁慕尼黑', count: 2, averageScore: 8.25 },
-      { name: '张三', team: '皇家马德里', count: 2, averageScore: 8.25 },
+      { name: '李四', team: '拜仁慕尼黑', count: 2, averageScore: 8.25, goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
+      { name: '张三', team: '皇家马德里', count: 2, averageScore: 8.25, goals: 0, assists: 0, yellowCards: 0, redCards: 0 },
     ]);
   });
 });
@@ -330,7 +330,7 @@ describe('computeTeamLeaders', () => {
       { name: '王五', team: '皇家马德里', goals: 0, assists: 2, mvpCount: 0, averageScore: 0, count: 2 },
     ]);
     expect(leaders.mvpList).toEqual([
-      { name: '张三', team: '皇家马德里', count: 2, averageScore: 8.2 },
+      { name: '张三', team: '皇家马德里', count: 2, averageScore: 8.2, goals: 3, assists: 0, yellowCards: 0, redCards: 0 },
     ]);
   });
 
@@ -396,7 +396,7 @@ describe('computePlayerDetail', () => {
     expect(detail).toMatchObject({ name: '张三', team: '皇家马德里', goals: 2, assists: 0, mvpCount: 1 });
     expect(detail.averageScore).toBe(8.5);
     expect(detail.matches).toEqual([
-      { matchNumber: 1, round: 1, opponent: '巴塞罗那', forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, mvpScore: 8.5 },
+      { matchNumber: 1, round: 1, opponent: '巴塞罗那', forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, yellowCards: 0, redCards: 0, mvpScore: 8.5 },
     ]);
   });
 

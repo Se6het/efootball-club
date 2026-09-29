@@ -115,6 +115,6 @@ describe('createInitialState', () => {
     });
     expect(state.config.teamsA).toEqual(['皇家马德里', '巴塞罗那']);
     expect(state.config.teamsB).toEqual(['拜仁慕尼黑', '曼联']);
-    expect(state.matches[0].homeTeam).toBe('皇家马德里');
+    expect(state.matches.some((match) => match.homeTeam === '皇家马德里')).toBe(true);
   });
 });

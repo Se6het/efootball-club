@@ -1,30 +1,64 @@
+import { computeDisciplineStats } from './discipline.js';
+
 function playerKey(name, team) {
   return `${team}::${name}`;
 }
 
+function countValue(value) {
+  const count = Number(value ?? 0);
+  return Number.isInteger(count) && count >= 0 ? count : null;
+}
+
+function emptyStats(name, team) {
+  return { name, team, goals: 0, assists: 0, mvpCount: 0, mvpScoreTotal: 0 };
+}
+
 function accumulate(map, items, team, field) {
-  for (const item of items) {
+  for (const item of Array.isArray(items) ? items : []) {
     const name = String(item?.name ?? '').trim();
-    const count = Number(item?.count ?? 0);
-    if (!name || !Number.isFinite(count) || count <= 0) {
-      continue;
-    }
+    const count = countValue(item?.count);
+    if (!name || count === null || count <= 0) continue;
 
     const key = playerKey(name, team);
-    const current = map.get(key) ?? { name, team, goals: 0, assists: 0, mvpCount: 0, mvpScoreTotal: 0 };
-
-    const next = { ...current, team, [field]: current[field] + count };
-    map.set(key, next);
+    const current = map.get(key) ?? emptyStats(name, team);
+    map.set(key, { ...current, team, [field]: current[field] + count });
   }
 }
 
-export function validateContributionTotals(match) {
-  const homeScorerTotal = match.homeScorers.reduce((sum, item) => sum + Number(item.count ?? 0), 0);
-  const awayScorerTotal = match.awayScorers.reduce((sum, item) => sum + Number(item.count ?? 0), 0);
-  const homeAssistTotal = match.homeAssists.reduce((sum, item) => sum + Number(item.count ?? 0), 0);
-  const awayAssistTotal = match.awayAssists.reduce((sum, item) => sum + Number(item.count ?? 0), 0);
+function accumulateCards(map, items, team) {
+  for (const item of Array.isArray(items) ? items : []) {
+    const name = String(item?.name ?? '').trim();
+    const yellow = countValue(item?.yellow);
+    const red = countValue(item?.red);
+    if (!name || yellow === null || red === null || (yellow === 0 && red === 0)) continue;
+    const key = playerKey(name, team);
+    const current = map.get(key) ?? emptyStats(name, team);
+    map.set(key, {
+      ...current,
+      yellowCards: (current.yellowCards ?? 0) + yellow,
+      redCards: (current.redCards ?? 0) + red,
+    });
+  }
+}
 
-  if (homeScorerTotal !== match.homeGoals) {
+function sumContribution(items, name) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item?.name === name)
+    .reduce((sum, item) => sum + (countValue(item?.count) ?? 0), 0);
+}
+export function validateContributionTotals(match) {
+  const lists = [match.homeScorers, match.awayScorers, match.homeAssists, match.awayAssists];
+  if (!lists.every(Array.isArray)) return '进球和助攻记录格式无效';
+  const allCountsValid = lists.every((items) => items.every((item) => Number.isInteger(Number(item?.count)) && Number(item.count) >= 0));
+  if (!allCountsValid || !Number.isInteger(Number(match.homeGoals)) || Number(match.homeGoals) < 0 || !Number.isInteger(Number(match.awayGoals)) || Number(match.awayGoals) < 0) {
+    return '比分、进球和助攻数量必须是非负整数';
+  }
+  const homeScorerTotal = match.homeScorers.reduce((sum, item) => sum + Number(item.count), 0);
+  const awayScorerTotal = match.awayScorers.reduce((sum, item) => sum + Number(item.count), 0);
+  const homeAssistTotal = match.homeAssists.reduce((sum, item) => sum + Number(item.count), 0);
+  const awayAssistTotal = match.awayAssists.reduce((sum, item) => sum + Number(item.count), 0);
+
+  if (homeScorerTotal !== Number(match.homeGoals)) {
     return '主队进球数与进球球员数量不一致';
   }
   if (awayScorerTotal !== match.awayGoals) {
@@ -89,6 +123,10 @@ function buildLeaderLists(playerStats) {
       team: item.team,
       count: item.mvpCount,
       averageScore: Number((item.mvpScoreTotal / item.mvpCount).toFixed(2)),
+      goals: item.goals,
+      assists: item.assists,
+      yellowCards: item.yellowCards ?? 0,
+      redCards: item.redCards ?? 0,
     }))
     .sort(
       (left, right) =>
@@ -120,19 +158,14 @@ export function computePlayerStats(matches) {
     accumulate(stats, match.awayScorers, match.awayTeam, 'goals');
     accumulate(stats, match.homeAssists, match.homeTeam, 'assists');
     accumulate(stats, match.awayAssists, match.awayTeam, 'assists');
+    accumulateCards(stats, match.homePlayerCards, match.homeTeam);
+    accumulateCards(stats, match.awayPlayerCards, match.awayTeam);
     const mvpName = String(match.mvp?.name ?? '').trim();
     const mvpTeam = String(match.mvp?.team ?? '').trim();
     const mvpScore = Number(match.mvp?.score ?? NaN);
     if (mvpName && mvpTeam && Number.isFinite(mvpScore)) {
       const key = playerKey(mvpName, mvpTeam);
-      const current = stats.get(key) ?? {
-        name: mvpName,
-        team: mvpTeam,
-        goals: 0,
-        assists: 0,
-        mvpCount: 0,
-        mvpScoreTotal: 0,
-      };
+      const current = stats.get(key) ?? emptyStats(mvpName, mvpTeam);
       stats.set(key, {
         ...current,
         team: mvpTeam,
@@ -165,11 +198,13 @@ export function computePlayerDetail(matches, name, team) {
 
     const scorers = isHome ? match.homeScorers : match.awayScorers;
     const assisters = isHome ? match.homeAssists : match.awayAssists;
-    const goals = (scorers ?? []).find((item) => item.name === name)?.count ?? 0;
-    const assists = (assisters ?? []).find((item) => item.name === name)?.count ?? 0;
+    const goals = sumContribution(scorers, name);
+    const assists = sumContribution(assisters, name);
+    const cardEntries = isHome ? match.homePlayerCards : match.awayPlayerCards;
+    const card = (Array.isArray(cardEntries) ? cardEntries : []).filter((item) => item?.name === name).reduce((result, item) => ({ yellow: result.yellow + (countValue(item?.yellow) ?? 0), red: result.red + (countValue(item?.red) ?? 0) }), { yellow: 0, red: 0 });
     const isMvp = match.mvp?.name === name && match.mvp?.team === team;
 
-    if (goals === 0 && assists === 0 && !isMvp) {
+    if (goals === 0 && assists === 0 && card.yellow === 0 && card.red === 0 && !isMvp) {
       continue;
     }
 
@@ -184,6 +219,8 @@ export function computePlayerDetail(matches, name, team) {
       result: forGoals > againstGoals ? '胜' : forGoals < againstGoals ? '负' : '平',
       goals,
       assists,
+      yellowCards: card.yellow,
+      redCards: card.red,
       mvpScore: isMvp ? match.mvp.score : null,
     });
   }
@@ -197,6 +234,8 @@ export function computePlayerDetail(matches, name, team) {
     assists: stats.assists,
     mvpCount: stats.mvpCount,
     mvpScoreTotal: stats.mvpScoreTotal,
+    yellowCards: stats.yellowCards ?? 0,
+    redCards: stats.redCards ?? 0,
     averageScore: stats.mvpCount > 0 ? Number((stats.mvpScoreTotal / stats.mvpCount).toFixed(2)) : 0,
     matches: lines,
   };
@@ -224,6 +263,8 @@ export function collectKnownPlayers(matches) {
     for (const item of match.homeAssists ?? []) add(match.homeTeam, item?.name);
     for (const item of match.awayScorers ?? []) add(match.awayTeam, item?.name);
     for (const item of match.awayAssists ?? []) add(match.awayTeam, item?.name);
+    for (const item of match.homePlayerCards ?? []) add(match.homeTeam, item?.name);
+    for (const item of match.awayPlayerCards ?? []) add(match.awayTeam, item?.name);
     add(match.mvp?.team, match.mvp?.name);
   }
 

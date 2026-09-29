@@ -5,12 +5,12 @@ let hideTimer = null;
 const HIDE_MS = 2200;
 
 // 轻量提示：右下角滑入，自动消失。重复调用会替换上一条。
-export function showToast(message) {
+export function showToast(message, kind = 'success') {
   if (activeToast) {
     activeToast.remove();
   }
 
-  const toast = el('div', { className: 'toast', role: 'status', text: message });
+  const toast = el('div', { className: `toast ${kind === 'error' ? 'toast-error' : ''}`, role: kind === 'error' ? 'alert' : 'status', text: message });
   document.body.append(toast);
   activeToast = toast;
 
