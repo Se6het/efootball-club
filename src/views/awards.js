@@ -23,6 +23,7 @@ function renderPodiumCard(item, slot) {
       el('span', { className: 'award-podium-medal', text: PODIUM_MEDALS[slot] ?? '' }),
       el('span', { className: 'badge', text: `第 ${item.rank} 名` }),
     ]),
+    teamBadge(item.team),
     el('h3', { text: item.team }),
     el('div', {
       className: 'award-amount',
@@ -87,81 +88,72 @@ function renderWinners(icon, title, award, emptyText, label) {
   ]);
 }
 
-function renderFmvp(award, onEdit) {
+// FMVP 的奖金在创建存档时就已录入，赛季结束后只需要评出获奖球员，
+// 所以这里直接给一个下拉选择，不再重复让用户填一遍奖金。
+function renderFmvp(award, players, settings, onSave) {
+  const hasWinner = Boolean(award.name);
+  const sorted = [...players].sort((left, right) =>
+    right.goals - left.goals || right.assists - left.assists || left.name.localeCompare(right.name, 'zh-Hans-CN')
+  );
+  const winnerStats = hasWinner
+    ? sorted.find((player) => player.name === award.name && player.team === award.team)
+    : null;
+
+  const select = el('select', { className: 'fmvp-select' }, [
+    el('option', { value: '', text: hasWinner ? '更换 FMVP 球员' : '选择 FMVP 球员', disabled: true }),
+    ...sorted.map((player, index) => el('option', {
+      value: String(index),
+      text: `${player.name} · ${player.team}`,
+    })),
+  ]);
+
+  if (hasWinner) {
+    const index = sorted.findIndex((player) => player.name === award.name && player.team === award.team);
+    if (index >= 0) {
+      select.value = String(index);
+    }
+  } else {
+    select.value = '';
+  }
+
+  select.addEventListener('change', () => {
+    const picked = sorted[Number(select.value)];
+    if (!picked) {
+      return;
+    }
+    onSave({ ...settings, fmvpPlayerName: picked.name, fmvpTeam: picked.team });
+  });
+
   return el('div', { className: 'panel award-panel' }, [
     awardPanelTitle('⭐', 'FMVP'),
-    el('div', { className: 'award-card fmvp-card' }, [
-      el('div', { className: 'award-amount', text: renderPrizeValue(award.prize) }),
-      el('div', { className: 'fmvp-name', text: award.name ? `${award.name} · ${award.team}` : '尚未录入' }),
+    el('div', { className: 'award-winners' }, [
+      el('div', { className: 'award-prize-chip', text: `奖金 ${renderPrizeValue(award.prize)}` }),
+      hasWinner
+        ? el('div', { className: 'row-card award-winner' }, [
+            el('div', { className: 'award-winner-name', text: award.name }),
+            el('div', {
+              className: 'muted',
+              text: winnerStats
+                ? `${award.team} · ${winnerStats.goals} 球 / ${winnerStats.assists} 助`
+                : award.team,
+            }),
+          ])
+        : el('p', { className: 'muted', text: '尚未评选，请选出本赛季的 FMVP 球员' }),
     ]),
-    el('div', { className: 'toolbar' }, [
-      el('button', {
-        className: 'button',
-        type: 'button',
-        text: '修改颁奖设置',
-        onClick: onEdit,
-      }),
+    el('label', { className: 'fmvp-picker' }, [
+      el('span', { className: 'fmvp-picker-label', text: 'FMVP 球员' }),
+      select,
     ]),
   ]);
 }
 
-function renderFmvpForm(state, onSave) {
-  const form = el('form', { className: 'panel award-panel form-grid' });
-  const firstPlace = el('input', { type: 'number', min: '0', step: '1', value: String(state?.firstPlace ?? 0) });
-  const secondPlace = el('input', { type: 'number', min: '0', step: '1', value: String(state?.secondPlace ?? 0) });
-  const thirdPlace = el('input', { type: 'number', min: '0', step: '1', value: String(state?.thirdPlace ?? 0) });
-  const topScorer = el('input', { type: 'number', min: '0', step: '1', value: String(state?.topScorer ?? 0) });
-  const topAssist = el('input', { type: 'number', min: '0', step: '1', value: String(state?.topAssist ?? 0) });
-  const fmvp = el('input', { type: 'number', min: '0', step: '1', value: String(state?.fmvp ?? 0) });
-  const fmvpPlayerName = el('input', { type: 'text', value: String(state?.fmvpPlayerName ?? '') });
-  const fmvpTeam = el('input', { type: 'text', value: String(state?.fmvpTeam ?? '') });
-
-  form.append(
-    awardPanelTitle('⭐', '录入奖金'),
-    el('p', { className: 'muted', text: '如果射手王或助攻王出现并列，这里录入的是每位获奖球员的奖金。' }),
-    el('label', {}, ['冠军奖金', firstPlace]),
-    el('label', {}, ['亚军奖金', secondPlace]),
-    el('label', {}, ['季军奖金', thirdPlace]),
-    el('label', {}, ['射手王奖金', topScorer]),
-    el('label', {}, ['助攻王奖金', topAssist]),
-    el('label', {}, ['FMVP 奖金', fmvp]),
-    el('label', {}, ['FMVP 球员', fmvpPlayerName]),
-    el('label', {}, ['FMVP 球队', fmvpTeam]),
-    el('div', { className: 'toolbar' }, [
-      el('button', {
-        className: 'button primary',
-        type: 'submit',
-        text: '保存颁奖设置',
-      }),
-    ])
-  );
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    onSave({
-      firstPlace: Number(firstPlace.value),
-      secondPlace: Number(secondPlace.value),
-      thirdPlace: Number(thirdPlace.value),
-      topScorer: Number(topScorer.value),
-      topAssist: Number(topAssist.value),
-      fmvp: Number(fmvp.value),
-      fmvpPlayerName: fmvpPlayerName.value,
-      fmvpTeam: fmvpTeam.value,
-    });
-  });
-
-  return form;
-}
-
-export function renderAwardsView({ seasonFinished, summary, onSave, onEdit, currentSettings, isEditing }) {
+export function renderAwardsView({ seasonFinished, summary, settings, players = [], onSave }) {
   if (!seasonFinished) {
     return el('div', { className: 'panel' }, [
       el('h2', { text: '赛季颁奖' }),
       emptyState('🏆', '赛季还未结束', '完成所有比赛后，这里会展示奖金与获奖名单'),
     ]);
   }
-
-  const shouldShowForm = isEditing || !currentSettings?.fmvpPlayerName;
 
   return el('div', { className: 'awards-stage' }, [
     renderChampionBanner(summary.podium[0]),
@@ -172,7 +164,7 @@ export function renderAwardsView({ seasonFinished, summary, onSave, onEdit, curr
     el('div', { className: 'award-columns' }, [
       renderWinners('👟', '射手王', summary.topScorer, '暂无射手王数据', '并列射手王奖金'),
       renderWinners('🎯', '助攻王', summary.topAssist, '暂无助攻王数据', '并列助攻王奖金'),
-      shouldShowForm ? renderFmvpForm(currentSettings, onSave) : renderFmvp(summary.fmvp, onEdit),
+      renderFmvp(summary.fmvp, players, settings, onSave),
     ]),
   ]);
 }

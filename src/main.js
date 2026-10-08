@@ -23,7 +23,6 @@ import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAw
 const app = document.querySelector('#app');
 let activeTab = 'dashboard';
 let state = loadState();
-let isEditingAwards = false;
 
 function persist(nextState) {
   state = saveState(nextState);
@@ -35,7 +34,6 @@ function persist(nextState) {
 }
 
 function startLeague(nextState) {
-  isEditingAwards = false;
   persist(nextState);
 }
 
@@ -49,7 +47,6 @@ function resetLeague() {
   }
   state = null;
   activeTab = 'dashboard';
-  isEditingAwards = false;
   render();
 }
 
@@ -128,7 +125,6 @@ function openEditor(match) {
         const nextState = updateMatch(state, match.id, () => nextMatch);
         if (isSeasonFinished(nextState.matches)) {
           activeTab = 'awards';
-          isEditingAwards = !nextState.awards;
         }
         closeTop();
         if (persist(nextState)) {
@@ -235,11 +231,11 @@ function renderLeague() {
   const seasonFinished = isSeasonFinished(state.matches);
   if (!seasonFinished && activeTab === 'awards') {
     activeTab = 'dashboard';
-    isEditingAwards = false;
   }
+  const playerStats = computePlayerStats(state.matches);
   const summary = buildAwardSummary(state.awards ?? {}, {
     rankedTeams,
-    playerStats: computePlayerStats(state.matches),
+    playerStats,
   });
 
   clear(app);
@@ -259,12 +255,8 @@ function renderLeague() {
     awards: () => renderAwardsView({
       seasonFinished,
       summary,
-      isEditing: isEditingAwards || !state.awards,
-      currentSettings: state.awards ? normalizeAwardSettings(state.awards) : null,
-      onEdit: () => {
-        isEditingAwards = true;
-        render();
-      },
+      settings: state.awards,
+      players: playerStats,
       onSave: (settings) => {
         const normalized = normalizeAwardSettings(settings);
         const error = validateAwardSettings(normalized, [...state.config.teamsA, ...state.config.teamsB]);
@@ -272,9 +264,8 @@ function renderLeague() {
           window.alert(error);
           return;
         }
-        isEditingAwards = false;
         if (persist(updateAwards(state, normalized))) {
-          showToast('已保存颁奖设置');
+          showToast('已评出 FMVP');
         }
       },
     }),
