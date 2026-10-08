@@ -1,5 +1,4 @@
 import { el, emptyState, teamCell } from '../ui.js';
-import { teamRowClass } from '../teams.js';
 import { animateNumber } from '../animate.js';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -37,7 +36,7 @@ export function renderList(title, items, emptyText, columns, emptyHint = '', onP
               ]),
             ]),
             el('tbody', {}, items.map((item, index) => el('tr', {
-              className: `${teamRowClass(item.team)} ${MEDAL_CLASS[index] ?? ''}`.trim(),
+              className: MEDAL_CLASS[index] ?? '',
             }, columns.map((column) => {
               if (column.key === 'rank') {
                 return rankCell(index);

@@ -63,15 +63,6 @@ function formStrip(form) {
   ]);
 }
 
-function legend() {
-  return el('div', { className: 'standings-legend' }, [
-    el('span', { className: 'legend-item' }, [el('span', { className: 'form-pill win', text: '胜' }), '胜']),
-    el('span', { className: 'legend-item' }, [el('span', { className: 'form-pill draw', text: '平' }), '平']),
-    el('span', { className: 'legend-item' }, [el('span', { className: 'form-pill loss', text: '负' }), '负']),
-    el('span', { className: 'legend-hint', text: '近5场进球多 = 状态火热' }),
-  ]);
-}
-
 export function renderStandingsView(rankedTeams, onTeamClick, options = {}) {
   const formByTeam = options.formByTeam ?? new Map();
   const hasGames = rankedTeams.some((team) => team.played > 0);
@@ -79,7 +70,6 @@ export function renderStandingsView(rankedTeams, onTeamClick, options = {}) {
   return el('div', { className: 'panel' }, [
     el('div', { className: 'panel-head' }, [
       el('h2', { text: '球队榜' }),
-      rankedTeams.length ? legend() : null,
     ]),
     rankedTeams.length
       ? el('div', { className: 'table-wrap' }, [

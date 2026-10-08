@@ -71,6 +71,18 @@ describe('view smoke tests', () => {
     expect(text).toContain('连续 2 场');
   });
 
+  it('renders recent-form strips as labeled pills instead of raw objects', () => {
+    const view = renderNextMatchView(nextMatch, () => {}, [], {
+      h2h: computeHeadToHead(matches, nextMatch),
+      homeForm: computeTeamForm(matches, '皇家马德里'),
+      awayForm: computeTeamForm(matches, '巴塞罗那'),
+    });
+    expect(textOf(view)).not.toContain('[object Object]');
+    const pills = view.querySelectorAll('.form-pill');
+    expect(pills.length).toBeGreaterThan(0);
+    expect(pills.map((pill) => textOf(pill)).sort()).toEqual(['胜', '胜', '负', '负']);
+  });
+
   it('renders the empty next-match state', () => {
     const view = renderNextMatchView(null, () => {});
     expect(textOf(view)).toContain('所有比赛都已完成');
@@ -100,6 +112,12 @@ describe('view smoke tests', () => {
     expect(text).toContain('射手榜');
     expect(text).toContain('助攻榜');
     expect(text).toContain('MVP 榜');
+  });
+
+  it('keeps leaderboard rows plain except for the top-three highlight', () => {
+    const view = renderLeadersView(computeLeaders(matches), () => {});
+    const rows = view.querySelectorAll('tr');
+    expect(rows.some((row) => String(row.className).includes('row-bg-'))).toBe(false);
   });
 
   it('wires leaderboard player links to the click callback', () => {

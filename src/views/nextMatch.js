@@ -8,7 +8,7 @@ function miniForm(form = []) {
   if (!form.length) {
     return el('span', { className: 'muted', text: '暂无战绩' });
   }
-  return el('span', { className: 'form-strip' }, form.map(formPill));
+  return el('span', { className: 'form-strip' }, form.map((item) => formPill(item?.result ?? item)));
 }
 
 function renderVersusForm(homeTeam, awayTeam, homeForm = [], awayForm = []) {
