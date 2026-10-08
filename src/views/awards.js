@@ -1,47 +1,84 @@
-import { el, emptyState } from '../ui.js';
+import { el, emptyState, teamBadge } from '../ui.js';
 import { animateNumber } from '../animate.js';
 
-const PODIUM_MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
-const PODIUM_CLASS = { 1: 'gold', 2: 'silver', 3: 'bronze' };
+const PODIUM_MEDALS = ['🥇', '🥈', '🥉'];
+const PODIUM_CLASS = ['gold', 'silver', 'bronze'];
+// 领奖台站位：亚军居左、冠军居中（最高一台）、季军居右。
+const PODIUM_ORDER = [1, 0, 2];
 
 function renderPrizeValue(value) {
   return `${value} 元`;
 }
 
-function renderPodium(podium) {
-  return el('div', { className: 'award-grid' }, podium.length
-    ? podium.map((item) =>
-        el('div', { className: `award-card ${PODIUM_CLASS[item.rank] ?? ''}` }, [
-          el('div', { className: 'award-card-head' }, [
-            el('span', { className: 'award-podium-medal', text: PODIUM_MEDALS[item.rank] ?? '' }),
-            el('span', { className: 'badge', text: `第 ${item.rank} 名` }),
-          ]),
-          el('h3', { text: item.team }),
-          el('div', {
-            className: 'award-amount',
-            text: renderPrizeValue(item.prize),
-            onAfterRender: (node) => animateNumber(node, 0, item.prize, {
-              duration: 600,
-              formatter: (value) => `${Math.round(value)} 元`,
-            }),
-          }),
-          item.needsPlayoff ? el('p', { className: 'muted', text: '待附加赛，暂不结算奖金' }) : null,
-        ])
-      )
-    : [emptyState('🏆', '暂无前三名数据', '赛季结束后这里会展示前三名与奖金')]);
+function awardPanelTitle(icon, title) {
+  return el('h2', { className: 'award-panel-title' }, [
+    el('span', { className: 'award-panel-icon', text: icon }),
+    el('span', { text: title }),
+  ]);
 }
 
-function renderWinners(title, award, emptyText, label) {
+function renderPodiumCard(item, slot) {
+  return el('div', { className: `award-card podium-card ${PODIUM_CLASS[slot] ?? ''}` }, [
+    el('div', { className: 'award-card-head' }, [
+      el('span', { className: 'award-podium-medal', text: PODIUM_MEDALS[slot] ?? '' }),
+      el('span', { className: 'badge', text: `第 ${item.rank} 名` }),
+    ]),
+    el('h3', { text: item.team }),
+    el('div', {
+      className: 'award-amount',
+      text: renderPrizeValue(item.prize),
+      onAfterRender: (node) => animateNumber(node, 0, item.prize, {
+        duration: 600,
+        formatter: (value) => `${Math.round(value)} 元`,
+      }),
+    }),
+    item.needsPlayoff ? el('p', { className: 'muted', text: '待附加赛，暂不结算奖金' }) : null,
+  ]);
+}
+
+function renderPodium(podium) {
+  if (!podium.length) {
+    return el('div', { className: 'award-grid' }, [
+      emptyState('🏆', '暂无前三名数据', '赛季结束后这里会展示前三名与奖金'),
+    ]);
+  }
+  return el('div', { className: 'podium' }, PODIUM_ORDER.map((slot) => (
+    podium[slot]
+      ? renderPodiumCard(podium[slot], slot)
+      : el('div', { className: 'podium-slot' })
+  )));
+}
+
+// 冠军横幅：把第一名（冠军）单独抬出来做仪式感焦点。仅当冠军已定（非待附加赛）时出现。
+function renderChampionBanner(champion) {
+  if (!champion || champion.needsPlayoff) {
+    return null;
+  }
+  return el('section', { className: 'awards-hero' }, [
+    el('span', { className: 'awards-hero-trophy', text: '🏆' }),
+    el('div', { className: 'awards-hero-main' }, [
+      el('span', { className: 'awards-hero-kicker', text: '赛季冠军' }),
+      el('span', { className: 'awards-hero-team' }, [
+        teamBadge(champion.team),
+        el('span', { className: 'awards-hero-name', text: champion.team }),
+      ]),
+      el('span', { className: 'awards-hero-prize', text: renderPrizeValue(champion.prize) }),
+    ]),
+    el('span', { className: 'awards-hero-medal', text: PODIUM_MEDALS[0] }),
+  ]);
+}
+
+function renderWinners(icon, title, award, emptyText, label) {
   const prizeLabel = award.winners.length > 1 ? `${label} ${renderPrizeValue(award.prize)} / 人` : `奖金 ${renderPrizeValue(award.prize)}`;
 
-  return el('div', { className: 'panel' }, [
-    el('h2', { text: title }),
+  return el('div', { className: 'panel award-panel' }, [
+    awardPanelTitle(icon, title),
     award.winners.length
       ? el('div', { className: 'award-winners' }, [
-          el('div', { className: 'muted', text: prizeLabel }),
+          el('div', { className: 'award-prize-chip', text: prizeLabel }),
           ...award.winners.map((winner) =>
-            el('div', { className: 'row-card' }, [
-              el('div', { text: winner.name }),
+            el('div', { className: 'row-card award-winner' }, [
+              el('div', { className: 'award-winner-name', text: winner.name }),
               el('div', { className: 'muted', text: `${winner.team} · ${winner.goals} 球 / ${winner.assists} 助` }),
             ])
           ),
@@ -51,11 +88,11 @@ function renderWinners(title, award, emptyText, label) {
 }
 
 function renderFmvp(award, onEdit) {
-  return el('div', { className: 'panel' }, [
-    el('h2', { text: 'FMVP' }),
-    el('div', { className: 'award-card' }, [
+  return el('div', { className: 'panel award-panel' }, [
+    awardPanelTitle('⭐', 'FMVP'),
+    el('div', { className: 'award-card fmvp-card' }, [
       el('div', { className: 'award-amount', text: renderPrizeValue(award.prize) }),
-      el('div', { text: award.name ? `${award.name} · ${award.team}` : '尚未录入' }),
+      el('div', { className: 'fmvp-name', text: award.name ? `${award.name} · ${award.team}` : '尚未录入' }),
     ]),
     el('div', { className: 'toolbar' }, [
       el('button', {
@@ -69,7 +106,7 @@ function renderFmvp(award, onEdit) {
 }
 
 function renderFmvpForm(state, onSave) {
-  const form = el('form', { className: 'panel form-grid' });
+  const form = el('form', { className: 'panel award-panel form-grid' });
   const firstPlace = el('input', { type: 'number', min: '0', step: '1', value: String(state?.firstPlace ?? 0) });
   const secondPlace = el('input', { type: 'number', min: '0', step: '1', value: String(state?.secondPlace ?? 0) });
   const thirdPlace = el('input', { type: 'number', min: '0', step: '1', value: String(state?.thirdPlace ?? 0) });
@@ -80,7 +117,7 @@ function renderFmvpForm(state, onSave) {
   const fmvpTeam = el('input', { type: 'text', value: String(state?.fmvpTeam ?? '') });
 
   form.append(
-    el('h2', { text: '录入奖金' }),
+    awardPanelTitle('⭐', '录入奖金'),
     el('p', { className: 'muted', text: '如果射手王或助攻王出现并列，这里录入的是每位获奖球员的奖金。' }),
     el('label', {}, ['冠军奖金', firstPlace]),
     el('label', {}, ['亚军奖金', secondPlace]),
@@ -126,13 +163,16 @@ export function renderAwardsView({ seasonFinished, summary, onSave, onEdit, curr
 
   const shouldShowForm = isEditing || !currentSettings?.fmvpPlayerName;
 
-  return el('div', { className: 'grid-two' }, [
-    el('div', { className: 'panel' }, [
-      el('h2', { text: '前三名奖金' }),
+  return el('div', { className: 'awards-stage' }, [
+    renderChampionBanner(summary.podium[0]),
+    el('div', { className: 'panel award-panel award-podium-panel' }, [
+      awardPanelTitle('🏆', '前三名奖金'),
       renderPodium(summary.podium),
     ]),
-    renderWinners('射手王', summary.topScorer, '暂无射手王数据', '并列射手王奖金'),
-    renderWinners('助攻王', summary.topAssist, '暂无助攻王数据', '并列助攻王奖金'),
-    shouldShowForm ? renderFmvpForm(currentSettings, onSave) : renderFmvp(summary.fmvp, onEdit),
+    el('div', { className: 'award-columns' }, [
+      renderWinners('👟', '射手王', summary.topScorer, '暂无射手王数据', '并列射手王奖金'),
+      renderWinners('🎯', '助攻王', summary.topAssist, '暂无助攻王数据', '并列助攻王奖金'),
+      shouldShowForm ? renderFmvpForm(currentSettings, onSave) : renderFmvp(summary.fmvp, onEdit),
+    ]),
   ]);
 }
