@@ -6,6 +6,7 @@ import { clear, el } from './ui.js';
 import { fadeIn } from './animate.js';
 import { showToast } from './toast.js';
 import { renderSetupView } from './views/setup.js';
+import { renderDashboard } from './views/dashboard.js';
 import { renderNextMatchView } from './views/nextMatch.js';
 import { renderScheduleView } from './views/schedule.js';
 import { renderStandingsView } from './views/standings.js';
@@ -19,15 +20,8 @@ import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './
 import { computeHeadToHead } from './h2h.js';
 import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAwardSettings } from './awards.js';
 
-const baseTabs = [
-  { key: 'next', label: '下一场' },
-  { key: 'schedule', label: '赛程' },
-  { key: 'standings', label: '球队榜' },
-  { key: 'leaders', label: '球员榜' },
-];
-
 const app = document.querySelector('#app');
-let activeTab = 'next';
+let activeTab = 'dashboard';
 let state = loadState();
 let isEditingAwards = false;
 
@@ -54,7 +48,7 @@ function resetLeague() {
     return;
   }
   state = null;
-  activeTab = 'next';
+  activeTab = 'dashboard';
   isEditingAwards = false;
   render();
 }
@@ -240,10 +234,9 @@ function renderLeague() {
   const leaders = computeLeaders(state.matches);
   const seasonFinished = isSeasonFinished(state.matches);
   if (!seasonFinished && activeTab === 'awards') {
-    activeTab = 'next';
+    activeTab = 'dashboard';
     isEditingAwards = false;
   }
-  const tabs = seasonFinished ? [...baseTabs, { key: 'awards', label: '赛季颁奖' }] : baseTabs;
   const summary = buildAwardSummary(state.awards ?? {}, {
     rankedTeams,
     playerStats: computePlayerStats(state.matches),
@@ -251,28 +244,19 @@ function renderLeague() {
 
   clear(app);
 
-  const nav = el('div', { className: 'tabs' }, tabs.map((tab) => el('button', {
-    className: tab.key === activeTab ? 'tab active' : 'tab',
-    type: 'button',
-    text: tab.label,
-    onClick: () => {
-      activeTab = tab.key;
-      render();
-    },
-  })));
-
-  const content = {
-    next: renderNextMatchView(nextMatch, openEditor, nextMatch ? getSuspensionsBeforeMatch(state.matches, nextMatch) : [], nextMatch
+  // 详情视图按需渲染：内容与既有视图完全一致，只在前面加一条“返回总览”。
+  const detailViews = {
+    next: () => renderNextMatchView(nextMatch, openEditor, nextMatch ? getSuspensionsBeforeMatch(state.matches, nextMatch) : [], nextMatch
       ? {
           h2h: computeHeadToHead(state.matches, nextMatch),
           homeForm: computeTeamForm(state.matches, nextMatch.homeTeam, 5),
           awayForm: computeTeamForm(state.matches, nextMatch.awayTeam, 5),
         }
       : {}),
-    schedule: renderScheduleView(state.matches, openEditor),
-    standings: renderStandingsView(rankedTeams, openTeamDetail, { formByTeam }),
-    leaders: renderLeadersView(leaders, openPlayerDetail),
-    awards: renderAwardsView({
+    schedule: () => renderScheduleView(state.matches, openEditor),
+    standings: () => renderStandingsView(rankedTeams, openTeamDetail, { formByTeam }),
+    leaders: () => renderLeadersView(leaders, openPlayerDetail),
+    awards: () => renderAwardsView({
       seasonFinished,
       summary,
       isEditing: isEditingAwards || !state.awards,
@@ -294,7 +278,34 @@ function renderLeague() {
         }
       },
     }),
-  }[activeTab];
+  };
+
+  const content = activeTab === 'dashboard'
+    ? renderDashboard({
+        nextMatch,
+        matches: state.matches,
+        rankedTeams,
+        leaders,
+        seasonFinished,
+        onOpen: (key) => {
+          activeTab = key;
+          render();
+        },
+      })
+    : el('div', { className: 'detail-view' }, [
+        el('div', { className: 'detail-bar' }, [
+          el('button', {
+            className: 'back-button',
+            type: 'button',
+            text: '← 返回总览',
+            onClick: () => {
+              activeTab = 'dashboard';
+              render();
+            },
+          }),
+        ]),
+        detailViews[activeTab](),
+      ]);
 
   const total = state.matches.length;
   const played = state.matches.filter((match) => match.isPlayed).length;
@@ -343,7 +354,6 @@ function renderLeague() {
         ]),
       ]),
       progressCard,
-      nav,
       content,
     ])
   );

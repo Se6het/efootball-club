@@ -1,4 +1,4 @@
-import { getTeamMark, teamCrestUrl, teamPrimary, teamSecondary, teamText } from './teams.js';
+import { getTeamMark, teamCrestUrl } from './teams.js';
 
 export function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -86,15 +86,10 @@ export function createSection(title, description) {
   ]);
 }
 
-// 圆形俱乐部徽章：优先 api-football 队徽图，加载失败或离线时降级为主题色圆徽 + 中文缩写。
+// 俱乐部徽章：直接显示队徽本体，不再套圆形底色/描边/阴影。
+// 队徽图加载失败或离线时，回退为中文缩写文字（同样不外套圈）。
 function teamBadge(team) {
-  const primary = teamPrimary(team);
-  const secondary = teamSecondary(team);
-  const text = teamText(team);
-  const style = primary
-    ? `background: linear-gradient(135deg, ${primary}, ${secondary || primary}); color: ${text};`
-    : null;
-  const fallback = el('span', { className: 'team-avatar-fallback', text: getTeamMark(team) });
+  const fallback = el('span', { className: 'team-crest-mark', text: getTeamMark(team) });
   const url = teamCrestUrl(team);
   const inner = url
     ? el('img', {
@@ -102,19 +97,16 @@ function teamBadge(team) {
         alt: `${team} 队徽`,
         src: url,
         loading: 'lazy',
-        width: 26,
-        height: 26,
         onLoad: () => {
           // 队徽多为透明背景 PNG，加载成功后隐藏底层缩写，避免透字。
           fallback.style.display = 'none';
         },
         onError: (event) => {
-          const node = event.target;
-          node.style.display = 'none';
+          event.target.style.display = 'none';
         },
       })
     : null;
-  return el('span', { className: 'team-avatar', style }, [
+  return el('span', { className: 'team-crest' }, [
     inner,
     fallback,
   ]);

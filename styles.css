@@ -1,17 +1,22 @@
 :root {
   color-scheme: light;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-  --bg: #f7f8fb;
+  /* 晴空（浅色蓝）配色 */
+  --bg: #eaeff8;
+  --bg-soft: #dfe7f5;
   --panel: #ffffff;
-  --panel-alt: #f1f4f9;
-  --text: #172033;
-  --muted: #5f6b84;
-  --border: #d8e0ed;
-  --primary: #2457d6;
-  --primary-weak: #e7eefc;
+  --panel-alt: #f3f7fd;
+  --text: #111a2e;
+  --muted: #65728f;
+  --border: #dae2f0;
+  --primary: #2557d6;
+  --primary-weak: #e8effc;
+  --accent-2: #0ea5a4;
   --danger: #c0392b;
   --success: #1f8a5b;
   --warning: #a46b00;
+  --shadow-sm: 0 2px 8px rgba(20, 35, 80, 0.07);
+  --shadow: 0 10px 26px rgba(20, 35, 80, 0.1);
 }
 
 * {
@@ -27,6 +32,10 @@ html, body {
 
 body {
   min-height: 100vh;
+  background:
+    radial-gradient(1200px 520px at 82% -12%, var(--bg-soft), transparent 62%),
+    var(--bg);
+  background-attachment: fixed;
 }
 
 button,
@@ -97,26 +106,6 @@ button {
 
 .button.ghost {
   background: transparent;
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.tab {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 10px 16px;
-}
-
-.tab.active {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
 }
 
 .grid-two {
@@ -305,32 +294,48 @@ th {
   white-space: nowrap;
 }
 
-.team-avatar {
-  position: relative;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: grid;
+/* 队徽：无外圈、无底色，直接显示本体；加载失败回退中文缩写。
+   尺寸由上下文变量 --s 控制。 */
+.team-crest {
+  --s: 22px;
+  display: inline-grid;
   place-items: center;
+  width: var(--s);
+  height: var(--s);
   flex: none;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
 }
 
-.team-avatar-fallback {
-  font-size: 12px;
-  line-height: 1;
+.team-crest > * {
+  grid-area: 1 / 1;
 }
 
 .team-crest-img {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  z-index: 1;
+  object-fit: contain;
+  display: block;
 }
+
+.team-crest-mark {
+  font-size: calc(var(--s) * 0.56);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+/* 统一尺寸标度：表格 18 / 列表 20 / 默认 22 / 宫格对阵与详情标题 30 / 对战卡 40 */
+table .team-crest { --s: 18px; }
+
+.mini-row .team-crest,
+.mini-fix .team-crest,
+.upcoming-list .team-crest { --s: 20px; }
+
+.team-detail-head .team-crest,
+.player-detail-team .team-crest { --s: 30px; }
+
+.tile-team .team-crest { --s: 30px; }
+
+.next-match-teams .team-crest { --s: 40px; }
 
 /* 下一场对阵 */
 .next-match-card {
@@ -350,15 +355,6 @@ th {
 
 .next-match-teams .team-name {
   font-size: 17px;
-}
-
-.next-match-card .team-avatar {
-  width: 36px;
-  height: 36px;
-}
-
-.next-match-card .team-avatar-fallback {
-  font-size: 16px;
 }
 
 .vs-sep {
@@ -432,28 +428,14 @@ tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row
 
 /* ---------- 第二轮美化：视觉层级 / 品牌顶栏 / 进度 / 奖牌 / 空态 / 弹窗 / 动效 ---------- */
 
-/* 品牌化顶栏 */
+/* 品牌化顶栏：浅色行头 + 渐变徽标（晴空） */
 .brand-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 22px 24px;
-  border-radius: 16px;
-  color: #fff;
-  background: linear-gradient(120deg, #2457d6 0%, #1d3f9e 55%, #0f2459 100%);
-  box-shadow: 0 8px 24px rgba(36, 87, 214, 0.28);
-  position: relative;
-  overflow: hidden;
-}
-
-.brand-banner::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(600px 160px at 85% -30%, rgba(255, 255, 255, 0.18), transparent 70%);
-  pointer-events: none;
+  padding: 4px 2px;
 }
 
 .brand-main {
@@ -465,13 +447,13 @@ tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row
 .brand-logo {
   width: 46px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   font-size: 26px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12);
+  color: #fff;
+  background: linear-gradient(135deg, #2a5ce0, #0c1c4d);
+  box-shadow: var(--shadow-sm);
   flex: none;
 }
 
@@ -483,7 +465,7 @@ tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row
 
 .brand-banner .brand-sub {
   margin: 2px 0 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
   font-size: 14px;
 }
 
@@ -491,31 +473,31 @@ tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  position: relative;
-  z-index: 1;
 }
 
 .banner-toolbar .button {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #fff;
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
 }
 
 .banner-toolbar .button:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: var(--panel-alt);
 }
 
 /* 赛季进度卡片 */
 .progress-card {
-  background: var(--panel);
+  background:
+    linear-gradient(180deg, var(--panel), color-mix(in srgb, var(--primary) 4%, var(--panel)));
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 18px;
+  border-radius: 18px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .progress-info {
@@ -541,16 +523,17 @@ tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row
 .progress-track {
   flex: 1;
   min-width: 160px;
-  height: 10px;
+  height: 12px;
   border-radius: 999px;
   background: var(--panel-alt);
+  box-shadow: inset 0 1px 2px rgba(20, 35, 80, 0.08);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #4aa86a, var(--success));
+  background: linear-gradient(90deg, var(--primary), var(--accent-2));
   transition: width 0.6s ease;
 }
 
@@ -573,8 +556,8 @@ tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row
 
 /* 面板视觉层级升级 */
 .panel {
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
-  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  border-radius: 18px;
 }
 
 .row-card {
@@ -697,8 +680,8 @@ tbody tr.rank-top td:first-child {
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   background: var(--panel);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(20, 35, 80, 0.28);
   position: relative;
   animation: fadeInUp 0.25s ease;
 }
@@ -732,8 +715,7 @@ body.modal-open {
 }
 
 /* 交互动效 */
-.button,
-.tab {
+.button {
   transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
 }
 
@@ -743,7 +725,6 @@ body.modal-open {
 }
 
 .button:focus-visible,
-.tab:focus-visible,
 input:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--primary);
@@ -777,7 +758,6 @@ select:focus-visible {
   .progress-fill,
   .row-card,
   .button,
-  .tab,
   .modal,
   .fade-in,
   .toast {
@@ -789,7 +769,7 @@ select:focus-visible {
 /* 窄屏适配 */
 @media (max-width: 640px) {
   .brand-banner {
-    padding: 16px;
+    padding: 4px 0;
   }
 
   .brand-banner h1 {
@@ -1494,11 +1474,6 @@ tbody tr.row-medal-bronze {
   opacity: 0.94;
 }
 
-.upcoming-list .team-avatar {
-  width: 22px;
-  height: 22px;
-}
-
 /* ---------- 球员明细 ---------- */
 
 .venue-tag {
@@ -1592,6 +1567,344 @@ tbody tr.row-medal-bronze {
 
   .h2h-sum-goals {
     margin-left: 0;
+  }
+}
+
+/* ==========================================================================
+   四宫格总览（首页）：四块摘要卡片，点任意一格展开对应详情
+   ========================================================================== */
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+.tile {
+  --tile-accent: var(--primary);
+  position: relative;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 178px;
+  overflow: hidden;
+  text-align: left;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    linear-gradient(146deg, color-mix(in srgb, var(--tile-accent) 6%, transparent), transparent 58%),
+    var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+/* 顶部一道细色条，给每格一个色彩身份 */
+.tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--tile-accent), color-mix(in srgb, var(--tile-accent) 20%, transparent));
+}
+
+.tile:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: color-mix(in srgb, var(--tile-accent) 40%, var(--border));
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--tile-accent);
+  outline-offset: 3px;
+}
+
+/* 四格各自的强调色：下一场 / 赛程 / 球队榜 / 球员榜 */
+.dashboard > .tile:nth-child(1) { --tile-accent: var(--primary); }
+.dashboard > .tile:nth-child(2) { --tile-accent: var(--accent-2); }
+.dashboard > .tile:nth-child(3) { --tile-accent: #c8871a; }
+.dashboard > .tile:nth-child(4) { --tile-accent: #7c4dff; }
+
+.tile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tile-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 12px;
+  font-size: 18px;
+  line-height: 1;
+  background: color-mix(in srgb, var(--tile-accent) 13%, var(--panel));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tile-accent) 22%, transparent);
+}
+
+.tile-title {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+
+.tile-more {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tile-accent);
+  transition: transform 0.18s ease;
+}
+
+.tile:hover .tile-more {
+  transform: translateX(3px);
+}
+
+.tile-body {
+  display: grid;
+  gap: 9px;
+}
+
+.tile-body > .muted {
+  padding: 16px 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* 宫格内的对阵（下一场 / 颁奖冠军） */
+.mini-versus {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.tile-team {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tile-team-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+}
+
+.mini-vs {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  color: var(--tile-accent);
+  background: color-mix(in srgb, var(--tile-accent) 10%, var(--panel));
+}
+
+.mini-meta {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.award-champ {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.award-champ-name {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.award-champ-tag {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #3a2a00;
+  background: linear-gradient(135deg, #f7d774, #d99a1b);
+}
+
+/* 宫格内的赛程行 */
+.mini-fix {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13px;
+}
+
+.mini-fix:last-child {
+  border-bottom: 0;
+}
+
+.mini-fix-round {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.mini-fix-vs {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.mini-fix-side {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mini-fix-side.away {
+  justify-content: flex-end;
+}
+
+/* 宫格内的榜单行（球队榜 / 球员榜） */
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13px;
+}
+
+.mini-row:last-child {
+  border-bottom: 0;
+}
+
+.mini-idx {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  background: var(--panel-alt);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 前三名用奖牌色，呼应积分榜的视觉语言 */
+.tile-body .mini-row:nth-child(1) .mini-idx {
+  color: #6b4b00;
+  background: linear-gradient(135deg, #f7d774, #e0a92b);
+}
+
+.tile-body .mini-row:nth-child(2) .mini-idx {
+  color: #4a5260;
+  background: linear-gradient(135deg, #e9edf5, #c6ceda);
+}
+
+.tile-body .mini-row:nth-child(3) .mini-idx {
+  color: #5a3418;
+  background: linear-gradient(135deg, #ecc59c, #cd8e57);
+}
+
+.mini-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.mini-player {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mini-team {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-val {
+  flex: none;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--tile-accent);
+}
+
+.mini-unit {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* 详情页返回条 */
+.detail-view {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 15px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.back-button:hover {
+  background: var(--panel-alt);
+  transform: translateX(-2px);
+  box-shadow: var(--shadow);
+}
+
+.back-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 820px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile-more,
+  .back-button {
+    transition: none !important;
+    transform: none !important;
   }
 }
 
