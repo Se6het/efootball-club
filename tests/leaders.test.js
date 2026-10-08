@@ -391,13 +391,19 @@ describe('computePlayerDetail', () => {
     },
   ];
 
-  it('aggregates stats and lists per-match contributions', () => {
+  it('aggregates stats and lists every played match of the team, including blank ones', () => {
     const detail = computePlayerDetail(matches, '张三', '皇家马德里');
-    expect(detail).toMatchObject({ name: '张三', team: '皇家马德里', goals: 2, assists: 0, mvpCount: 1 });
+    expect(detail).toMatchObject({ name: '张三', team: '皇家马德里', goals: 2, assists: 0, mvpCount: 1, appearances: 2, goalInvolvements: 2 });
     expect(detail.averageScore).toBe(8.5);
     expect(detail.matches).toEqual([
-      { matchNumber: 1, round: 1, opponent: '巴塞罗那', forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, yellowCards: 0, redCards: 0, mvpScore: 8.5 },
+      { matchNumber: 1, round: 1, opponent: '巴塞罗那', isHome: true, forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, yellowCards: 0, redCards: 0, mvpScore: 8.5, contributed: true },
+      { matchNumber: 2, round: 2, opponent: '曼城', isHome: true, forGoals: 0, againstGoals: 3, result: '负', goals: 0, assists: 0, yellowCards: 0, redCards: 0, mvpScore: null, contributed: false },
     ]);
+  });
+
+  it('never lists matches that have not been played yet', () => {
+    const detail = computePlayerDetail(matches, '张三', '皇家马德里');
+    expect(detail.matches.map((line) => line.matchNumber)).toEqual([1, 2]);
   });
 
   it('computes the result from the player team perspective', () => {

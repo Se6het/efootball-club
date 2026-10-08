@@ -204,16 +204,14 @@ export function computePlayerDetail(matches, name, team) {
     const card = (Array.isArray(cardEntries) ? cardEntries : []).filter((item) => item?.name === name).reduce((result, item) => ({ yellow: result.yellow + (countValue(item?.yellow) ?? 0), red: result.red + (countValue(item?.red) ?? 0) }), { yellow: 0, red: 0 });
     const isMvp = match.mvp?.name === name && match.mvp?.team === team;
 
-    if (goals === 0 && assists === 0 && card.yellow === 0 && card.red === 0 && !isMvp) {
-      continue;
-    }
-
     const forGoals = isHome ? match.homeGoals : match.awayGoals;
     const againstGoals = isHome ? match.awayGoals : match.homeGoals;
+    const contributed = goals > 0 || assists > 0 || card.yellow > 0 || card.red > 0 || isMvp;
     lines.push({
       matchNumber: match.matchNumber,
       round: match.round,
       opponent: isHome ? match.awayTeam : match.homeTeam,
+      isHome,
       forGoals,
       againstGoals,
       result: forGoals > againstGoals ? '胜' : forGoals < againstGoals ? '负' : '平',
@@ -222,6 +220,7 @@ export function computePlayerDetail(matches, name, team) {
       yellowCards: card.yellow,
       redCards: card.red,
       mvpScore: isMvp ? match.mvp.score : null,
+      contributed,
     });
   }
 
@@ -237,6 +236,8 @@ export function computePlayerDetail(matches, name, team) {
     yellowCards: stats.yellowCards ?? 0,
     redCards: stats.redCards ?? 0,
     averageScore: stats.mvpCount > 0 ? Number((stats.mvpScoreTotal / stats.mvpCount).toFixed(2)) : 0,
+    appearances: lines.length,
+    goalInvolvements: stats.goals + stats.assists,
     matches: lines,
   };
 }

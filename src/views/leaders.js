@@ -2,6 +2,9 @@ import { el, emptyState, teamCell } from '../ui.js';
 import { teamRowClass } from '../teams.js';
 import { animateNumber } from '../animate.js';
 
+const MEDALS = ['🥇', '🥈', '🥉'];
+const MEDAL_CLASS = ['row-medal-gold', 'row-medal-silver', 'row-medal-bronze'];
+
 function numCell(value, item) {
   return el('td', {
     className: 'num-cell',
@@ -10,9 +13,21 @@ function numCell(value, item) {
   });
 }
 
-export function renderList(title, items, emptyText, columns, emptyHint = '', onPlayerClick) {
+function rankCell(index) {
+  const medal = MEDALS[index];
+  return el('td', { className: medal ? 'rank-cell rank-cell-medal' : 'rank-cell' }, [
+    el('span', { className: medal ? 'rank-num rank-num-medal' : 'rank-num', text: medal ?? String(index + 1) }),
+  ]);
+}
+
+export function renderList(title, items, emptyText, columns, emptyHint = '', onPlayerClick, options = {}) {
+  const titleNode = el('h2', {}, [
+    options.icon ? el('span', { className: 'panel-icon', text: options.icon }) : null,
+    el('span', { text: title }),
+  ]);
+
   return el('div', { className: 'panel' }, [
-    el('h2', { text: title }),
+    titleNode,
     items.length
       ? el('div', { className: 'table-wrap' }, [
           el('table', {}, [
@@ -21,9 +36,11 @@ export function renderList(title, items, emptyText, columns, emptyHint = '', onP
                 ...columns.map((column) => el('th', { text: column.label })),
               ]),
             ]),
-            el('tbody', {}, items.map((item, index) => el('tr', { className: teamRowClass(item.team) }, columns.map((column) => {
+            el('tbody', {}, items.map((item, index) => el('tr', {
+              className: `${teamRowClass(item.team)} ${MEDAL_CLASS[index] ?? ''}`.trim(),
+            }, columns.map((column) => {
               if (column.key === 'rank') {
-                return el('td', { text: String(index + 1) });
+                return rankCell(index);
               }
               if (column.key === 'team') {
                 return el('td', {}, [teamCell(item.team)]);
@@ -48,7 +65,7 @@ export function renderList(title, items, emptyText, columns, emptyHint = '', onP
             })))),
           ]),
         ])
-      : emptyState('🏅', emptyText, emptyHint),
+      : emptyState(options.emptyIcon ?? '🏅', emptyText, emptyHint),
   ]);
 }
 
@@ -62,7 +79,7 @@ export function renderLeadersView(leaders, onPlayerClick) {
       { key: 'assists', label: '助攻', animate: true },
       { key: 'mvpCount', label: 'MVP 场次', animate: true },
       { key: 'averageScore', label: 'MVP 平均分', format: (value) => (Number.isFinite(value) ? value.toFixed(2) : '0.00') },
-    ], '还没人进球', '录入比赛比分后，射手榜会在这里出现', onPlayerClick),
+    ], '录入比赛比分后，射手榜会在这里出现', onPlayerClick, { icon: '👟', emptyIcon: '👟' }),
     renderList('助攻榜', leaders.assistList, '暂无助攻记录', [
       { key: 'rank', label: '排名' },
       { key: 'name', label: '球员' },
@@ -71,7 +88,7 @@ export function renderLeadersView(leaders, onPlayerClick) {
       { key: 'goals', label: '进球', animate: true },
       { key: 'mvpCount', label: 'MVP 场次', animate: true },
       { key: 'averageScore', label: 'MVP 平均分', format: (value) => (Number.isFinite(value) ? value.toFixed(2) : '0.00') },
-    ], '还没人助攻', '录入比赛助攻后，助攻榜会在这里出现', onPlayerClick),
+    ], '录入比赛助攻后，助攻榜会在这里出现', onPlayerClick, { icon: '🎯', emptyIcon: '🎯' }),
     renderList('MVP 榜', leaders.mvpList ?? [], '暂无 MVP 记录', [
       { key: 'rank', label: '排名' },
       { key: 'name', label: '球员' },
@@ -80,6 +97,6 @@ export function renderLeadersView(leaders, onPlayerClick) {
       { key: 'averageScore', label: 'MVP 平均分', format: (value) => (Number.isFinite(value) ? value.toFixed(2) : '0.00') },
       { key: 'goals', label: '进球', animate: true },
       { key: 'assists', label: '助攻', animate: true },
-    ], '还没有 MVP', '录入比赛时填写全场 MVP 后会在这里出现', onPlayerClick),
+    ], '录入比赛时填写全场 MVP 后会在这里出现', onPlayerClick, { icon: '⭐', emptyIcon: '⭐' }),
   ]);
 }

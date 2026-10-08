@@ -15,6 +15,8 @@ import { renderTeamDetailView } from './views/teamDetail.js';
 import { renderPlayerDetailView } from './views/playerDetail.js';
 import { openMatchForm } from './views/matchForm.js';
 import { rankTeams } from './standings.js';
+import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './form.js';
+import { computeHeadToHead } from './h2h.js';
 import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAwardSettings } from './awards.js';
 
 const baseTabs = [
@@ -127,6 +129,7 @@ function openEditor(match) {
     content: () => openMatchForm(match, {
       knownPlayers: collectKnownPlayers(state.matches),
       suspensions: getSuspensionsBeforeMatch(state.matches, match),
+      h2h: computeHeadToHead(state.matches, match),
       onSave: (nextMatch) => {
         const nextState = updateMatch(state, match.id, () => nextMatch);
         if (isSeasonFinished(nextState.matches)) {
@@ -146,7 +149,10 @@ function openEditor(match) {
 function openTeamDetail(team) {
   pushModal({
     ariaLabel: `${team} 队内数据`,
-    content: () => renderTeamDetailView(team, computeTeamLeaders(state.matches, team), openPlayerDetail),
+    content: () => renderTeamDetailView(team, computeTeamLeaders(state.matches, team), openPlayerDetail, {
+      form: computeTeamForm(state.matches, team, 5),
+      upcoming: computeUpcomingFixtures(state.matches, team, 5),
+    }),
   });
 }
 
@@ -230,6 +236,7 @@ function renderSetup() {
 function renderLeague() {
   const nextMatch = getNextMatch(state.matches);
   const rankedTeams = rankTeams(state.config, state.matches);
+  const formByTeam = computeTeamFormMap(state.matches, [...state.config.teamsA, ...state.config.teamsB], 5);
   const leaders = computeLeaders(state.matches);
   const seasonFinished = isSeasonFinished(state.matches);
   if (!seasonFinished && activeTab === 'awards') {
@@ -255,9 +262,15 @@ function renderLeague() {
   })));
 
   const content = {
-    next: renderNextMatchView(nextMatch, openEditor, nextMatch ? getSuspensionsBeforeMatch(state.matches, nextMatch) : []),
+    next: renderNextMatchView(nextMatch, openEditor, nextMatch ? getSuspensionsBeforeMatch(state.matches, nextMatch) : [], nextMatch
+      ? {
+          h2h: computeHeadToHead(state.matches, nextMatch),
+          homeForm: computeTeamForm(state.matches, nextMatch.homeTeam, 5),
+          awayForm: computeTeamForm(state.matches, nextMatch.awayTeam, 5),
+        }
+      : {}),
     schedule: renderScheduleView(state.matches, openEditor),
-    standings: renderStandingsView(rankedTeams, openTeamDetail),
+    standings: renderStandingsView(rankedTeams, openTeamDetail, { formByTeam }),
     leaders: renderLeadersView(leaders, openPlayerDetail),
     awards: renderAwardsView({
       seasonFinished,

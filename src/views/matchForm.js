@@ -1,6 +1,7 @@
 import { el } from '../ui.js';
 import { cardTotals } from '../discipline.js';
 import { validateContributionTotals, validateMvpSelection } from '../leaders.js';
+import { renderHeadToHead } from './nextMatch.js';
 
 function createEntryList(items = []) {
   return (Array.isArray(items) ? items : []).map((item) => ({ name: item.name ?? '', count: item.count ?? 0 }));
@@ -10,7 +11,7 @@ function createCardList(items = []) {
   return (Array.isArray(items) ? items : []).map((item) => ({ name: item.name ?? '', yellow: item.yellow ?? 0, red: item.red ?? 0 }));
 }
 
-export function openMatchForm(match, { onSave, onCancel, knownPlayers, suspensions = [] }) {
+export function openMatchForm(match, { onSave, onCancel, knownPlayers, suspensions = [], h2h = null }) {
   const state = {
     homeGoals: match.homeGoals,
     awayGoals: match.awayGoals,
@@ -140,6 +141,7 @@ export function openMatchForm(match, { onSave, onCancel, knownPlayers, suspensio
     root.replaceChildren(
       el('h3', { text: `${match.homeTeam} vs ${match.awayTeam}` }),
       suspensions.length ? el('div', { className: 'error', text: `停赛提醒：${suspensions.map((item) => `${item.name}（${item.team}，还需 ${item.pendingSuspension} 场）`).join('、')}` }) : null,
+      h2h ? renderHeadToHead(h2h) : null,
       el('div', { className: 'field-grid' }, [
         el('label', { className: 'field' }, [
           el('span', { text: '主队比分' }),

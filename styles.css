@@ -1010,3 +1010,614 @@ select:focus-visible {
 .round-group > .table-wrap {
   border-top: 1px solid var(--border);
 }
+
+/* ==========================================================================
+   第三轮美化：清晰的积分榜 / 近期状态 / 交锋看点 / 球员明细
+   —— 说明：整行高饱和队色改为「浅色底 + 左侧队伍色条」，让积分、进球、丢球更易读。
+   ========================================================================== */
+
+/* 表格基础：数字列用等宽数字，斑马纹让长表更易读 */
+tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+/* 队伍色条 + 浅色底（覆盖早期整行满色） */
+tbody tr[class*="row-bg-"] {
+  background: color-mix(in srgb, var(--row-primary) 14%, #ffffff);
+  box-shadow: inset 5px 0 0 var(--row-secondary);
+  transition: filter 0.15s ease, background-color 0.15s ease;
+}
+
+tbody tr[class*="row-bg-"] td {
+  color: var(--text);
+  border-bottom-color: color-mix(in srgb, var(--row-secondary) 16%, var(--border));
+}
+
+/* 前三名：叠加奖牌色光晕（覆盖上面的底色，但仍保留可读的深色文字） */
+tbody tr.rank-top-1 {
+  background: linear-gradient(90deg, rgba(230, 180, 40, 0.26), rgba(255, 255, 255, 0) 72%), color-mix(in srgb, var(--row-primary) 14%, #ffffff);
+  box-shadow: inset 5px 0 0 #d99a1b;
+}
+
+tbody tr.rank-top-2 {
+  background: linear-gradient(90deg, rgba(168, 178, 196, 0.3), rgba(255, 255, 255, 0) 72%), color-mix(in srgb, var(--row-primary) 14%, #ffffff);
+  box-shadow: inset 5px 0 0 #aab4c4;
+}
+
+tbody tr.rank-top-3 {
+  background: linear-gradient(90deg, rgba(205, 138, 82, 0.26), rgba(255, 255, 255, 0) 72%), color-mix(in srgb, var(--row-primary) 14%, #ffffff);
+  box-shadow: inset 5px 0 0 #cd8a52;
+}
+
+/* 榜单前三名 */
+tbody tr.row-medal-gold {
+  background: linear-gradient(90deg, rgba(230, 180, 40, 0.24), rgba(255, 255, 255, 0) 78%), color-mix(in srgb, var(--row-primary, #f5f6f8) 12%, #ffffff);
+  box-shadow: inset 5px 0 0 #d99a1b;
+}
+
+tbody tr.row-medal-silver {
+  background: linear-gradient(90deg, rgba(168, 178, 196, 0.3), rgba(255, 255, 255, 0) 78%), color-mix(in srgb, var(--row-primary, #f5f6f8) 12%, #ffffff);
+  box-shadow: inset 5px 0 0 #aab4c4;
+}
+
+tbody tr.row-medal-bronze {
+  background: linear-gradient(90deg, rgba(205, 138, 82, 0.26), rgba(255, 255, 255, 0) 78%), color-mix(in srgb, var(--row-primary, #f5f6f8) 12%, #ffffff);
+  box-shadow: inset 5px 0 0 #cd8a52;
+}
+
+/* 面板标题 + 图标 */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.panel-head h2 {
+  margin: 0;
+}
+
+.panel-icon {
+  margin-right: 6px;
+}
+
+/* 数字单元格 */
+.num-cell {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted-cell {
+  color: var(--muted);
+}
+
+/* 排名 */
+.rank-cell {
+  text-align: center;
+}
+
+.rank-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--panel-alt);
+  color: var(--text);
+}
+
+.rank-num-medal {
+  background: none;
+  font-size: 20px;
+  height: auto;
+  min-width: 0;
+  padding: 0;
+}
+
+/* 积分榜列宽与强调 */
+.standings-table {
+  min-width: 900px;
+}
+
+.standings-table th,
+.standings-table td {
+  text-align: center;
+}
+
+.standings-table .team-th,
+.standings-table .team-col {
+  text-align: left;
+}
+
+.goals-for {
+  color: #1f8a5b;
+  font-weight: 600;
+}
+
+.goals-against {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.gd-cell {
+  font-weight: 700;
+}
+
+.gd-positive {
+  color: #1f8a5b;
+}
+
+.gd-negative {
+  color: #c0392b;
+}
+
+.gd-zero {
+  color: var(--muted);
+}
+
+.col-points {
+  letter-spacing: 0.5px;
+}
+
+.points-cell {
+  text-align: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: rgba(36, 87, 214, 0.045);
+}
+
+.points-chip {
+  display: inline-block;
+  min-width: 36px;
+  padding: 4px 9px;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  background: var(--primary-weak);
+  color: var(--primary);
+}
+
+.points-chip-leader {
+  background: linear-gradient(135deg, #f7d774, #d99a1b);
+  color: #3a2a00;
+  box-shadow: 0 2px 8px rgba(217, 154, 27, 0.35);
+}
+
+.fairplay-cell {
+  font-size: 12px;
+}
+
+.badge-warn {
+  background: #fdeecb;
+  color: #8a5b00;
+}
+
+/* 近期状态小色块 */
+.form-cell {
+  text-align: center;
+}
+
+.form-strip {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.form-pill {
+  display: inline-grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+.form-pill.win {
+  background: linear-gradient(135deg, #34c26b, #1f8a5b);
+}
+
+.form-pill.draw {
+  background: linear-gradient(135deg, #9aa7bd, #6b7891);
+}
+
+.form-pill.loss {
+  background: linear-gradient(135deg, #e35d6a, #c0392b);
+}
+
+/* 积分榜图例 */
+.standings-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-item .form-pill {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}
+
+.legend-hint {
+  opacity: 0.85;
+}
+
+/* ---------- 下一场：状态条 + 历史交锋 ---------- */
+
+.next-match-meta {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.alert-suspension {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff2f1;
+  color: var(--danger);
+  border: 1px solid #f3c9c4;
+  font-size: 14px;
+}
+
+.versus-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.versus-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--panel-alt);
+}
+
+.versus-form-label {
+  font-weight: 600;
+}
+
+.next-toolbar {
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.h2h-panel {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f6f9ff, #ffffff);
+}
+
+.h2h-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.h2h-head h3 {
+  margin: 0;
+}
+
+.h2h-ordinal {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-weak);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.h2h-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.h2h-summary strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.h2h-sum-home {
+  color: #1f8a5b;
+}
+
+.h2h-sum-away {
+  color: #c0392b;
+}
+
+.h2h-sum-draw {
+  color: var(--muted);
+}
+
+.h2h-sum-goals {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.h2h-sum-label {
+  width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.h2h-meetings {
+  display: grid;
+  gap: 6px;
+}
+
+.h2h-meeting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.h2h-round {
+  min-width: 52px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.h2h-score {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.h2h-team {
+  color: var(--muted);
+}
+
+.h2h-team.h2h-win {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.h2h-highlights {
+  margin-top: 14px;
+}
+
+.h2h-highlights-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.h2h-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.h2h-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #6b4a00;
+  background: linear-gradient(135deg, #fff6e0, #ffe9c2);
+  border: 1px solid #f2d9a8;
+}
+
+.h2h-chip-icon {
+  font-size: 15px;
+}
+
+/* ---------- 球队详情：近期战绩 + 未来赛程 ---------- */
+
+.form-panel h3,
+.upcoming-panel h3 {
+  margin: 0 0 12px;
+}
+
+.form-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.form-summary-pill {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.form-summary-pill.win {
+  background: linear-gradient(135deg, #34c26b, #1f8a5b);
+}
+
+.form-summary-pill.draw {
+  background: linear-gradient(135deg, #9aa7bd, #6b7891);
+}
+
+.form-summary-pill.loss {
+  background: linear-gradient(135deg, #e35d6a, #c0392b);
+}
+
+.form-summary-points {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-weak);
+}
+
+.form-list,
+.upcoming-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.form-row,
+.upcoming-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  background: var(--panel-alt);
+}
+
+.form-round,
+.upcoming-round {
+  min-width: 54px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.form-opponent,
+.upcoming-opponent {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-score {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.upcoming-panel {
+  opacity: 0.94;
+}
+
+.upcoming-list .team-avatar {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---------- 球员明细 ---------- */
+
+.venue-tag {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: rgba(127, 127, 127, 0.14);
+  flex: none;
+  vertical-align: middle;
+}
+
+.match-log tbody td {
+  font-variant-numeric: tabular-nums;
+}
+
+.opp-cell {
+  white-space: nowrap;
+}
+
+.opp-cell .team-name {
+  vertical-align: middle;
+}
+
+.row-idle {
+  opacity: 0.6;
+}
+
+.result-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.result-pill.success {
+  background: #e6f6ee;
+  color: #1f8a5b;
+}
+
+.result-pill.error {
+  background: #fdeceb;
+  color: #c0392b;
+}
+
+.result-pill.warning {
+  background: #fdf3e0;
+  color: #a46b00;
+}
+
+.stat-hot {
+  color: #1f8a5b;
+  font-weight: 700;
+}
+
+.card-yellow {
+  color: #a46b00;
+  font-weight: 700;
+}
+
+.card-red {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.mvp-score {
+  color: #8e5ad6;
+  font-weight: 700;
+}
+
+/* 球员统计卡片的彩色顶边 */
+.stat-tile-apps { border-top: 3px solid #64748b; }
+.stat-tile-goals { border-top: 3px solid #1f8a5b; }
+.stat-tile-assists { border-top: 3px solid #2457d6; }
+.stat-tile-involvements { border-top: 3px solid #8e5ad6; }
+.stat-tile-mvp { border-top: 3px solid #d99a1b; }
+.stat-tile-rating { border-top: 3px solid #12a0d7; }
+.stat-tile-yellow { border-top: 3px solid #e2b93b; }
+.stat-tile-red { border-top: 3px solid #c0392b; }
+.stat-tile-suspension { border-top: 3px solid #a46b00; }
+
+@media (max-width: 640px) {
+  .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .h2h-sum-goals {
+    margin-left: 0;
+  }
+}
+
