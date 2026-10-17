@@ -100,6 +100,24 @@ export function computeDisciplineStats(matches, customRules = {}) {
   return [...records.values()];
 }
 
+// 某队全部有牌球员的纪律档案，供球队详情里低调展示：
+// 谁的牌最多、谁已经停赛过、谁再吃一张黄牌就要停赛。
+export function computeTeamDiscipline(matches, team, customRules = {}) {
+  const rules = normalizeDisciplineRules(customRules);
+  return computeDisciplineStats(matches, rules)
+    .filter((record) => record.team === team)
+    .map((record) => ({
+      ...record,
+      oneYellowFromBan: record.pendingSuspension === 0
+        && record.yellowCards % rules.yellowLimit === rules.yellowLimit - 1,
+    }))
+    .sort((left, right) =>
+      right.pendingSuspension - left.pendingSuspension ||
+      right.redCards - left.redCards ||
+      right.yellowCards - left.yellowCards ||
+      left.name.localeCompare(right.name, 'zh-Hans-CN'));
+}
+
 export function cardTotals(entries = []) {
   return (Array.isArray(entries) ? entries : []).reduce(
     (totals, entry) => ({

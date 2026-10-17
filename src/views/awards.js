@@ -109,9 +109,9 @@ function renderFmvp(award, players, settings, onSave) {
 
   if (hasWinner) {
     const index = sorted.findIndex((player) => player.name === award.name && player.team === award.team);
-    if (index >= 0) {
-      select.value = String(index);
-    }
+    // 存档里的 FMVP 若不在本赛季球员榜中（例如导入了旧备份），回落到占位项，
+    // 否则浏览器会默认选中第一个可选项，看起来像"选错人了"。
+    select.value = index >= 0 ? String(index) : '';
   } else {
     select.value = '';
   }

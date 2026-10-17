@@ -294,6 +294,25 @@ th {
   white-space: nowrap;
 }
 
+/* 赛程/积分榜上的球队归属玩家标签：低调、不抢眼。 */
+.team-owner-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.owner-tag {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(127, 127, 127, 0.1);
+  opacity: 0.85;
+}
+
 /* 队徽：无外圈、无底色，直接显示本体；加载失败回退中文缩写。
    尺寸由上下文变量 --s 控制。 */
 .team-crest {
@@ -2185,3 +2204,222 @@ tbody tr.row-medal-bronze {
   }
 }
 
+
+/* ---------- 积分榜：多维度点击排序 ---------- */
+
+.sort-hint {
+  font-size: 12px;
+}
+
+.sortable-th {
+  padding: 0;
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 8px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+}
+
+.sort-button:hover {
+  color: var(--primary);
+  background: var(--primary-weak);
+}
+
+.sort-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.sortable-active .sort-button {
+  color: var(--primary);
+}
+
+.sort-caret {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.sortable-active .sort-caret {
+  opacity: 1;
+}
+
+/* ---------- 球队详情：整个赛季 / 纪律情况（低调折叠区） ---------- */
+
+.season-panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.season-panel > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--panel-alt);
+}
+
+.season-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.season-panel > summary::before {
+  content: '▸';
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.season-panel[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.season-panel[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.season-body {
+  padding: 14px 15px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.season-body h4 {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.rank-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-empty {
+  padding: 14px;
+  text-align: center;
+  font-size: 13px;
+  background: var(--panel-alt);
+  border-radius: 9px;
+}
+
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.chart-axis-label {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--primary);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.chart-dot-leader {
+  fill: var(--warning);
+}
+
+.discipline-list {
+  list-style: none;
+  margin: 0;
+  padding: 12px 15px;
+  display: grid;
+  gap: 6px;
+}
+
+.discipline-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  background: var(--panel-alt);
+}
+
+.discipline-name {
+  min-width: 84px;
+  font-weight: 600;
+}
+
+.discipline-cards {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.card-chip {
+  padding: 1px 7px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-chip-yellow {
+  color: #7a5a00;
+  background: #fdf0c8;
+}
+
+.card-chip-red {
+  color: #a12b1d;
+  background: #fbdedb;
+}
+
+.discipline-badge {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.discipline-row .discipline-badge + .discipline-badge {
+  margin-left: 0;
+}
+
+.discipline-badge.served {
+  color: var(--muted);
+  background: rgba(127, 127, 127, 0.14);
+}
+
+.discipline-badge.pending {
+  color: #fff;
+  background: var(--danger);
+}
+
+.discipline-badge.risk {
+  color: #7a5a00;
+  background: #fdf0c8;
+}

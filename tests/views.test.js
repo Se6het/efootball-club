@@ -16,7 +16,8 @@ const { computeHeadToHead } = await import('../src/h2h.js');
 const { computeTeamForm, computeUpcomingFixtures, computeTeamFormMap } = await import('../src/form.js');
 const { computeLeaders, computePlayerDetail, computeTeamLeaders } = await import('../src/leaders.js');
 const { buildAwardSummary } = await import('../src/awards.js');
-const { rankTeams } = await import('../src/standings.js');
+const { computeRankProgression, rankTeams } = await import('../src/standings.js');
+const { computeTeamDiscipline } = await import('../src/discipline.js');
 
 function fixture(id, matchNumber, round, homeTeam, awayTeam, homeGoals, awayGoals, isPlayed, extra = {}) {
   return {
@@ -193,5 +194,87 @@ describe('view smoke tests', () => {
     const withoutH2h = textOf(openMatchForm(nextMatch, { onSave: () => {}, onCancel: () => {}, knownPlayers: {} }));
     expect(withoutH2h).toContain('保存比赛');
     expect(withoutH2h).not.toContain('历史交锋');
+  });
+});
+
+function rankedTeam(team, rank, overrides = {}) {
+  return {
+    team,
+    rank,
+    played: 2,
+    wins: 1,
+    draws: 0,
+    losses: 1,
+    goalsFor: 1,
+    goalsAgainst: 1,
+    goalDifference: 0,
+    points: 3,
+    fairPlayPoints: 0,
+    needsPlayoff: false,
+    ...overrides,
+  };
+}
+
+describe('standings multi-dimension sorting', () => {
+  const ranked = [
+    rankedTeam('甲队', 1, { wins: 2, losses: 0, points: 6, goalsFor: 1, goalDifference: 1 }),
+    rankedTeam('乙队', 2, { wins: 0, losses: 1, draws: 1, points: 1, goalsFor: 5, goalDifference: 3 }),
+    rankedTeam('丙队', 3, { wins: 0, losses: 1, draws: 1, points: 1, goalsFor: 3, goalDifference: 1 }),
+  ];
+
+  function firstRowTeam(view) {
+    const tbody = view.querySelector('tbody');
+    const row = tbody.querySelectorAll('tr')[0];
+    return textOf(row);
+  }
+
+  it('sorts by a clicked column and toggles direction on the second click', () => {
+    const view = renderStandingsView(ranked, () => {}, {});
+    const goalsButton = view.querySelectorAll('.sort-button').find((button) => textOf(button).startsWith('进球'));
+    expect(goalsButton).toBeTruthy();
+
+    // 首次点击：按进球降序（乙队 5 球居首）。
+    goalsButton.click();
+    expect(firstRowTeam(view)).toContain('乙队');
+
+    // 再次点击：切换为升序（甲队 1 球居首）。
+    goalsButton.click();
+    expect(firstRowTeam(view)).toContain('甲队');
+  });
+
+  it('keeps the official order as the default', () => {
+    const view = renderStandingsView(ranked, () => {}, {});
+    expect(firstRowTeam(view)).toContain('甲队');
+  });
+});
+
+describe('team detail season & discipline panels', () => {
+  it('renders the season chart and full-season list', () => {
+    const progression = computeRankProgression(
+      { teamsA: ['皇家马德里'], teamsB: ['巴塞罗那'] },
+      matches,
+      '皇家马德里'
+    );
+    const view = renderTeamDetailView('皇家马德里', computeTeamLeaders(matches, '皇家马德里'), () => {}, {
+      form: computeTeamForm(matches, '皇家马德里'),
+      upcoming: computeUpcomingFixtures(matches, '皇家马德里'),
+      season: computeTeamForm(matches, '皇家马德里', 0),
+      progression,
+      totalTeams: 2,
+      discipline: computeTeamDiscipline(matches, '皇家马德里'),
+    });
+    const text = textOf(view);
+    expect(text).toContain('整个赛季');
+    expect(text).toContain('排名走势');
+    expect(text).toContain('纪律情况');
+    expect(view.querySelector('.rank-chart')).not.toBeNull();
+  });
+
+  it('shows a placeholder when there is no season data', () => {
+    const view = renderTeamDetailView('皇家马德里', computeTeamLeaders(matches, '皇家马德里'), () => {}, {});
+    const text = textOf(view);
+    expect(text).toContain('整个赛季');
+    expect(text).toContain('暂无排名走势');
+    expect(text).toContain('该队本赛季还没有红黄牌记录');
   });
 });

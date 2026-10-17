@@ -188,6 +188,32 @@ export function computeStandings(config, matches) {
   return [...stats.values()];
 }
 
+// 某队「每一轮结束后」的排名快照，用于球队详情里的赛季排名折线图。
+// 逐轮累积已完成的比赛再排名，避免只打了一半的一轮造成排名抖动。
+export function computeRankProgression(config, matches, team) {
+  const played = (Array.isArray(matches) ? matches : []).filter((match) => match?.isPlayed);
+  const rounds = [...new Set(played.map((match) => match.round))].sort((left, right) => left - right);
+  const progression = [];
+
+  for (const round of rounds) {
+    const upto = played.filter((match) => match.round <= round);
+    const ranked = rankTeams(config, upto);
+    const entry = ranked.find((item) => item.team === team);
+    if (!entry) {
+      continue;
+    }
+    progression.push({
+      round,
+      rank: entry.rank,
+      points: entry.points,
+      played: entry.played,
+      isLeader: entry.rank === 1,
+    });
+  }
+
+  return progression;
+}
+
 export function rankTeams(config, matches) {
   const standings = computeStandings(config, matches);
   const ordered = standings.slice().sort(compareOverall);

@@ -120,6 +120,14 @@ export function teamCell(team) {
   ]);
 }
 
+// 球队单元格 + 归属玩家小标签：低调显示赛程/积分榜上每支球队属于哪位玩家。
+export function teamWithOwner(team, owner) {
+  return el('span', { className: 'team-owner-wrap' }, [
+    teamCell(team),
+    owner ? el('span', { className: 'owner-tag', text: owner, title: `归属：${owner}` }) : null,
+  ]);
+}
+
 export { teamBadge };
 
 // 空状态：图标 + 标题 + 提示，占位高度统一，供各列表空数据时复用。

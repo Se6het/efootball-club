@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { computeStandings, rankTeams } from '../src/standings.js';
+import { computeRankProgression, computeStandings, rankTeams } from '../src/standings.js';
 
-function createMatch(homeTeam, awayTeam, homeGoals, awayGoals, homeCards = { yellow: 0, red: 0 }, awayCards = { yellow: 0, red: 0 }) {
+function createMatch(homeTeam, awayTeam, homeGoals, awayGoals, homeCards = { yellow: 0, red: 0 }, awayCards = { yellow: 0, red: 0 }, round = 1) {
   return {
     isPlayed: true,
     homeTeam,
@@ -10,6 +10,7 @@ function createMatch(homeTeam, awayTeam, homeGoals, awayGoals, homeCards = { yel
     awayGoals,
     homeCards,
     awayCards,
+    round,
     homeScorers: [],
     awayScorers: [],
     homeAssists: [],
@@ -130,5 +131,31 @@ describe('rankTeams', () => {
     );
 
     expect(ranked.every((team) => team.needsPlayoff)).toBe(true);
+  });
+});
+
+describe('computeRankProgression', () => {
+  it('tracks a team rank snapshot after each completed round', () => {
+    const config = { teamsA: ['A', 'B'], teamsB: ['C', 'D'] };
+    const matches = [
+      createMatch('A', 'C', 3, 0, undefined, undefined, 1),
+      createMatch('B', 'D', 0, 0, undefined, undefined, 1),
+      createMatch('A', 'D', 0, 2, undefined, undefined, 2),
+      createMatch('C', 'B', 1, 1, undefined, undefined, 2),
+    ];
+
+    const progression = computeRankProgression(config, matches, 'A');
+    expect(progression.map((point) => point.round)).toEqual([1, 2]);
+    expect(progression[0]).toMatchObject({ round: 1, rank: 1, points: 3, isLeader: true });
+    // 第 2 轮 A 输球：排名下滑，但积分仍是 3。
+    expect(progression[1].rank).toBeGreaterThanOrEqual(2);
+    expect(progression[1].points).toBe(3);
+    expect(progression[1].isLeader).toBe(false);
+  });
+
+  it('returns an empty progression before any match is played', () => {
+    const config = { teamsA: ['A'], teamsB: ['B'] };
+    const unplayed = { ...createMatch('A', 'B', 0, 0), isPlayed: false, round: 1 };
+    expect(computeRankProgression(config, [unplayed], 'A')).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import { getSuspensionsBeforeMatch } from './discipline.js';
+import { computeTeamDiscipline, getSuspensionsBeforeMatch } from './discipline.js';
 import { createInitialState } from './schedule.js';
 import { collectKnownPlayers, computeLeaders, computePlayerDetail, computePlayerStats, computeTeamLeaders } from './leaders.js';
 import { clearState, loadState, parseBackup, saveState, serializeState, updateAwards, updateMatch } from './store.js';
@@ -15,7 +15,7 @@ import { renderAwardsView } from './views/awards.js';
 import { renderTeamDetailView } from './views/teamDetail.js';
 import { renderPlayerDetailView } from './views/playerDetail.js';
 import { openMatchForm } from './views/matchForm.js';
-import { rankTeams } from './standings.js';
+import { computeRankProgression, rankTeams } from './standings.js';
 import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './form.js';
 import { computeHeadToHead } from './h2h.js';
 import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAwardSettings } from './awards.js';
@@ -52,6 +52,14 @@ function resetLeague() {
 
 function getNextMatch(matches) {
   return matches.find((match) => !match.isPlayed) ?? null;
+}
+
+// 队名 → 归属玩家，供赛程表、积分榜低调标注球队归属。
+function buildOwnerMap(config) {
+  const map = {};
+  for (const team of config.teamsA) map[team] = config.playerA;
+  for (const team of config.teamsB) map[team] = config.playerB;
+  return map;
 }
 
 const modalStack = [];
@@ -142,6 +150,10 @@ function openTeamDetail(team) {
     content: () => renderTeamDetailView(team, computeTeamLeaders(state.matches, team), openPlayerDetail, {
       form: computeTeamForm(state.matches, team, 5),
       upcoming: computeUpcomingFixtures(state.matches, team, 5),
+      season: computeTeamForm(state.matches, team, 0),
+      progression: computeRankProgression(state.config, state.matches, team),
+      totalTeams: state.config.teamsA.length + state.config.teamsB.length,
+      discipline: computeTeamDiscipline(state.matches, team),
     }),
   });
 }
@@ -237,6 +249,7 @@ function renderLeague() {
     rankedTeams,
     playerStats,
   });
+  const ownerByTeam = buildOwnerMap(state.config);
 
   clear(app);
 
@@ -249,8 +262,8 @@ function renderLeague() {
           awayForm: computeTeamForm(state.matches, nextMatch.awayTeam, 5),
         }
       : {}),
-    schedule: () => renderScheduleView(state.matches, openEditor),
-    standings: () => renderStandingsView(rankedTeams, openTeamDetail, { formByTeam }),
+    schedule: () => renderScheduleView(state.matches, openEditor, ownerByTeam),
+    standings: () => renderStandingsView(rankedTeams, openTeamDetail, { formByTeam, ownerByTeam }),
     leaders: () => renderLeadersView(leaders, openPlayerDetail),
     awards: () => renderAwardsView({
       seasonFinished,
