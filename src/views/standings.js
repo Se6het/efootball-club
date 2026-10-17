@@ -23,27 +23,27 @@ function numberCell(value, extraClass = '', animate = true) {
   });
 }
 
-function signedCell(value) {
+function signedCell(value, animate = true) {
   const sign = value > 0 ? '+' : '';
   return el('td', {
     className: `num-cell gd-cell ${value > 0 ? 'gd-positive' : value < 0 ? 'gd-negative' : 'gd-zero'}`,
     text: `${sign}${value}`,
-    onAfterRender: (node) => animateNumber(node, 0, value, {
+    onAfterRender: animate ? (node) => animateNumber(node, 0, value, {
       duration: 500,
       formatter: (current) => {
         const rounded = Math.round(current);
         return `${rounded > 0 ? '+' : ''}${rounded}`;
       },
-    }),
+    }) : null,
   });
 }
 
-function pointsCell(points, isLeader) {
+function pointsCell(points, isLeader, animate = true) {
   return el('td', { className: 'points-cell' }, [
     el('span', {
       className: `points-chip${isLeader ? ' points-chip-leader' : ''}`,
       text: String(points),
-      onAfterRender: (node) => animateNumber(node, 0, points, { duration: 500 }),
+      onAfterRender: animate ? (node) => animateNumber(node, 0, points, { duration: 500 }) : null,
     }),
   ]);
 }
@@ -124,8 +124,8 @@ export function renderStandingsView(rankedTeams, onTeamClick, options = {}) {
       numberCell(team.losses, '', animate),
       numberCell(team.goalsFor, 'goals-for', animate),
       numberCell(team.goalsAgainst, 'goals-against', animate),
-      signedCell(team.goalDifference),
-      pointsCell(team.points, isLeader),
+      signedCell(team.goalDifference, animate),
+      pointsCell(team.points, isLeader, animate),
       el('td', { className: 'num-cell fairplay-cell muted', text: String(team.fairPlayPoints) }),
       el('td', {}, [
         team.needsPlayoff
