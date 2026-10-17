@@ -396,8 +396,8 @@ describe('computePlayerDetail', () => {
     expect(detail).toMatchObject({ name: '张三', team: '皇家马德里', goals: 2, assists: 0, mvpCount: 1, appearances: 2, goalInvolvements: 2 });
     expect(detail.averageScore).toBe(8.5);
     expect(detail.matches).toEqual([
-      { matchNumber: 1, round: 1, opponent: '巴塞罗那', isHome: true, forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, yellowCards: 0, redCards: 0, mvpScore: 8.5, contributed: true },
-      { matchNumber: 2, round: 2, opponent: '曼城', isHome: true, forGoals: 0, againstGoals: 3, result: '负', goals: 0, assists: 0, yellowCards: 0, redCards: 0, mvpScore: null, contributed: false },
+      { matchNumber: 1, round: 1, opponent: '巴塞罗那', isHome: true, forGoals: 2, againstGoals: 1, result: '胜', goals: 2, assists: 0, yellowCards: 0, redCards: 0, mvpScore: 8.5, suspended: false, contributed: true },
+      { matchNumber: 2, round: 2, opponent: '曼城', isHome: true, forGoals: 0, againstGoals: 3, result: '负', goals: 0, assists: 0, yellowCards: 0, redCards: 0, mvpScore: null, suspended: false, contributed: false },
     ]);
   });
 
@@ -414,6 +414,128 @@ describe('computePlayerDetail', () => {
 
   it('returns null for a player with no recorded contributions', () => {
     expect(computePlayerDetail(matches, '不存在', '皇家马德里')).toBeNull();
+  });
+
+  it('counts a suspended match as a non-appearance and blanks that match line', () => {
+    const red = [
+      {
+        isPlayed: true,
+        matchNumber: 1,
+        round: 1,
+        homeTeam: '皇家马德里',
+        awayTeam: '巴塞罗那',
+        homeGoals: 1,
+        awayGoals: 0,
+        homeScorers: [{ name: '张三', count: 1 }],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+        homePlayerCards: [{ name: '张三', yellow: 0, red: 1 }],
+        mvp: { name: '张三', team: '皇家马德里', score: 9.1 },
+      },
+      {
+        isPlayed: true,
+        matchNumber: 2,
+        round: 2,
+        homeTeam: '皇家马德里',
+        awayTeam: '曼城',
+        homeGoals: 2,
+        awayGoals: 2,
+        // 停赛中的球员不应出现在这场比赛的任何贡献里
+        homeScorers: [{ name: '王五', count: 2 }],
+        awayScorers: [{ name: '李四', count: 2 }],
+        homeAssists: [],
+        awayAssists: [],
+        mvp: { name: '王五', team: '皇家马德里', score: 7.4 },
+      },
+      {
+        isPlayed: true,
+        matchNumber: 3,
+        round: 3,
+        homeTeam: '皇家马德里',
+        awayTeam: '利物浦',
+        homeGoals: 1,
+        awayGoals: 1,
+        homeScorers: [{ name: '张三', count: 1 }],
+        awayScorers: [{ name: '陈九', count: 1 }],
+        homeAssists: [],
+        awayAssists: [],
+      },
+    ];
+
+    const detail = computePlayerDetail(red, '张三', '皇家马德里');
+    expect(detail.appearances).toBe(2);
+    expect(detail.suspensions).toBe(1);
+    expect(detail.matches.map((line) => line.suspended)).toEqual([false, true, false]);
+    expect(detail.matches[1]).toMatchObject({ goals: 0, assists: 0, yellowCards: 0, redCards: 0, mvpScore: null, contributed: false });
+    expect(detail.matches[1].result).toBe('平');
+  });
+
+  it('suspends only for the following match after a red card', () => {
+    const red = [
+      {
+        isPlayed: true,
+        matchNumber: 1,
+        round: 1,
+        homeTeam: '皇家马德里',
+        awayTeam: '巴塞罗那',
+        homeGoals: 1,
+        awayGoals: 0,
+        homeScorers: [{ name: '张三', count: 1 }],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+        homePlayerCards: [{ name: '张三', yellow: 1, red: 0 }],
+        mvp: { name: '张三', team: '皇家马德里', score: 8 },
+      },
+      {
+        isPlayed: true,
+        matchNumber: 2,
+        round: 2,
+        homeTeam: '皇家马德里',
+        awayTeam: '曼城',
+        homeGoals: 0,
+        awayGoals: 0,
+        homeScorers: [],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+        homePlayerCards: [{ name: '张三', yellow: 1, red: 0 }],
+      },
+      {
+        isPlayed: true,
+        matchNumber: 3,
+        round: 3,
+        homeTeam: '皇家马德里',
+        awayTeam: '利物浦',
+        homeGoals: 0,
+        awayGoals: 0,
+        homeScorers: [],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+        homePlayerCards: [{ name: '张三', yellow: 1, red: 0 }],
+      },
+      {
+        isPlayed: true,
+        matchNumber: 4,
+        round: 4,
+        homeTeam: '皇家马德里',
+        awayTeam: '巴塞罗那',
+        homeGoals: 0,
+        awayGoals: 0,
+        homeScorers: [],
+        awayScorers: [],
+        homeAssists: [],
+        awayAssists: [],
+      },
+    ];
+
+    // 第三张黄牌（第 3 场）触发下一场（第 4 场）停赛。
+    const detail = computePlayerDetail(red, '张三', '皇家马德里');
+    expect(detail.matches.map((line) => line.suspended)).toEqual([false, false, false, true]);
+    expect(detail.appearances).toBe(3);
+    expect(detail.suspensions).toBe(1);
   });
 });
 

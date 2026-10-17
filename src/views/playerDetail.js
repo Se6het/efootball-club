@@ -7,6 +7,7 @@ function statTiles(detail) {
   const average = detail.mvpCount > 0 ? detail.averageScore.toFixed(2) : '—';
   return [
     ['出场', detail.appearances ?? detail.matches.length, 'stat-tile-apps'],
+    ['停赛', detail.suspensions ?? 0, 'stat-tile-suspension'],
     ['进球', detail.goals, 'stat-tile-goals'],
     ['助攻', detail.assists, 'stat-tile-assists'],
     ['参与进球', detail.goalInvolvements ?? detail.goals + detail.assists, 'stat-tile-involvements'],
@@ -19,7 +20,7 @@ function statTiles(detail) {
 }
 
 function matchRow(line) {
-  const className = [teamRowClass(line.opponent), line.contributed ? '' : 'row-idle'].filter(Boolean).join(' ');
+  const className = [teamRowClass(line.opponent), line.contributed ? '' : 'row-idle', line.suspended ? 'row-suspended' : ''].filter(Boolean).join(' ');
   return el('tr', { className }, [
     el('td', { className: 'num-cell', text: String(line.matchNumber) }),
     el('td', { className: 'muted', text: `第 ${line.round} 轮` }),
@@ -28,7 +29,9 @@ function matchRow(line) {
       teamCell(line.opponent),
     ]),
     el('td', {}, [
-      el('span', { className: `result-pill ${RESULT_CLASS[line.result] ?? ''}`, text: `${line.result} ${line.forGoals}:${line.againstGoals}` }),
+      line.suspended
+        ? el('span', { className: 'suspension-pill', text: `停赛（球队 ${line.forGoals}:${line.againstGoals}）` })
+        : el('span', { className: `result-pill ${RESULT_CLASS[line.result] ?? ''}`, text: `${line.result} ${line.forGoals}:${line.againstGoals}` }),
     ]),
     el('td', { className: `num-cell ${line.goals > 0 ? 'stat-hot' : 'muted'}`, text: String(line.goals) }),
     el('td', { className: `num-cell ${line.assists > 0 ? 'stat-hot' : 'muted'}`, text: String(line.assists) }),
@@ -52,7 +55,7 @@ export function renderPlayerDetailView(detail) {
     )),
     el('div', { className: 'panel' }, [
       el('h3', { text: '赛季出场明细' }),
-      el('p', { className: 'muted', text: '列出该球员所在球队本赛季已完成的全部比赛，灰色行表示该场没有进球、助攻、牌务或 MVP 记录。' }),
+      el('p', { className: 'muted', text: '列出该球员所在球队本赛季已完成的全部比赛。灰色行表示该场没有进球、助攻、牌务或 MVP 记录；停赛的场次不计入出场次数。' }),
       detail.matches.length
         ? el('div', { className: 'table-wrap' }, [
             el('table', { className: 'match-log' }, [

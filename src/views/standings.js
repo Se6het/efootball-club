@@ -190,9 +190,6 @@ export function renderStandingsView(rankedTeams, onTeamClick, options = {}) {
   const panel = el('div', { className: 'panel' }, [
     el('div', { className: 'panel-head' }, [
       el('h2', { text: '球队榜' }),
-      rankedTeams.length
-        ? el('span', { className: 'sort-hint muted', text: '点击表头可按该项排序，再点一次切换升/降序' })
-        : null,
     ]),
     rankedTeams.length
       ? el('div', { className: 'table-wrap' }, [

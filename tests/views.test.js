@@ -164,6 +164,26 @@ describe('view smoke tests', () => {
     expect(text).toContain('出场');
   });
 
+  it('marks suspended matches in the player detail with a suspension pill', () => {
+    const withRed = [
+      fixture('s-1', 1, 1, '皇家马德里', '巴塞罗那', 1, 0, true, {
+        homeScorers: [{ name: '张三', count: 1 }],
+        homePlayerCards: [{ name: '张三', yellow: 0, red: 1 }],
+      }),
+      fixture('s-2', 2, 2, '皇家马德里', '巴塞罗那', 0, 0, true),
+    ];
+    const detail = computePlayerDetail(withRed, '张三', '皇家马德里');
+    expect(detail.appearances).toBe(1);
+    expect(detail.suspensions).toBe(1);
+
+    const view = renderPlayerDetailView(detail);
+    // 出场 1、停赛 1
+    const values = view.querySelectorAll('.stat-value').map((node) => textOf(node));
+    expect(values).toContain('1');
+    expect(view.querySelectorAll('.row-suspended').length).toBe(1);
+    expect(textOf(view.querySelector('.suspension-pill'))).toContain('停赛');
+  });
+
   it('renders the schedule grouped by round', () => {
     expect(textOf(renderScheduleView(matches, () => {}))).toContain('总赛程');
   });
@@ -276,5 +296,63 @@ describe('team detail season & discipline panels', () => {
     expect(text).toContain('整个赛季');
     expect(text).toContain('暂无排名走势');
     expect(text).toContain('该队本赛季还没有红黄牌记录');
+  });
+
+  it('renders the whole-season win/draw/loss visualization without array-stringified garbage', () => {
+    const view = renderTeamDetailView('皇家马德里', computeTeamLeaders(matches, '皇家马德里'), () => {}, {
+      form: computeTeamForm(matches, '皇家马德里'),
+      season: computeTeamForm(matches, '皇家马德里', 0),
+      progression: [{ round: 1, rank: 1, points: 3, isLeader: true }, { round: 2, rank: 1, points: 6, isLeader: true }],
+      totalTeams: 2,
+      discipline: computeTeamDiscipline(matches, '皇家马德里'),
+    });
+
+    const text = textOf(view);
+    expect(text).not.toContain('[object ');
+    expect(text).toContain('赛季胜负分布');
+    expect(text).toContain('进阶数据');
+    expect(text).toContain('赛季全部比赛');
+
+    // 100% 堆叠条 + 图例 + 逐场色块
+    expect(view.querySelector('.outcome-bar')).not.toBeNull();
+    expect(view.querySelectorAll('.outcome-seg').length).toBe(1); // 皇家马德里 2 战全胜，只有胜色块
+    expect(view.querySelectorAll('.outcome-key').length).toBe(4);
+    expect(view.querySelectorAll('.outcome-cell').length).toBe(2);
+
+    // 进阶数据磁贴：场均进球、零封场次等
+    const tiles = view.querySelectorAll('.stat-tile');
+    expect(tiles.length).toBeGreaterThanOrEqual(6);
+    expect(text).toContain('场均进球');
+    expect(text).toContain('主场 胜-平-负');
+  });
+
+  it('renders goal and assist share donuts inside the share panel', () => {
+    const view = renderTeamDetailView('皇家马德里', computeTeamLeaders(matches, '皇家马德里'), () => {}, {
+      season: computeTeamForm(matches, '皇家马德里', 0),
+    });
+
+    const sharePanel = view.querySelector('.share-panel');
+    expect(sharePanel).not.toBeNull();
+    expect(view.querySelectorAll('.donut-chart').length).toBe(2);
+    // 进球：张三 4 球 + 孙八 1 球；助攻：王五 1 次
+    expect(view.querySelectorAll('.donut-legend-row').length).toBe(3);
+
+    const text = textOf(view);
+    expect(text).toContain('进球占比');
+    expect(text).toContain('助攻占比');
+    expect(text).not.toContain('[object ');
+  });
+
+  it('renders the goal share donut empty state when there is nothing to plot', () => {
+    const view = renderTeamDetailView('皇家马德里', { scorerList: [], assistList: [], mvpList: [] }, () => {}, {});
+    expect(textOf(view)).toContain('该队还没有进球记录');
+  });
+});
+
+describe('standings header cleanup', () => {
+  it('does not render the removed sort hint annotation', () => {
+    const view = renderStandingsView([rankedTeam('甲队', 1)], () => {}, {});
+    expect(view.querySelector('.sort-hint')).toBeNull();
+    expect(textOf(view)).not.toContain('点击表头');
   });
 });

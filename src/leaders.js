@@ -1,4 +1,4 @@
-import { computeDisciplineStats } from './discipline.js';
+import { buildSuspensionIndex } from './discipline.js';
 
 function playerKey(name, team) {
   return `${team}::${name}`;
@@ -185,6 +185,9 @@ export function computePlayerDetail(matches, name, team) {
   }
 
   const lines = [];
+  const suspensionIndex = buildSuspensionIndex(matches);
+  const suspendedKey = playerKey(name, team);
+
   for (const match of matches) {
     if (!match.isPlayed) {
       continue;
@@ -196,6 +199,9 @@ export function computePlayerDetail(matches, name, team) {
       continue;
     }
 
+    // 停赛场次不计入出场：该球员这场没有上。
+    const suspended = suspensionIndex.get(Number(match.matchNumber))?.has(suspendedKey) ?? false;
+
     const scorers = isHome ? match.homeScorers : match.awayScorers;
     const assisters = isHome ? match.homeAssists : match.awayAssists;
     const goals = sumContribution(scorers, name);
@@ -206,7 +212,7 @@ export function computePlayerDetail(matches, name, team) {
 
     const forGoals = isHome ? match.homeGoals : match.awayGoals;
     const againstGoals = isHome ? match.awayGoals : match.homeGoals;
-    const contributed = goals > 0 || assists > 0 || card.yellow > 0 || card.red > 0 || isMvp;
+    const contributed = suspended ? false : goals > 0 || assists > 0 || card.yellow > 0 || card.red > 0 || isMvp;
     lines.push({
       matchNumber: match.matchNumber,
       round: match.round,
@@ -215,11 +221,12 @@ export function computePlayerDetail(matches, name, team) {
       forGoals,
       againstGoals,
       result: forGoals > againstGoals ? '胜' : forGoals < againstGoals ? '负' : '平',
-      goals,
-      assists,
-      yellowCards: card.yellow,
-      redCards: card.red,
-      mvpScore: isMvp ? match.mvp.score : null,
+      goals: suspended ? 0 : goals,
+      assists: suspended ? 0 : assists,
+      yellowCards: suspended ? 0 : card.yellow,
+      redCards: suspended ? 0 : card.red,
+      mvpScore: suspended || !isMvp ? null : match.mvp.score,
+      suspended,
       contributed,
     });
   }
@@ -236,7 +243,8 @@ export function computePlayerDetail(matches, name, team) {
     yellowCards: stats.yellowCards ?? 0,
     redCards: stats.redCards ?? 0,
     averageScore: stats.mvpCount > 0 ? Number((stats.mvpScoreTotal / stats.mvpCount).toFixed(2)) : 0,
-    appearances: lines.length,
+    appearances: lines.filter((line) => !line.suspended).length,
+    suspensions: lines.filter((line) => line.suspended).length,
     goalInvolvements: stats.goals + stats.assists,
     matches: lines,
   };

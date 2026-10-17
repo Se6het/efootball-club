@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardTotals, computeDisciplineStats, computeTeamDiscipline, getSuspensionsBeforeMatch } from '../src/discipline.js';
+import { buildSuspensionIndex, cardTotals, computeDisciplineStats, computeTeamDiscipline, getSuspensionsBeforeMatch } from '../src/discipline.js';
 
 function match(matchNumber, homeTeam, awayTeam, homePlayerCards = [], awayPlayerCards = [], isPlayed = true) {
   return { matchNumber, homeTeam, awayTeam, homePlayerCards, awayPlayerCards, isPlayed };
@@ -51,5 +51,67 @@ describe('discipline', () => {
     expect(zhangsan).toMatchObject({ yellowCards: 2, pendingSuspension: 0, oneYellowFromBan: true });
 
     expect(computeTeamDiscipline(matches, 'B')).toEqual([]);
+  });
+});
+
+describe('buildSuspensionIndex', () => {
+  it('maps each played match to the players suspended entering it', () => {
+    const matches = [
+      match(1, 'A', 'B', [{ name: '张三', yellow: 0, red: 1 }]),
+      match(2, 'C', 'D'),
+      match(3, 'A', 'C'),
+      match(4, 'A', 'D'),
+    ];
+
+    const index = buildSuspensionIndex(matches);
+    // 红牌在第 1 场产生，只作用于球队 A 的下一场（第 3 场）；
+    // 第 2 场 A 队没有比赛，不占用停赛。
+    expect(index.get(1).size).toBe(0);
+    expect([...index.get(3)]).toEqual(['A::张三']);
+    expect(index.get(4).size).toBe(0);
+  });
+
+  it('is empty for matches without any cards', () => {
+    const index = buildSuspensionIndex([match(1, 'A', 'B'), match(2, 'A', 'C')]);
+    expect(index.get(1).size).toBe(0);
+    expect(index.get(2).size).toBe(0);
+  });
+
+  it('carries a suspension forward when the team sits out several rounds', () => {
+    const matches = [
+      match(1, 'A', 'B', [{ name: '张三', yellow: 0, red: 1 }]),
+      match(2, 'C', 'D'),
+      match(3, 'C', 'D'),
+      match(4, 'A', 'C'),
+    ];
+    const index = buildSuspensionIndex(matches);
+    expect([...index.get(4)]).toEqual(['A::张三']);
+  });
+
+  it('triggers a second ban exactly on the sixth yellow card', () => {
+    const yellow = [{ name: '张三', yellow: 1, red: 0 }];
+    const matches = [
+      match(1, 'A', 'B', yellow),
+      match(2, 'A', 'C', yellow),
+      match(3, 'A', 'D', yellow),
+      match(4, 'A', 'E'), // 第 3 黄对应的停赛在这场上执行
+      match(5, 'A', 'F', yellow),
+      match(6, 'A', 'G', yellow),
+      match(7, 'A', 'H', yellow),
+      match(8, 'A', 'I'), // 第 6 黄对应的停赛在这场上执行
+    ];
+
+    const index = buildSuspensionIndex(matches);
+    expect([...index.get(4)]).toEqual(['A::张三']);
+    expect(index.get(5).size).toBe(0);
+    expect(index.get(6).size).toBe(0);
+    expect(index.get(7).size).toBe(0);
+    expect([...index.get(8)]).toEqual(['A::张三']);
+
+    expect(computeDisciplineStats(matches).find((row) => row.name === '张三')).toMatchObject({
+      yellowCards: 6,
+      servedSuspensions: 2,
+      pendingSuspension: 0,
+    });
   });
 });

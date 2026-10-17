@@ -68,6 +68,35 @@ function applyCards(records, match, rules) {
   }
 }
 
+// 每场「已进行」比赛中，进入该场时正处于停赛的球员集合（matchNumber → Set<'队::名'>）。
+// 用于把停赛判为未出场：这场球该球员根本没上。
+export function buildSuspensionIndex(matches, customRules = {}) {
+  const rules = normalizeDisciplineRules(customRules);
+  const index = new Map();
+  const records = new Map();
+  const ordered = [...(Array.isArray(matches) ? matches : [])].sort(
+    (left, right) => Number(left?.matchNumber ?? 0) - Number(right?.matchNumber ?? 0)
+  );
+
+  for (const match of ordered) {
+    if (!match?.isPlayed) {
+      continue;
+    }
+    const teams = new Set([match.homeTeam, match.awayTeam].filter(Boolean));
+    const suspended = new Set();
+    for (const [key, record] of records) {
+      if (teams.has(record.team) && record.pendingSuspension > 0) {
+        suspended.add(key);
+      }
+    }
+    index.set(Number(match.matchNumber), suspended);
+    serveSuspensions(records, teams);
+    applyCards(records, match, rules);
+  }
+
+  return index;
+}
+
 function replayUntil(matches, targetNumber, rules) {
   const records = new Map();
   const ordered = [...(Array.isArray(matches) ? matches : [])].sort(
