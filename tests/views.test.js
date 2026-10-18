@@ -200,8 +200,70 @@ describe('view smoke tests', () => {
     expect(view.querySelectorAll('.odds-table')).toHaveLength(2);
     expect(text).toContain('冠军 / 前三');
     expect(view.querySelectorAll('.odd-value').length).toBeGreaterThan(0);
+    // 每条看点都挂着相关球队的队徽（头条卡 + 更多看点行）。
+    const stories = view.querySelectorAll('.news-card').length + view.querySelectorAll('.news-row').length;
+    expect(stories).toBeGreaterThan(1);
+    expect(view.querySelectorAll('.news-crests')).toHaveLength(stories);
+    // 等级只用颜色表达，界面上不出现「传说/史诗/稀有/常规」这些字。
+    for (const label of ['传说', '史诗', '稀有', '常规']) {
+      expect(text).not.toContain(label);
+    }
+    // 赔率下面那些小注释也去掉了。
+    expect(view.querySelectorAll('.odds-notes')).toHaveLength(0);
     expect(text).not.toContain('[object ');
     expect(text).not.toMatch(/undefined|NaN/);
+  });
+
+  it('only puts the players still in the award races on the odds table', () => {
+    const players = Array.from({ length: 12 }, (unused, index) => ({
+      key: `甲队::球员${index}`,
+      name: `球员${index}`,
+      team: '甲队',
+      bootProb: index < 6 ? 0.12 : 0.001,
+      assistProb: index < 6 ? 0.12 : 0.001,
+      fmvpProb: index < 6 ? 0.12 : 0.001,
+      bootPercent: 12,
+      assistPercent: 12,
+      fmvpPercent: 12,
+      bootOdd: 7.8,
+      assistOdd: 7.8,
+      fmvpOdd: 7.8,
+    }));
+    const view = renderNewsView({ odds: { available: true, finished: false, iterations: 100, teams: [], players } });
+    // 概率低到 2% 以下的那些人不该上桌。
+    expect(view.querySelectorAll('.player-name')).toHaveLength(6);
+  });
+
+  it('still shows a shortlist when nobody clears the 2% floor', () => {
+    const players = Array.from({ length: 12 }, (unused, index) => ({
+      key: `甲队::球员${index}`,
+      name: `球员${index}`,
+      team: '甲队',
+      bootProb: 0.001,
+      assistProb: 0.001,
+      fmvpProb: 0.001,
+      bootPercent: 0.1,
+      assistPercent: 0.1,
+      fmvpPercent: 0.1,
+      bootOdd: 500,
+      assistOdd: 500,
+      fmvpOdd: 500,
+    }));
+    const view = renderNewsView({ odds: { available: true, finished: false, iterations: 100, teams: [], players } });
+    // 全都低于 2% 也不能给空表，退回概率最高的 8 个。
+    expect(view.querySelectorAll('.player-name')).toHaveLength(8);
+  });
+
+  it('renders a story that has no team attached without a crest', () => {
+    const view = renderNewsView({
+      news: [
+        { id: 'x', category: 'stat', icon: '💥', tier: 'rare', title: '无主看点', detail: '没有球队', metric: 1, teams: [], round: 1 },
+        { id: 'y', category: 'stat', icon: '💥', tier: 'rare', title: '缺字段看点', detail: '连 teams 都没有', metric: 1 },
+      ],
+    });
+    expect(textOf(view)).toContain('无主看点');
+    expect(view.querySelectorAll('.news-crests')).toHaveLength(0);
+    expect(view.querySelectorAll('.news-card')).toHaveLength(2);
   });
 
   it('renders the news view safely with no data at all', () => {

@@ -62,6 +62,9 @@ describe('computeNews guard rails', () => {
       expect(entry.title).not.toMatch(/undefined|NaN/);
       expect(entry.detail).not.toMatch(/undefined|NaN/);
       expect(Number.isFinite(entry.metric)).toBe(true);
+      // 界面上要靠这两个字段挂队徽、排新旧。
+      expect(Array.isArray(entry.teams)).toBe(true);
+      expect(Number.isFinite(entry.round)).toBe(true);
     }
   });
 
@@ -151,7 +154,7 @@ describe('record generators', () => {
     expect(titles(computeNews({ config, matches, leaders }))).not.toContain('张三 连续 2 场进球');
   });
 
-  it('detects team win, unbeaten, winless and losing streaks', () => {
+  it('detects a team win streak', () => {
     const winning = [
       fixture(1, 1, '甲队', '乙队', 1, 0),
       fixture(2, 2, '甲队', '乙队', 2, 0),
@@ -159,17 +162,37 @@ describe('record generators', () => {
     ];
     const winTitles = titles(computeNews({ config, matches: winning, leaders }));
     expect(winTitles).toContain('甲队 3 连胜');
-    expect(winTitles).toContain('甲队 已 3 场不败');
+    expect(winTitles.length).toBeGreaterThan(0);
+  });
 
+  it('detects an unbeaten run that is not a win streak', () => {
+    // 最后一场打平：没有连胜，但照样是不败。
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 1, 0),
+      fixture(2, 2, '甲队', '乙队', 2, 0),
+      fixture(3, 3, '甲队', '乙队', 1, 1),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    expect(titles(items)).toContain('甲队 已 3 场不败');
+    expect(titles(items)).not.toContain('甲队 3 连胜');
+  });
+
+  it('detects a winless run and a losing streak', () => {
     const winless = [
       fixture(1, 1, '甲队', '乙队', 0, 1),
       fixture(2, 2, '甲队', '乙队', 1, 1),
       fixture(3, 3, '甲队', '乙队', 0, 2),
       fixture(4, 4, '甲队', '乙队', 1, 3),
     ];
-    const lossTitles = titles(computeNews({ config, matches: winless, leaders }));
-    expect(lossTitles).toContain('甲队 已经 4 场不胜');
-    expect(winTitles.length).toBeGreaterThan(0);
+    const titles1 = titles(computeNews({ config, matches: winless, leaders }));
+    expect(titles1).toContain('甲队 已经 4 场不胜');
+
+    const losing = [
+      fixture(1, 1, '甲队', '乙队', 0, 1),
+      fixture(2, 2, '甲队', '乙队', 0, 2),
+      fixture(3, 3, '甲队', '乙队', 0, 3),
+    ];
+    expect(titles(computeNews({ config, matches: losing, leaders }))).toContain('甲队 遭遇 3 连败');
   });
 
   it('counts consecutive clean sheets per team', () => {
@@ -192,17 +215,74 @@ describe('record generators', () => {
     expect(list).toContain('乙队 至今未能战胜 甲队');
   });
 
-  it('adds colour pieces: biggest margin, wildest match and a scoring haul', () => {
+  it('reports hard stats: biggest margin, wildest match and a scoring haul', () => {
     const matches = [
       fixture(1, 1, '甲队', '乙队', 6, 0, { homeScorers: [{ name: '张三', count: 4 }] }),
       fixture(2, 2, '甲队', '乙队', 1, 1),
     ];
     const items = computeNews({ config, matches, leaders });
-    const funTitles = titles(items.filter((entry) => entry.category === 'fun'));
-    expect(funTitles).toContain('本赛季最大分差：甲队 6:0 乙队');
-    expect(funTitles).toContain('进球大战：甲队 6:0 乙队');
-    expect(funTitles).toContain('张三 单场打进 4 球');
-    expect(items.find((entry) => entry.id.startsWith('fun-haul')).tier).toBe('legend');
+    const statTitles = titles(items.filter((entry) => entry.category === 'stat'));
+    expect(statTitles).toContain('本赛季最大分差：甲队 6:0 乙队');
+    expect(statTitles).toContain('进球大战：甲队 6:0 乙队');
+    expect(statTitles).toContain('张三 单场打进 4 球');
+    expect(items.find((entry) => entry.id.startsWith('stat-haul')).tier).toBe('legend');
+  });
+
+  it('keeps the quirky stuff in its own bucket', () => {
+    // 乙队场场丢球、一球未进，正好凑出不那么正经的条条。
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 2, 1),
+      fixture(2, 2, '乙队', '甲队', 0, 3),
+      fixture(3, 3, '甲队', '乙队', 1, 2),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const quirks = titles(items.filter((entry) => entry.category === 'quirk'));
+    expect(quirks).toContain('防线漏勺：乙队 场场丢球');
+    // 正经纪录不会混进趣闻：连胜、最大分差各有各的归类。
+    expect(quirks.some((title) => title.includes('连胜') || title.includes('最大分差'))).toBe(false);
+  });
+
+  it('calls out a team that only ever loses by a single goal', () => {
+    const cfg = { teamsA: ['甲队', '丙队'], teamsB: ['乙队', '丁队'] };
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 1, 0),
+      fixture(2, 2, '丙队', '乙队', 2, 1),
+      fixture(3, 3, '丁队', '乙队', 1, 0),
+      fixture(4, 4, '甲队', '丙队', 1, 1),
+    ];
+    const items = computeNews({ config: cfg, matches, leaders });
+    const quirk = items.find((entry) => entry.id === 'quirk-close-losses:乙队');
+    expect(quirk).toBeTruthy();
+    expect(quirk.title).toContain('全都只输一球');
+    // 只踢了两场的球队不该被编排。
+    expect(items.some((entry) => entry.category === 'quirk' && entry.teams[0] === '甲队')).toBe(false);
+  });
+
+  it('adds silly pieces: a card collector and a one-man show', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 3, 0, { homeScorers: [{ name: '张三', count: 3 }], awayCards: { yellow: 2, red: 0 } }),
+      fixture(2, 2, '乙队', '甲队', 0, 2, { awayScorers: [{ name: '张三', count: 2 }], homeCards: { yellow: 2, red: 0 } }),
+      fixture(3, 3, '甲队', '乙队', 3, 1, { homeScorers: [{ name: '张三', count: 3 }], awayCards: { yellow: 2, red: 0 } }),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const ids = items.map((entry) => entry.id);
+    expect(ids).toContain('quirk-card-collector:乙队');
+    expect(ids).toContain('quirk-one-man-show:甲队');
+    expect(items.find((entry) => entry.id === 'quirk-card-collector:乙队').title).toContain('6 张黄牌');
+    expect(items.find((entry) => entry.id === 'quirk-one-man-show:甲队').title).toContain('张三');
+    // 甲队只吃了 4 张黄牌，不该被算成收藏家。
+    expect(ids).not.toContain('quirk-card-collector:甲队');
+  });
+
+  it('reports at most one one-man show per league', () => {
+    const solo = (homeScorers, awayScorers) => ({ homeScorers, awayScorers });
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 2, 0, solo([{ name: '甲前锋', count: 2 }], [])),
+      fixture(2, 2, '乙队', '甲队', 0, 3, solo([], [{ name: '甲前锋', count: 3 }])),
+      fixture(3, 3, '甲队', '乙队', 1, 1, solo([], [{ name: '乙前锋', count: 1 }])),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    expect(items.filter((entry) => entry.id.startsWith('quirk-one-man-show'))).toHaveLength(1);
   });
 
   it('flags the only team without a win', () => {
@@ -217,6 +297,22 @@ describe('record generators', () => {
     expect(list).not.toContain('甲队 是唯一还没赢过球的球队');
   });
 
+  it('keeps the feed short and drops stale news', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 9, 0, { homeScorers: [{ name: '张三', count: 5 }] }),
+      fixture(2, 2, '甲队', '乙队', 1, 0, { homeScorers: [{ name: '张三', count: 1 }] }),
+      fixture(3, 3, '乙队', '甲队', 0, 2, { awayScorers: [{ name: '张三', count: 2 }] }),
+      fixture(4, 4, '甲队', '乙队', 2, 1, { homeScorers: [{ name: '张三', count: 2 }] }),
+      fixture(5, 5, '甲队', '乙队', 3, 0, { homeScorers: [{ name: '张三', count: 3 }] }),
+      fixture(6, 6, '甲队', '乙队', 1, 1),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    expect(items.length).toBeLessThanOrEqual(10);
+    // 最新一轮是第 6 轮，第 1 轮那场 9:0 已经是旧闻，不该再挂在「新闻」里。
+    expect(items.every((entry) => entry.round >= 4)).toBe(true);
+    expect(titles(items)).not.toContain('本赛季最大分差：甲队 9:0 乙队');
+  });
+
   it('flags a draw specialist once one team clearly leads the drawn games', () => {
     // 四支球队：乙队一路打平（4 场），其他队平局更少。
     const cfg = { teamsA: ['甲队', '丙队'], teamsB: ['乙队', '丁队'] };
@@ -229,7 +325,7 @@ describe('record generators', () => {
       fixture(6, 5, '丁队', '丙队', 1, 0),
     ];
     const items = computeNews({ config: cfg, matches, leaders });
-    const drawItem = items.find((entry) => entry.id === 'fun-draw-king');
+    const drawItem = items.find((entry) => entry.id === 'quirk-draw-king');
     expect(drawItem).toBeTruthy();
     expect(drawItem.title).toContain('乙队');
     expect(drawItem.detail).toContain('4 场平局');

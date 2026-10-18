@@ -111,20 +111,22 @@ function leadersBody(leaders) {
 }
 
 // 新闻格子横跨整行：里面塞几条头条摘要，一眼能扫到。
+// 层级只用颜色区分（tier-*），再配上相关球队的队徽，不写「传说」这类字。
 function newsBody(news) {
   const top = (news ?? []).slice(0, 3);
   if (!top.length) {
     return [el('span', { className: 'muted', text: '录入比分后这里会出现看点与赔率' })];
   }
-  return top.map((entry) => el('span', { className: `mini-news tier-${entry.tier}` }, [
-    el('span', { className: 'mini-news-icon', text: entry.icon }),
-    el('span', { className: 'mini-news-title', text: entry.title }),
-    el('span', { className: `mini-news-tier tier-${entry.tier}`, text: tierLabelOf(entry.tier) }),
-  ]));
-}
-
-function tierLabelOf(tier) {
-  return { legend: '传说', epic: '史诗', rare: '稀有', common: '常规' }[tier] ?? '常规';
+  return top.map((entry) => {
+    const crests = (entry.teams ?? []).filter(Boolean);
+    return el('span', { className: `mini-news tier-${entry.tier}` }, [
+      el('span', { className: 'mini-news-icon', text: entry.icon }),
+      crests.length > 0
+        ? el('span', { className: 'mini-news-crests' }, crests.map((team) => teamBadge(team)))
+        : null,
+      el('span', { className: 'mini-news-title', text: entry.title }),
+    ]);
+  });
 }
 
 export function renderDashboard({ nextMatch, matches, rankedTeams, leaders, news = [], seasonFinished, onOpen }) {

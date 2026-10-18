@@ -5,6 +5,7 @@
 //      再按出场场次向联赛均值收缩（打得越少越保守，避免一场论）。
 //   2. 单场进球用泊松分布采样，期望进球 = 联赛场均 × 双方攻防比 × 主场系数。
 //   3. 模拟剩余赛程跑很多次，统计每队夺冠/进前三的次数 → 概率 → 赔率。
+//   3.5 概率再朝「均势先验」收缩一把（强度看还剩多少赛程），免得赛季没结束就报出 1.01。
 //   4. 球员奖项：把模拟出来的进球/助攻按球员的历史份额分配给队内球员，
 //      FMVP 按参与度加权抽签；最后统计谁的赛季总数最高。
 //
@@ -15,10 +16,14 @@ import { computePlayerStats } from './leaders.js';
 import { createRng } from './schedule.js';
 
 const MARGIN = 0.06; // 水位：赔率里留 6% 的抽水
-const MIN_ODDS = 1.01;
+const MIN_ODDS = 1.01; // 赛季结束、已封盘时的极限赔率
+const OPEN_MIN_ODDS = 1.05; // 赛季进行中不给低于这个的价，再稳也留点余地
 const MAX_ODDS = 500;
 const DEFAULT_ITERATIONS = 1200;
 const DEFAULT_SEED = 20261018;
+// 赛季还没踢完时模拟出来的概率会显得「言之凿凿」（动不动就 1.01），
+// 按剩余赛程比例掺入一点均势先验，把极端赔率拉回合理区间。
+const SOFTEN_STRENGTH = 1.4;
 
 function num(value) {
   const n = Number(value);
@@ -200,14 +205,36 @@ function finalOrder(strength) {
     );
 }
 
-function toOdds(probability) {
+function toOdds(probability, floor = MIN_ODDS) {
   if (!(probability > 0)) return null;
   const raw = (1 - MARGIN) / probability;
-  return Math.round(clamp(raw, MIN_ODDS, MAX_ODDS) * 100) / 100;
+  return Math.round(clamp(raw, floor, MAX_ODDS) * 100) / 100;
 }
 
 function toPercent(probability) {
   return Math.round(probability * 1000) / 10;
+}
+
+// 把模拟概率朝「均势先验」收缩：同一市场里还活着的项先取个平均当 prior，
+// 再按该项的「剩余赛程比例」把概率往 prior 拉。剩余为 0（赛季结束）就原样返回，
+// 概率为 0 的项保持 0（不挂价），因此不会凭空造出可能性。
+function softenProbabilities(rows, fractionOf) {
+  const alive = rows.filter((row) => row.p > 0);
+  const total = alive.reduce((sum, row) => sum + row.p, 0);
+  const prior = alive.length > 0 ? total / alive.length : 0;
+  const out = new Map();
+  for (const row of alive) {
+    const pseudo = SOFTEN_STRENGTH * clamp(fractionOf(row), 0, 1);
+    out.set(row.key, (row.p + prior * pseudo) / (1 + pseudo));
+  }
+  // 各队剩余场次不等时（轮空），上式的加权平均不保和——等比缩回去，
+  // 保证每个市场的总量不变（夺冠合计仍 100%、前三合计仍 300%）。等权时比例恰为 1。
+  const softened = alive.reduce((sum, row) => sum + (out.get(row.key) ?? 0), 0);
+  if (softened > 0 && Math.abs(softened - total) > 1e-12) {
+    const scale = total / softened;
+    for (const key of out.keys()) out.set(key, out.get(key) * scale);
+  }
+  return out;
 }
 
 export function computeOdds({ config, matches, iterations = DEFAULT_ITERATIONS, seed = DEFAULT_SEED } = {}) {
@@ -369,31 +396,74 @@ export function computeOdds({ config, matches, iterations = DEFAULT_ITERATIONS, 
     if (bestFmvp && bestFmvp.data.mvp > 0) fmvpCount.set(bestFmvp.key, (fmvpCount.get(bestFmvp.key) ?? 0) + 1);
   }
 
+  // 每队「已踢 / 还剩」，换算成「还剩多少比例」——收缩的强度就看它。
+  const playedByTeam = new Map();
+  const remainingByTeam = new Map();
+  for (const team of teams) {
+    playedByTeam.set(team, baseStats.get(team)?.played ?? 0);
+    remainingByTeam.set(team, 0);
+  }
+  for (const match of remaining) {
+    for (const side of ['home', 'away']) {
+      const team = match[`${side}Team`];
+      if (remainingByTeam.has(team)) remainingByTeam.set(team, remainingByTeam.get(team) + 1);
+    }
+  }
+  const fractionOf = (team) => {
+    const left = remainingByTeam.get(team) ?? 0;
+    const total = (playedByTeam.get(team) ?? 0) + left;
+    return total > 0 ? left / total : 0;
+  };
+  const oddFloor = finished ? MIN_ODDS : OPEN_MIN_ODDS;
+
+  const championProbByTeam = softenProbabilities(
+    teams.map((team) => ({ key: team, p: (championCount.get(team) ?? 0) / runs })),
+    (row) => fractionOf(row.key)
+  );
+  const top3ProbByTeam = softenProbabilities(
+    teams.map((team) => ({ key: team, p: (top3Count.get(team) ?? 0) / runs })),
+    (row) => fractionOf(row.key)
+  );
+
+  const playerKeys = [...playerBase.keys()];
+  const bootProbByPlayer = softenProbabilities(
+    playerKeys.map((key) => ({ key, p: (bootCount.get(key) ?? 0) / runs })),
+    (row) => fractionOf(row.key.split('::')[0])
+  );
+  const assistProbByPlayer = softenProbabilities(
+    playerKeys.map((key) => ({ key, p: (assistCount.get(key) ?? 0) / runs })),
+    (row) => fractionOf(row.key.split('::')[0])
+  );
+  const fmvpProbByPlayer = softenProbabilities(
+    playerKeys.map((key) => ({ key, p: (fmvpCount.get(key) ?? 0) / runs })),
+    (row) => fractionOf(row.key.split('::')[0])
+  );
+
   const teamRows = teams
     .map((team) => {
-      const championProb = (championCount.get(team) ?? 0) / runs;
-      const top3Prob = Math.min(1, (top3Count.get(team) ?? 0) / runs);
+      const championProb = championProbByTeam.get(team) ?? 0;
+      const top3Prob = Math.min(1, top3ProbByTeam.get(team) ?? 0);
       return {
         team,
         championProb,
         top3Prob,
         championPercent: toPercent(championProb),
         top3Percent: toPercent(top3Prob),
-        championOdd: toOdds(championProb),
-        top3Odd: toOdds(top3Prob),
+        championOdd: toOdds(championProb, oddFloor),
+        top3Odd: toOdds(top3Prob, oddFloor),
         points: basePoints.get(team) ?? 0,
-        played: (baseStats.get(team)?.played) ?? 0,
-        remaining: remaining.filter((match) => match.homeTeam === team || match.awayTeam === team).length,
+        played: playedByTeam.get(team) ?? 0,
+        remaining: remainingByTeam.get(team) ?? 0,
       };
     })
     .sort((left, right) => right.championProb - left.championProb || left.team.localeCompare(right.team, 'zh-Hans-CN'));
 
-  const playerRows = [...playerBase.keys()]
+  const playerRows = playerKeys
     .map((key) => {
       const [team, name] = key.split('::');
-      const bootProb = (bootCount.get(key) ?? 0) / runs;
-      const assistProb = (assistCount.get(key) ?? 0) / runs;
-      const fmvpProb = (fmvpCount.get(key) ?? 0) / runs;
+      const bootProb = bootProbByPlayer.get(key) ?? 0;
+      const assistProb = assistProbByPlayer.get(key) ?? 0;
+      const fmvpProb = fmvpProbByPlayer.get(key) ?? 0;
       return {
         key,
         name,
@@ -404,9 +474,9 @@ export function computeOdds({ config, matches, iterations = DEFAULT_ITERATIONS, 
         bootPercent: toPercent(bootProb),
         assistPercent: toPercent(assistProb),
         fmvpPercent: toPercent(fmvpProb),
-        bootOdd: toOdds(bootProb),
-        assistOdd: toOdds(assistProb),
-        fmvpOdd: toOdds(fmvpProb),
+        bootOdd: toOdds(bootProb, oddFloor),
+        assistOdd: toOdds(assistProb, oddFloor),
+        fmvpOdd: toOdds(fmvpProb, oddFloor),
       };
     })
     .filter((row) => row.bootProb > 0 || row.assistProb > 0 || row.fmvpProb > 0)

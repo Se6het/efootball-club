@@ -40,6 +40,18 @@ function season() {
   ];
 }
 
+// 只踢了一轮、四队都还有戏的赛季，用来观察「赔率会不会过于笃定」。
+function contestedSeason() {
+  return [
+    fixture(1, 1, '甲队', '乙队', 4, 0),
+    fixture(2, 1, '丙队', '丁队', 0, 1),
+    fixture(3, 2, '甲队', '丁队', 0, 0, false),
+    fixture(4, 2, '乙队', '丙队', 0, 0, false),
+    fixture(5, 3, '甲队', '丙队', 0, 0, false),
+    fixture(6, 3, '乙队', '丁队', 0, 0, false),
+  ];
+}
+
 function oddFor(odds, team, key) {
   return odds.teams.find((row) => row.team === team)?.[key];
 }
@@ -66,6 +78,25 @@ describe('computeOdds', () => {
     expect(sum).toBeCloseTo(3, 6);
   });
 
+  it('keeps every market summing to its original total even when teams have played different amounts', () => {
+    // 各队已赛场次不同（甲/丁 各 3 场，乙/丙 各 2 场），收缩的权重也不一样，
+    // 这时「朝均势收缩」必须按总量归一化，否则各队概率加起来会超过 100%。
+    const uneven = [
+      fixture(1, 1, '甲队', '乙队', 2, 0),
+      fixture(2, 1, '丙队', '丁队', 1, 1),
+      fixture(3, 2, '甲队', '丙队', 3, 0),
+      fixture(4, 2, '乙队', '丁队', 0, 1),
+      fixture(5, 3, '甲队', '丁队', 1, 0),
+      fixture(6, 3, '乙队', '丙队', 0, 0, false),
+      fixture(7, 4, '甲队', '乙队', 0, 0, false),
+      fixture(8, 4, '丙队', '丁队', 0, 0, false),
+    ];
+    const odds = computeOdds({ config, matches: uneven, iterations });
+    expect(odds.finished).toBe(false);
+    expect(odds.teams.reduce((sum, row) => sum + row.championProb, 0)).toBeCloseTo(1, 6);
+    expect(odds.teams.reduce((sum, row) => sum + row.top3Prob, 0)).toBeCloseTo(3, 6);
+  });
+
   it('gives the strongest team shorter odds than the weakest', () => {
     const odds = computeOdds({ config, matches: season(), iterations });
     expect(oddFor(odds, '甲队', 'championOdd')).toBeLessThan(2);
@@ -75,15 +106,7 @@ describe('computeOdds', () => {
     expect(oddFor(odds, '丁队', 'championOdd')).toBeNull();
 
     // 换成还有悬念的赛季，落后的球队就该挂出更长的赔率。
-    const contested = [
-      fixture(1, 1, '甲队', '乙队', 4, 0),
-      fixture(2, 1, '丙队', '丁队', 0, 1),
-      fixture(3, 2, '甲队', '丁队', 0, 0, false),
-      fixture(4, 2, '乙队', '丙队', 0, 0, false),
-      fixture(5, 3, '甲队', '丙队', 0, 0, false),
-      fixture(6, 3, '乙队', '丁队', 0, 0, false),
-    ];
-    const live = computeOdds({ config, matches: contested, iterations });
+    const live = computeOdds({ config, matches: contestedSeason(), iterations });
     expect(oddFor(live, '甲队', 'championOdd')).toBeLessThan(oddFor(live, '丁队', 'championOdd'));
   });
 
@@ -121,6 +144,26 @@ describe('computeOdds', () => {
         expect(row[key]).toBeLessThanOrEqual(500);
       }
     }
+  });
+
+  it('never looks like a done deal while matches are still to be played', () => {
+    const odds = computeOdds({ config, matches: season(), iterations });
+    expect(odds.finished).toBe(false);
+    for (const row of odds.teams) {
+      for (const key of ['championOdd', 'top3Odd']) {
+        if (row[key] === null) continue;
+        expect(row[key]).toBeGreaterThanOrEqual(1.05);
+      }
+    }
+  });
+
+  it('softens the favourite towards the field while the race is still open', () => {
+    const odds = computeOdds({ config, matches: contestedSeason(), iterations });
+    const leader = odds.teams[0];
+    expect(leader.championProb).toBeGreaterThan(0.3);
+    // 还有两轮没踢，就算领跑也不该给出「板上钉钉」的赔率。
+    expect(leader.championProb).toBeLessThan(1);
+    expect(leader.championOdd).toBeGreaterThanOrEqual(1.1);
   });
 
   it('quotes player award markets once players are recorded', () => {

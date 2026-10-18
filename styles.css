@@ -2640,12 +2640,23 @@ tbody tr.row-medal-bronze {
   padding: 7px 11px;
   border-radius: 9px;
   background: var(--panel-alt);
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--tier-color, var(--border));
 }
 
 .mini-news-icon {
   flex: 0 0 auto;
   font-size: 15px;
+}
+
+.mini-news-crests {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mini-news-crests .team-crest {
+  --s: 18px;
 }
 
 .mini-news-title {
@@ -2658,38 +2669,11 @@ tbody tr.row-medal-bronze {
   font-weight: 600;
 }
 
-.mini-news-tier {
-  flex: 0 0 auto;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.mini-news.tier-legend { border-left-color: #7c3aed; }
-.mini-news.tier-epic { border-left-color: #e08a1e; }
-.mini-news.tier-rare { border-left-color: #2557d6; }
-.mini-news.tier-common { border-left-color: var(--muted); }
-
-/* 稀有度配色：传说 / 史诗 / 稀有 / 常规 */
-.tier-legend,
-.tier-epic,
-.tier-rare,
-.tier-common {
-  --tier-color: var(--muted);
-  --tier-bg: rgba(127, 127, 127, 0.12);
-}
-
-.news-tier,
-.mini-news-tier {
-  color: var(--tier-color, var(--muted));
-  background: var(--tier-bg, rgba(127, 127, 127, 0.12));
-}
-
-.tier-legend { --tier-color: #6d28d9; --tier-bg: #ede9fe; }
-.tier-epic { --tier-color: #a35a00; --tier-bg: #fdf0d8; }
-.tier-rare { --tier-color: #1d4ed8; --tier-bg: #e3ebfd; }
-.tier-common { --tier-color: #55606f; --tier-bg: #eceff4; }
+/* 稀有度配色：只当「颜色语言」用（边框 + 难度条），界面上不写传说/史诗这类字。 */
+.tier-legend { --tier-color: #6d28d9; }
+.tier-epic { --tier-color: #a35a00; }
+.tier-rare { --tier-color: #1d4ed8; }
+.tier-common { --tier-color: #55606f; }
 
 .news-view {
   display: grid;
@@ -2736,6 +2720,17 @@ tbody tr.row-medal-bronze {
   gap: 8px;
 }
 
+/* 相关球队的队徽：一条新闻挂一枚到两枚，扫一眼就知道说的是谁。 */
+.news-crests {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.news-crests .team-crest {
+  --s: 20px;
+}
+
 .news-cat {
   font-size: 11px;
   font-weight: 600;
@@ -2774,15 +2769,6 @@ tbody tr.row-medal-bronze {
   border-radius: 999px;
   background: var(--tier-color, var(--primary));
   transition: width 0.3s ease;
-}
-
-.news-tier {
-  display: inline-block;
-  padding: 2px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .news-list {
@@ -2854,16 +2840,6 @@ tbody tr.row-medal-bronze {
 .odds-status.finished {
   color: var(--muted);
   background: rgba(127, 127, 127, 0.14);
-}
-
-.odds-notes {
-  display: grid;
-  gap: 4px;
-}
-
-.odds-notes p {
-  margin: 0;
-  font-size: 12px;
 }
 
 .odds-subtitle {

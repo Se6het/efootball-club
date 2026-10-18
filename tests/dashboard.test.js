@@ -37,8 +37,8 @@ const rankedTeams = [
 ];
 const leaders = { scorerList: [{ name: '张三', team: '皇家马德里', goals: 2 }] };
 const news = [
-  { id: 'n-1', tier: 'legend', icon: '🟣', title: '张三 连续 3 场进球', detail: '状态火热', metric: 3 },
-  { id: 'n-2', tier: 'common', icon: '⚪', title: '最新战报：皇家马德里 2:1 巴塞罗那', detail: '刚结束', metric: 1 },
+  { id: 'n-1', tier: 'legend', icon: '🟣', title: '张三 连续 3 场进球', detail: '状态火热', metric: 3, teams: ['皇家马德里'], round: 3 },
+  { id: 'n-2', tier: 'common', icon: '⚪', title: '最新战报：皇家马德里 2:1 巴塞罗那', detail: '刚结束', metric: 1, teams: ['皇家马德里', '巴塞罗那'], round: 3 },
 ];
 
 function render(overrides = {}) {
@@ -65,6 +65,9 @@ describe('dashboard view', () => {
     expect(tileTitles(view)).toEqual(['下一场', '赛程', '球队榜', '球员榜', '新闻']);
     expect(view.querySelectorAll('.tile-wide')).toHaveLength(1);
     expect(view.querySelectorAll('.mini-news')).toHaveLength(2);
+    // 层级只上色（tier-*），再挂上相关球队的队徽。
+    expect(view.querySelector('.mini-news').className).toContain('tier-legend');
+    expect(view.querySelectorAll('.mini-news-crests')).toHaveLength(2);
   });
 
   it('summarizes the next fixture, upcoming schedule, standings, scorers and news', () => {
@@ -74,7 +77,9 @@ describe('dashboard view', () => {
     expect(text).toContain('第 2 轮');
     expect(text).toContain('张三');
     expect(text).toContain('连续 3 场进球');
-    expect(text).toContain('传说');
+    // 不再把「传说/史诗」这类字样写进界面。
+    expect(text).not.toContain('传说');
+    expect(text).not.toContain('史诗');
     expect(text).toContain('查看全部');
   });
 
