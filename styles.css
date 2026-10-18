@@ -2625,3 +2625,284 @@ tbody tr.row-medal-bronze {
   color: #a12b1d;
   background: #fbdedb;
 }
+
+/* ---------- 新闻：入口格子与看点页 ---------- */
+
+.tile-wide {
+  grid-column: 1 / -1;
+  min-height: 176px;
+}
+
+.mini-news {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  background: var(--panel-alt);
+  border-left: 3px solid var(--border);
+}
+
+.mini-news-icon {
+  flex: 0 0 auto;
+  font-size: 15px;
+}
+
+.mini-news-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mini-news-tier {
+  flex: 0 0 auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mini-news.tier-legend { border-left-color: #7c3aed; }
+.mini-news.tier-epic { border-left-color: #e08a1e; }
+.mini-news.tier-rare { border-left-color: #2557d6; }
+.mini-news.tier-common { border-left-color: var(--muted); }
+
+/* 稀有度配色：传说 / 史诗 / 稀有 / 常规 */
+.tier-legend,
+.tier-epic,
+.tier-rare,
+.tier-common {
+  --tier-color: var(--muted);
+  --tier-bg: rgba(127, 127, 127, 0.12);
+}
+
+.news-tier,
+.mini-news-tier {
+  color: var(--tier-color, var(--muted));
+  background: var(--tier-bg, rgba(127, 127, 127, 0.12));
+}
+
+.tier-legend { --tier-color: #6d28d9; --tier-bg: #ede9fe; }
+.tier-epic { --tier-color: #a35a00; --tier-bg: #fdf0d8; }
+.tier-rare { --tier-color: #1d4ed8; --tier-bg: #e3ebfd; }
+.tier-common { --tier-color: #55606f; --tier-bg: #eceff4; }
+
+.news-view {
+  display: grid;
+  gap: 20px;
+}
+
+.news-head h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.news-head p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.news-hero {
+  display: grid;
+  gap: 18px;
+}
+
+.news-headlines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.news-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--tier-color, var(--primary));
+  border-radius: 13px;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.news-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.news-cat {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.news-card-title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.4;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.news-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.news-card-detail {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.news-difficulty {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--panel-alt);
+  overflow: hidden;
+}
+
+.news-difficulty-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--tier-color, var(--primary));
+  transition: width 0.3s ease;
+}
+
+.news-tier {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.news-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 15px 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.news-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--panel-alt);
+  border-left: 3px solid var(--tier-color, var(--border));
+}
+
+.news-row-icon {
+  flex: 0 0 auto;
+  font-size: 15px;
+}
+
+.news-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.news-row-title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.news-row-detail {
+  font-size: 12px;
+}
+
+.news-row-cat {
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+
+.news-count {
+  font-size: 12px;
+}
+
+.news-odds {
+  display: grid;
+  gap: 12px;
+}
+
+.news-odds h3 {
+  margin: 0;
+}
+
+.odds-status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--success);
+  background: #e6f6ee;
+}
+
+.odds-status.finished {
+  color: var(--muted);
+  background: rgba(127, 127, 127, 0.14);
+}
+
+.odds-notes {
+  display: grid;
+  gap: 4px;
+}
+
+.odds-notes p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.odds-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.odds-table {
+  min-width: 560px;
+}
+
+.odd-value {
+  display: block;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.odd-percent {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.player-name {
+  font-weight: 600;
+}
+
+.player-team {
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .news-headlines {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .news-row-cat {
+    display: none;
+  }
+}

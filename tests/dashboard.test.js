@@ -36,6 +36,10 @@ const rankedTeams = [
   { rank: 2, team: '巴塞罗那', points: 0, played: 1 },
 ];
 const leaders = { scorerList: [{ name: '张三', team: '皇家马德里', goals: 2 }] };
+const news = [
+  { id: 'n-1', tier: 'legend', icon: '🟣', title: '张三 连续 3 场进球', detail: '状态火热', metric: 3 },
+  { id: 'n-2', tier: 'common', icon: '⚪', title: '最新战报：皇家马德里 2:1 巴塞罗那', detail: '刚结束', metric: 1 },
+];
 
 function render(overrides = {}) {
   return renderDashboard({
@@ -43,6 +47,7 @@ function render(overrides = {}) {
     matches,
     rankedTeams,
     leaders,
+    news,
     seasonFinished: false,
     onOpen: () => {},
     ...overrides,
@@ -54,18 +59,22 @@ function tileTitles(view) {
 }
 
 describe('dashboard view', () => {
-  it('renders four tiles in the four-quadrant order', () => {
+  it('renders five tiles with news spanning the full width', () => {
     const view = render();
-    expect(view.querySelectorAll('.tile')).toHaveLength(4);
-    expect(tileTitles(view)).toEqual(['下一场', '赛程', '球队榜', '球员榜']);
+    expect(view.querySelectorAll('.tile')).toHaveLength(5);
+    expect(tileTitles(view)).toEqual(['下一场', '赛程', '球队榜', '球员榜', '新闻']);
+    expect(view.querySelectorAll('.tile-wide')).toHaveLength(1);
+    expect(view.querySelectorAll('.mini-news')).toHaveLength(2);
   });
 
-  it('summarizes the next fixture, upcoming schedule, standings and scorers', () => {
+  it('summarizes the next fixture, upcoming schedule, standings, scorers and news', () => {
     const text = textOf(render());
     expect(text).toContain('拜仁慕尼黑');
     expect(text).toContain('曼城');
     expect(text).toContain('第 2 轮');
     expect(text).toContain('张三');
+    expect(text).toContain('连续 3 场进球');
+    expect(text).toContain('传说');
     expect(text).toContain('查看全部');
   });
 
@@ -73,23 +82,24 @@ describe('dashboard view', () => {
     const opened = [];
     const view = render({ onOpen: (key) => opened.push(key) });
     view.querySelectorAll('.tile').forEach((tile) => tile.click());
-    expect(opened).toEqual(['next', 'schedule', 'standings', 'leaders']);
+    expect(opened).toEqual(['next', 'schedule', 'standings', 'leaders', 'news']);
   });
 
   it('swaps in the awards tile once the season is over', () => {
     const opened = [];
     const view = render({ nextMatch: null, seasonFinished: true, onOpen: (key) => opened.push(key) });
-    expect(tileTitles(view)).toEqual(['赛季颁奖', '赛程', '球队榜', '球员榜']);
+    expect(tileTitles(view)).toEqual(['赛季颁奖', '赛程', '球队榜', '球员榜', '新闻']);
     view.querySelectorAll('.tile')[0].click();
     expect(opened).toEqual(['awards']);
     expect(textOf(view)).toContain('冠军');
   });
 
   it('falls back to muted hints when there is nothing to summarize', () => {
-    const text = textOf(render({ matches: [], rankedTeams: [], leaders: { scorerList: [] }, nextMatch: null }));
+    const text = textOf(render({ matches: [], rankedTeams: [], leaders: { scorerList: [] }, nextMatch: null, news: [] }));
     expect(text).toContain('所有比赛都已完成');
     expect(text).toContain('还没有赛程');
     expect(text).toContain('还没有球队数据');
     expect(text).toContain('暂无进球记录');
+    expect(text).toContain('录入比分后这里会出现看点与赔率');
   });
 });

@@ -9,6 +9,7 @@ const { renderLeadersView } = await import('../src/views/leaders.js');
 const { renderTeamDetailView } = await import('../src/views/teamDetail.js');
 const { renderPlayerDetailView } = await import('../src/views/playerDetail.js');
 const { renderScheduleView } = await import('../src/views/schedule.js');
+const { renderNewsView } = await import('../src/views/news.js');
 const { renderSetupView } = await import('../src/views/setup.js');
 const { renderAwardsView } = await import('../src/views/awards.js');
 const { openMatchForm } = await import('../src/views/matchForm.js');
@@ -18,6 +19,8 @@ const { computeLeaders, computePlayerDetail, computeTeamLeaders } = await import
 const { buildAwardSummary } = await import('../src/awards.js');
 const { computeRankProgression, rankTeams } = await import('../src/standings.js');
 const { computeTeamDiscipline } = await import('../src/discipline.js');
+const { computeNews } = await import('../src/news.js');
+const { computeOdds } = await import('../src/odds.js');
 
 function fixture(id, matchNumber, round, homeTeam, awayTeam, homeGoals, awayGoals, isPlayed, extra = {}) {
   return {
@@ -182,6 +185,32 @@ describe('view smoke tests', () => {
     expect(values).toContain('1');
     expect(view.querySelectorAll('.row-suspended').length).toBe(1);
     expect(textOf(view.querySelector('.suspension-pill'))).toContain('停赛');
+  });
+
+  it('renders the news view with headlines and both odds tables', () => {
+    const leaders = computeLeaders(matches);
+    const news = computeNews({ config, matches, leaders });
+    const odds = computeOdds({ config, matches, iterations: 200 });
+    const view = renderNewsView({ news, odds, playedCount: 2 });
+    const text = textOf(view);
+
+    expect(text).toContain('赛季看点与实时赔率 · 已结算 2 场比赛');
+    expect(view.querySelectorAll('.news-headlines')).toHaveLength(1);
+    expect(view.querySelectorAll('.news-card').length).toBeGreaterThan(0);
+    expect(view.querySelectorAll('.odds-table')).toHaveLength(2);
+    expect(text).toContain('冠军 / 前三');
+    expect(view.querySelectorAll('.odd-value').length).toBeGreaterThan(0);
+    expect(text).not.toContain('[object ');
+    expect(text).not.toMatch(/undefined|NaN/);
+  });
+
+  it('renders the news view safely with no data at all', () => {
+    const view = renderNewsView({});
+    const text = textOf(view);
+    expect(text).not.toContain('[object ');
+    expect(text).not.toMatch(/undefined|NaN/);
+    expect(view.querySelectorAll('.odds-table')).toHaveLength(0);
+    expect(text).toContain('暂时无法开盘');
   });
 
   it('renders the schedule grouped by round', () => {

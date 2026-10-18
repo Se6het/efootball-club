@@ -13,9 +13,9 @@ function tileHead(icon, title) {
   ]);
 }
 
-function tile(key, icon, title, body, onOpen) {
+function tile(key, icon, title, body, onOpen, extraClass = '') {
   return el('button', {
-    className: 'tile',
+    className: extraClass ? `tile ${extraClass}` : 'tile',
     type: 'button',
     'aria-label': `展开${title}`,
     onClick: () => onOpen(key),
@@ -110,7 +110,24 @@ function leadersBody(leaders) {
   ]));
 }
 
-export function renderDashboard({ nextMatch, matches, rankedTeams, leaders, seasonFinished, onOpen }) {
+// 新闻格子横跨整行：里面塞几条头条摘要，一眼能扫到。
+function newsBody(news) {
+  const top = (news ?? []).slice(0, 3);
+  if (!top.length) {
+    return [el('span', { className: 'muted', text: '录入比分后这里会出现看点与赔率' })];
+  }
+  return top.map((entry) => el('span', { className: `mini-news tier-${entry.tier}` }, [
+    el('span', { className: 'mini-news-icon', text: entry.icon }),
+    el('span', { className: 'mini-news-title', text: entry.title }),
+    el('span', { className: `mini-news-tier tier-${entry.tier}`, text: tierLabelOf(entry.tier) }),
+  ]));
+}
+
+function tierLabelOf(tier) {
+  return { legend: '传说', epic: '史诗', rare: '稀有', common: '常规' }[tier] ?? '常规';
+}
+
+export function renderDashboard({ nextMatch, matches, rankedTeams, leaders, news = [], seasonFinished, onOpen }) {
   const leadTile = seasonFinished
     ? tile('awards', '🏅', '赛季颁奖', awardBody(rankedTeams), onOpen)
     : tile('next', '⚽', '下一场', nextBody(nextMatch), onOpen);
@@ -120,5 +137,6 @@ export function renderDashboard({ nextMatch, matches, rankedTeams, leaders, seas
     tile('schedule', '🗓️', '赛程', scheduleBody(matches), onOpen),
     tile('standings', '🏆', '球队榜', standingsBody(rankedTeams), onOpen),
     tile('leaders', '👟', '球员榜', leadersBody(leaders), onOpen),
+    tile('news', '📰', '新闻', newsBody(news), onOpen, 'tile-wide'),
   ]);
 }

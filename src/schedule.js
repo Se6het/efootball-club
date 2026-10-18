@@ -9,7 +9,7 @@ function normalizeName(name) {
   return String(name ?? '').trim();
 }
 
-function createRng(seed = Math.random()) {
+export function createRng(seed = Math.random()) {
   if (typeof seed === 'function') return seed;
   let value = Number.isFinite(Number(seed)) ? Number(seed) >>> 0 : Math.floor(Math.random() * 0xffffffff);
   return () => {

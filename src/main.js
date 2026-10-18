@@ -11,6 +11,7 @@ import { renderNextMatchView } from './views/nextMatch.js';
 import { renderScheduleView } from './views/schedule.js';
 import { renderStandingsView } from './views/standings.js';
 import { renderLeadersView } from './views/leaders.js';
+import { renderNewsView } from './views/news.js';
 import { renderAwardsView } from './views/awards.js';
 import { renderTeamDetailView } from './views/teamDetail.js';
 import { renderPlayerDetailView } from './views/playerDetail.js';
@@ -18,6 +19,8 @@ import { openMatchForm } from './views/matchForm.js';
 import { computeRankProgression, rankTeams } from './standings.js';
 import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './form.js';
 import { computeHeadToHead } from './h2h.js';
+import { computeNews } from './news.js';
+import { computeOdds } from './odds.js';
 import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAwardSettings } from './awards.js';
 
 const app = document.querySelector('#app');
@@ -250,6 +253,9 @@ function renderLeague() {
     playerStats,
   });
   const ownerByTeam = buildOwnerMap(state.config);
+  const news = computeNews({ config: state.config, matches: state.matches, leaders });
+  const odds = computeOdds({ config: state.config, matches: state.matches });
+  const playedCount = state.matches.filter((match) => match.isPlayed).length;
 
   clear(app);
 
@@ -262,9 +268,11 @@ function renderLeague() {
           awayForm: computeTeamForm(state.matches, nextMatch.awayTeam, 5),
         }
       : {}),
+    news: () => renderNewsView({ news, odds, playedCount }),
     schedule: () => renderScheduleView(state.matches, openEditor, ownerByTeam),
     standings: () => renderStandingsView(rankedTeams, openTeamDetail, { formByTeam, ownerByTeam }),
     leaders: () => renderLeadersView(leaders, openPlayerDetail),
+    news: () => renderNewsView({ news, odds, playedCount }),
     awards: () => renderAwardsView({
       seasonFinished,
       summary,
@@ -290,6 +298,7 @@ function renderLeague() {
         matches: state.matches,
         rankedTeams,
         leaders,
+        news,
         seasonFinished,
         onOpen: (key) => {
           activeTab = key;
