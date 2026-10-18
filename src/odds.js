@@ -276,7 +276,7 @@ export function computeOdds({ config, matches, iterations = DEFAULT_ITERATIONS, 
     top3Count.set(team, 0);
   }
 
-  const runs = Math.max(1, Math.floor(iterations));
+  const runs = Number.isFinite(iterations) ? Math.max(1, Math.floor(iterations)) : DEFAULT_ITERATIONS;
 
   for (let run = 0; run < runs; run += 1) {
     const strength = new Map();

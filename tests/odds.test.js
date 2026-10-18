@@ -166,6 +166,46 @@ describe('computeOdds', () => {
     }
   });
 
+  it('keeps probabilities finite with a single team', () => {
+    const odds = computeOdds({ config: { teamsA: ['独苗'], teamsB: [] }, matches: [], iterations: 40 });
+    expect(odds.available).toBe(true);
+    expect(odds.finished).toBe(true);
+    expect(odds.teams).toHaveLength(1);
+    expect(odds.teams[0].championProb).toBeCloseTo(1, 6);
+    expect(odds.teams[0].championOdd).toBe(1.01);
+    expect(Number.isFinite(odds.teams[0].top3Prob)).toBe(true);
+  });
+
+  it('falls back to the default iteration count for nonsense inputs', () => {
+    for (const bad of [0, -5, NaN, Infinity, 'many', null, undefined]) {
+      const odds = computeOdds({ config, matches: season(), iterations: bad, seed: 7 });
+      expect(odds.teams).toHaveLength(4);
+      const sum = odds.teams.reduce((total, row) => total + row.championProb, 0);
+      expect(Number.isFinite(sum)).toBe(true);
+      expect(sum).toBeCloseTo(1, 6);
+    }
+  });
+
+  it('does not blow up on a team that has played but never scored', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '丁队', 5, 0),
+      fixture(2, 1, '乙队', '丙队', 2, 2),
+      fixture(3, 2, '丁队', '乙队', 0, 3),
+      fixture(4, 2, '丙队', '甲队', 0, 2),
+      fixture(5, 3, '丁队', '丙队', 0, 0, false),
+      fixture(6, 3, '甲队', '乙队', 0, 0, false),
+    ];
+    const odds = computeOdds({ config, matches, iterations: 300 });
+    const cellar = odds.teams.find((row) => row.team === '丁队');
+    expect(cellar).toBeTruthy();
+    expect(cellar.points).toBe(0);
+    for (const row of odds.teams) {
+      expect(Number.isFinite(row.championProb)).toBe(true);
+      expect(Number.isFinite(row.top3Prob)).toBe(true);
+    }
+    expect(odds.teams[odds.teams.length - 1].team).toBe('丁队');
+  });
+
   it('still lists every team before a single match is played', () => {
     const odds = computeOdds({
       config,

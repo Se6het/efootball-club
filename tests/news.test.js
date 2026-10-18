@@ -109,6 +109,27 @@ describe('ranking and tiers', () => {
     expect(newsDifficulty({ tier: 'legend', metric: 99 })).toBeLessThanOrEqual(99);
     expect(newsDifficulty({})).toBe(newsDifficulty({ tier: 'common', metric: 0 }));
   });
+
+  it('keeps difficulty inside 0-100 and rising with metric for every tier', () => {
+    for (const tier of TIER_ORDER) {
+      let previous = -1;
+      for (let metric = 0; metric <= 12; metric += 1) {
+        const value = newsDifficulty({ tier, metric });
+        expect(Number.isFinite(value)).toBe(true);
+        expect(value).toBeGreaterThanOrEqual(0);
+        expect(value).toBeLessThanOrEqual(100);
+        expect(value).toBeGreaterThanOrEqual(previous);
+        previous = value;
+      }
+    }
+    // 垃圾输入也不能算崩。
+    for (const junk of [{ tier: 'nonsense', metric: -10 }, { tier: null, metric: NaN }, { metric: Infinity }]) {
+      const value = newsDifficulty(junk);
+      expect(Number.isFinite(value)).toBe(true);
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThanOrEqual(100);
+    }
+  });
 });
 
 describe('record generators', () => {

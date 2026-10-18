@@ -268,7 +268,6 @@ function renderLeague() {
           awayForm: computeTeamForm(state.matches, nextMatch.awayTeam, 5),
         }
       : {}),
-    news: () => renderNewsView({ news, odds, playedCount }),
     schedule: () => renderScheduleView(state.matches, openEditor, ownerByTeam),
     standings: () => renderStandingsView(rankedTeams, openTeamDetail, { formByTeam, ownerByTeam }),
     leaders: () => renderLeadersView(leaders, openPlayerDetail),
