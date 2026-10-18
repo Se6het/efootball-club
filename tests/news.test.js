@@ -297,7 +297,7 @@ describe('record generators', () => {
     expect(list).not.toContain('甲队 是唯一还没赢过球的球队');
   });
 
-  it('keeps the feed short and drops stale news', () => {
+  it('keeps the feed bounded and drops stale news', () => {
     const matches = [
       fixture(1, 1, '甲队', '乙队', 9, 0, { homeScorers: [{ name: '张三', count: 5 }] }),
       fixture(2, 2, '甲队', '乙队', 1, 0, { homeScorers: [{ name: '张三', count: 1 }] }),
@@ -307,7 +307,7 @@ describe('record generators', () => {
       fixture(6, 6, '甲队', '乙队', 1, 1),
     ];
     const items = computeNews({ config, matches, leaders });
-    expect(items.length).toBeLessThanOrEqual(10);
+    expect(items.length).toBeLessThanOrEqual(20);
     // 最新一轮是第 6 轮，第 1 轮那场 9:0 已经是旧闻，不该再挂在「新闻」里。
     expect(items.every((entry) => entry.round >= 4)).toBe(true);
     expect(titles(items)).not.toContain('本赛季最大分差：甲队 9:0 乙队');
@@ -349,5 +349,88 @@ describe('record generators', () => {
     const items = computeNews({ config, matches, leaders });
     expect(items.length).toBeGreaterThan(0);
     expect(titles(items)).toContain('最新战报：甲队 2:1 乙队');
+  });
+
+  it('flags a playmaker hat-trick and a single-match goal-and-assist double', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 4, 0, {
+        homeScorers: [{ name: '张三', count: 2 }, { name: '王五', count: 2 }],
+        homeAssists: [{ name: '李四', count: 3 }, { name: '张三', count: 1 }],
+      }),
+    ];
+    const list = titles(computeNews({ config, matches, leaders }));
+    expect(list).toContain('李四 单场送出 3 次助攻');
+    expect(list).toContain('张三 单场独造 3 球');
+  });
+
+  it('notices a player who keeps taking the MVP award', () => {
+    const mvp = { name: '张三', team: '甲队', score: 8 };
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 2, 0, { mvp }),
+      fixture(2, 2, '乙队', '甲队', 0, 1, { mvp }),
+      fixture(3, 3, '甲队', '乙队', 1, 0, { mvp }),
+    ];
+    expect(titles(computeNews({ config, matches, leaders }))).toContain('张三 已 3 次当选 MVP');
+  });
+
+  it('crowns the best attack and the meanest defence in the league', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 5, 0),
+      fixture(2, 2, '甲队', '乙队', 4, 0),
+      fixture(3, 3, '甲队', '乙队', 3, 1),
+    ];
+    const list = titles(computeNews({ config, matches, leaders }));
+    expect(list).toContain('甲队 是联赛火力最猛的球队');
+    expect(list).toContain('甲队 的防线是联赛最稳的');
+  });
+
+  it('names the most combustible match of the season', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 1, 1, { homeCards: { yellow: 3, red: 0 }, awayCards: { yellow: 3, red: 0 } }),
+      fixture(2, 2, '甲队', '乙队', 0, 0, { homeCards: { yellow: 1, red: 0 } }),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const cardfest = items.find((entry) => entry.id === 'stat-cardfest');
+    expect(cardfest).toBeTruthy();
+    expect(cardfest.detail).toContain('6 张黄牌');
+  });
+
+  it('reports a match that boiled over into a red-card show', () => {
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 1, 1, { homeCards: { yellow: 1, red: 2 }, awayCards: { yellow: 1, red: 0 } }),
+      fixture(2, 2, '甲队', '乙队', 0, 0),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const brawl = items.find((entry) => entry.id === 'stat-bloodbath');
+    expect(brawl).toBeTruthy();
+    expect(brawl.title).toContain('2 张红牌');
+  });
+
+  it('spies on repeated scorelines and 0:0 specialists', () => {
+    const cfg = { teamsA: ['甲队', '丙队'], teamsB: ['乙队', '丁队'] };
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 1, 1),
+      fixture(2, 1, '丙队', '丁队', 1, 1),
+      fixture(3, 2, '甲队', '丙队', 0, 0),
+      fixture(4, 2, '乙队', '丁队', 0, 0),
+      fixture(5, 3, '甲队', '丁队', 0, 0),
+    ];
+    const items = computeNews({ config: cfg, matches, leaders });
+    const ids = items.map((entry) => entry.id);
+    expect(ids).toContain('quirk-score-repeat:0:0');
+    expect(ids).toContain('quirk-goalless:甲队');
+  });
+
+  it('spots a card collector and an MVP monopoly inside one squad', () => {
+    const mvp = { name: '张三', team: '甲队', score: 8 };
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 1, 1, { homeCards: { yellow: 0, red: 1 }, mvp }),
+      fixture(2, 2, '甲队', '乙队', 1, 1, { homeCards: { yellow: 0, red: 1 }, mvp }),
+      fixture(3, 3, '甲队', '乙队', 1, 1, { homeCards: { yellow: 0, red: 1 }, mvp }),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const ids = items.map((entry) => entry.id);
+    expect(ids).toContain('quirk-red-collector:甲队');
+    expect(ids).toContain('quirk-mvp-monopoly:甲队');
   });
 });

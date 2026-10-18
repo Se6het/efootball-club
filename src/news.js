@@ -33,12 +33,12 @@ export const NEWS_CATEGORIES = Object.freeze({
 // 一条看点最多挂多久（按轮次算）；赛季还没打满 NEWS_WINDOW 轮时不会误杀。
 const NEWS_WINDOW = 3;
 
-// 一屏看点总数上限：头条 3 条 + 更多若干条，太多了反而没人看。
-const MAX_ITEMS = 10;
+// 一屏看点总数上限：头条 3 条 + 更多若干条。放宽到 20，让赛季中后期有足够内容可看。
+const MAX_ITEMS = 20;
 
 // 同一名球员/同一支球队最多贡献几条，避免一个人刷满整个列表。
 const MAX_PER_PLAYER = 2;
-const MAX_PER_TEAM = 3;
+const MAX_PER_TEAM = 4;
 
 function num(value) {
   const n = Number(value);
@@ -89,6 +89,11 @@ function outcomeFor(match, team) {
 function yellowsFor(match, team) {
   const side = sideOf(match, team);
   return side ? num(match?.[`${side}Cards`]?.yellow) : 0;
+}
+
+function redsFor(match, team) {
+  const side = sideOf(match, team);
+  return side ? num(match?.[`${side}Cards`]?.red) : 0;
 }
 
 function matchesOfTeam(played, team) {
@@ -271,11 +276,73 @@ function playerItems(played, config, leaders) {
         }));
       }
 
+      // 5) 助攻帽子戏法：单场送出 3 次以上助攻
+      let bestAssist = { count: 0, round };
+      for (const match of teamMatches) {
+        for (const entry of entryList(match, team, 'Assists')) {
+          if (nameOf(entry?.name) !== playerName) continue;
+          const count = num(entry?.count);
+          if (count > bestAssist.count) bestAssist = { count, round: roundOf(match) };
+        }
+      }
+      if (bestAssist.count >= 3) {
+        mine.push(item({
+          id: `player-assist-haul:${team}:${playerName}`,
+          category: 'player',
+          icon: '🎁',
+          tier: bestAssist.count >= 4 ? 'legend' : 'epic',
+          title: `${playerName} 单场送出 ${bestAssist.count} 次助攻`,
+          detail: `${team} · 传球大师`,
+          metric: bestAssist.count,
+          teams: [team],
+          round: bestAssist.round,
+        }));
+      }
+
+      // 6) 传射建功：同一场既进球又助攻
+      let bestBoth = { total: 0, goals: 0, assists: 0, round };
+      for (const match of teamMatches) {
+        const game = contributionFor(match, team, playerName);
+        if (game.goals >= 1 && game.assists >= 1) {
+          const total = game.goals + game.assists;
+          if (total > bestBoth.total) bestBoth = { total, goals: game.goals, assists: game.assists, round: roundOf(match) };
+        }
+      }
+      if (bestBoth.total >= 3) {
+        mine.push(item({
+          id: `player-goal-assist:${team}:${playerName}`,
+          category: 'player',
+          icon: '🚀',
+          tier: bestBoth.total >= 5 ? 'legend' : bestBoth.total >= 4 ? 'epic' : 'rare',
+          title: `${playerName} 单场独造 ${bestBoth.total} 球`,
+          detail: `${team} · ${bestBoth.goals} 球 ${bestBoth.assists} 助攻，传射一把抓`,
+          metric: bestBoth.total,
+          teams: [team],
+          round: bestBoth.round,
+        }));
+      }
+
+      // 7) MVP 专业户：累计当选次数
+      const mvpTally = gameCounts.filter((game) => game.mvp).length;
+      if (mvpTally >= 3) {
+        mine.push(item({
+          id: `player-mvp-tally:${team}:${playerName}`,
+          category: 'player',
+          icon: '🏅',
+          tier: mvpTally >= 5 ? 'epic' : 'rare',
+          title: `${playerName} 已 ${mvpTally} 次当选 MVP`,
+          detail: `${team} · 全队的定海神针`,
+          metric: mvpTally,
+          teams: [team],
+          round,
+        }));
+      }
+
       items.push(...pickTop(mine, MAX_PER_PLAYER));
     }
   }
 
-  // 5) 射手榜 / 助攻榜领跑
+  // 8) 射手榜 / 助攻榜领跑
   const scorerList = Array.isArray(leaders?.scorerList) ? leaders.scorerList : [];
   const assistList = Array.isArray(leaders?.assistList) ? leaders.assistList : [];
   const topScorer = scorerList[0];
@@ -308,7 +375,7 @@ function playerItems(played, config, leaders) {
     }));
   }
 
-  // 6) 效率怪：场均参与进球（要求出场够多，别让一场论霸榜）
+  // 9) 效率怪：场均参与进球（要求出场够多，别让一场论霸榜）
   for (const stat of computePlayerStats(played)) {
     const apps = played.filter((match) => sideOf(match, stat.team)).length;
     if (apps < 3) continue;
@@ -452,7 +519,71 @@ function teamItems(played, config) {
       }));
     }
 
+    // 客场全败
+    const awayMatches = teamMatches.filter((match) => sideOf(match, team) === 'away');
+    if (awayMatches.length >= 3 && awayMatches.every((match) => outcomeFor(match, team) === 'loss')) {
+      mine.push(item({
+        id: `team-away-woes:${team}`,
+        category: 'team',
+        icon: '🧳',
+        tier: 'rare',
+        title: `${team} 客场全败`,
+        detail: `${awayMatches.length} 个客场一分未得`,
+        metric: awayMatches.length,
+        teams: [team],
+        round,
+      }));
+    }
+
     items.push(...pickTop(mine, MAX_PER_TEAM));
+  }
+
+  // 联赛级：火力最猛 / 防守最稳（正经纪录，得有个明确的领跑者才发）
+  const board = teams
+    .map((team) => {
+      const list = matchesOfTeam(played, team);
+      return {
+        team,
+        played: list.length,
+        goals: list.reduce((sum, match) => sum + goalsFor(match, team), 0),
+        conceded: list.reduce((sum, match) => sum + goalsAgainst(match, team), 0),
+      };
+    })
+    .filter((row) => row.played >= 3);
+
+  if (board.length >= 2) {
+    const attackKing = [...board].sort((left, right) => right.goals - left.goals)[0];
+    const nextAttack = board.filter((row) => row.team !== attackKing.team).reduce((max, row) => Math.max(max, row.goals), 0);
+    if (attackKing.goals >= 6 && attackKing.goals > nextAttack) {
+      items.push(item({
+        id: `team-attack-king:${attackKing.team}`,
+        category: 'team',
+        icon: '🚂',
+        tier: attackKing.goals >= 12 ? 'epic' : 'rare',
+        title: `${attackKing.team} 是联赛火力最猛的球队`,
+        detail: `${attackKing.played} 场轰进 ${attackKing.goals} 球`,
+        metric: attackKing.goals,
+        teams: [attackKing.team],
+        round: lastRoundOf(matchesOfTeam(played, attackKing.team)),
+      }));
+    }
+
+    const defenseKing = [...board].sort((left, right) => left.conceded - right.conceded)[0];
+    const nextDefense = board.filter((row) => row.team !== defenseKing.team).reduce((min, row) => Math.min(min, row.conceded), Infinity);
+    if (defenseKing.conceded < nextDefense) {
+      items.push(item({
+        id: `team-defense-king:${defenseKing.team}`,
+        category: 'team',
+        icon: '🧤',
+        tier: defenseKing.conceded <= 2 ? 'epic' : 'rare',
+        title: `${defenseKing.team} 的防线是联赛最稳的`,
+        detail: `${defenseKing.played} 场只丢 ${defenseKing.conceded} 球`,
+        // 指标用「守住多少场」而不是失球数：失球越少越厉害，拿失球数当指标会让难度条反着走。
+        metric: defenseKing.played,
+        teams: [defenseKing.team],
+        round: lastRoundOf(matchesOfTeam(played, defenseKing.team)),
+      }));
+    }
   }
 
   // 唯一一支还没赢过的球队（正儿八经的纪录，归到球队类里）
@@ -637,6 +768,42 @@ function statItems(played) {
     }
   }
 
+  // 最火爆的比赛：单场黄牌最多
+  const cardiest = played
+    .map((match) => ({ match, cards: num(match?.homeCards?.yellow) + num(match?.awayCards?.yellow) }))
+    .sort((left, right) => right.cards - left.cards)[0];
+  if (cardiest && cardiest.cards >= 5) {
+    items.push(item({
+      id: 'stat-cardfest',
+      category: 'stat',
+      icon: '🟨',
+      tier: cardiest.cards >= 9 ? 'epic' : 'rare',
+      title: `最火爆的比赛：${cardiest.match.homeTeam} ${num(cardiest.match.homeGoals)}:${num(cardiest.match.awayGoals)} ${cardiest.match.awayTeam}`,
+      detail: `单场共 ${cardiest.cards} 张黄牌 · 火药味十足`,
+      metric: cardiest.cards,
+      teams: [cardiest.match.homeTeam, cardiest.match.awayTeam],
+      round: roundOf(cardiest.match),
+    }));
+  }
+
+  // 红牌事件：单场出现 2 张以上红牌
+  const bloodbath = played
+    .map((match) => ({ match, reds: num(match?.homeCards?.red) + num(match?.awayCards?.red) }))
+    .sort((left, right) => right.reds - left.reds)[0];
+  if (bloodbath && bloodbath.reds >= 2) {
+    items.push(item({
+      id: 'stat-bloodbath',
+      category: 'stat',
+      icon: '🟥',
+      tier: 'epic',
+      title: `冲突升级：${bloodbath.match.homeTeam} vs ${bloodbath.match.awayTeam} 出现 ${bloodbath.reds} 张红牌`,
+      detail: `第 ${roundOf(bloodbath.match)} 轮 · 场面一度失控`,
+      metric: bloodbath.reds,
+      teams: [bloodbath.match.homeTeam, bloodbath.match.awayTeam],
+      round: roundOf(bloodbath.match),
+    }));
+  }
+
   return items;
 }
 
@@ -751,10 +918,63 @@ function quirkItems(played, config) {
         round,
       }));
     }
+
+    // 红牌大户
+    const reds = list.reduce((sum, match) => sum + redsFor(match, team), 0);
+    if (reds >= 2) {
+      push(team, item({
+        id: `quirk-red-collector:${team}`,
+        category: 'quirk',
+        icon: '🟥',
+        tier: reds >= 4 ? 'epic' : 'rare',
+        title: `${team} 已经吃到 ${reds} 张红牌`,
+        detail: '少打一人的比赛可不少',
+        metric: reds,
+        teams: [team],
+        round,
+      }));
+    }
+
+    // 0:0 专业户
+    const goalless = list.filter((match) => goalsFor(match, team) === 0 && goalsAgainst(match, team) === 0).length;
+    if (goalless >= 2) {
+      push(team, item({
+        id: `quirk-goalless:${team}`,
+        category: 'quirk',
+        icon: '💤',
+        tier: 'rare',
+        title: `${team} 已经踢出 ${goalless} 场 0:0`,
+        detail: '闷平大师，球迷昏昏欲睡',
+        metric: goalless,
+        teams: [team],
+        round,
+      }));
+    }
+
+    // MVP 一人包场：队内最佳几乎都给同一个人
+    const mvpNames = list.map((match) => nameOf(mvpOf(match, team)?.name)).filter(Boolean);
+    if (mvpNames.length >= 3) {
+      const mvpTally = new Map();
+      for (const name of mvpNames) mvpTally.set(name, (mvpTally.get(name) ?? 0) + 1);
+      const [mvpName, mvpCount] = [...mvpTally.entries()].sort((left, right) => right[1] - left[1])[0];
+      if (mvpCount / mvpNames.length >= 0.6) {
+        push(team, item({
+          id: `quirk-mvp-monopoly:${team}`,
+          category: 'quirk',
+          icon: '👑',
+          tier: 'rare',
+          title: `${team} 的 MVP 有 ${mvpCount} 次给了 ${mvpName}`,
+          detail: `全队 ${mvpNames.length} 次最佳里几乎都被他包了`,
+          metric: mvpCount,
+          teams: [team],
+          round,
+        }));
+      }
+    }
   }
 
   for (const bucket of buckets.values()) {
-    items.push(...pickTop(bucket, 2));
+    items.push(...pickTop(bucket, 3));
   }
 
   // 独角戏：全联赛最「靠一个人」的球队，只取最极端的那一支，免得同一句话刷屏。
@@ -827,6 +1047,31 @@ function quirkItems(played, config) {
       metric: dullest.played,
       teams: [dullest.team],
       round: lastRoundOf(matchesOfTeam(played, dullest.team)),
+    }));
+  }
+
+  // 比分复读机：同一个比分出现得最多
+  const scoreTally = new Map();
+  for (const match of played) {
+    const key = `${num(match.homeGoals)}:${num(match.awayGoals)}`;
+    const bucket = scoreTally.get(key) ?? { count: 0, teams: new Set() };
+    bucket.count += 1;
+    bucket.teams.add(match.homeTeam);
+    bucket.teams.add(match.awayTeam);
+    scoreTally.set(key, bucket);
+  }
+  const repeat = [...scoreTally.entries()].sort((left, right) => right[1].count - left[1].count)[0];
+  if (repeat && repeat[1].count >= 3) {
+    items.push(item({
+      id: `quirk-score-repeat:${repeat[0]}`,
+      category: 'quirk',
+      icon: '🔁',
+      tier: 'rare',
+      title: `本赛季已经 ${repeat[1].count} 次踢成 ${repeat[0]}`,
+      detail: '比分复读机，剧本都不带换的',
+      metric: repeat[1].count,
+      teams: [...repeat[1].teams],
+      round: lastRoundOf(played),
     }));
   }
 
