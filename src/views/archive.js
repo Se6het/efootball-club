@@ -183,12 +183,6 @@ function coachCard(profile) {
               className: 'coach-rival-record',
               text: `${rival.played} 场 ${rival.wins} 胜 ${rival.draws} 平 ${rival.losses} 负 · 进 ${rival.goalsFor} 失 ${rival.goalsAgainst}`,
             }),
-            rival.biggestMargin && rival.biggestMargin.diff !== 0
-              ? el('span', {
-                  className: 'coach-rival-margin muted',
-                  text: `最大 ${signed(rival.biggestMargin.diff)}`,
-                })
-              : null,
           ])
         )),
         profile.neverFaced.length > 0
@@ -247,7 +241,6 @@ function seasonCard(season, handlers) {
 
   const totalGoals = season.standings.reduce((sum, row) => sum + row.goalsFor, 0);
   const avgGoals = season.playedMatches > 0 ? totalGoals / season.playedMatches : 0;
-  const margin = season.h2h.biggestMargin;
 
   const roster = new Map();
   for (const row of season.standings) {
@@ -302,10 +295,6 @@ function seasonCard(season, handlers) {
       el('span', { className: 'arc-meta-item' }, [
         el('span', { className: 'arc-meta-k muted', text: '场均进球' }),
         el('span', { className: 'arc-meta-v', text: avgGoals.toFixed(1) }),
-      ]),
-      el('span', { className: 'arc-meta-item' }, [
-        el('span', { className: 'arc-meta-k muted', text: '最大分差' }),
-        el('span', { className: 'arc-meta-v', text: margin ? `${margin.score}（${Math.abs(margin.diff)}）` : '—' }),
       ]),
     ]),
     roster.size > 0
