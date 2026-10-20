@@ -449,6 +449,93 @@ tbody tr.row-bg-埃因 { --row-primary: #f2f2f2; --row-secondary: #dd1f2d; --row
 tbody tr.row-bg-费耶 { --row-primary: #ed1a3b; --row-secondary: #f2f2f2; --row-text: #ffffff; }
 tbody tr.row-bg-凯尔 { --row-primary: #018749; --row-secondary: #f2f2f2; --row-text: #ffffff; }
 tbody tr.row-bg-流浪 { --row-primary: #f2f2f2; --row-secondary: #1a3f85; --row-text: #1a2a4a; }
+tbody tr.row-bg-太妃 { --row-primary: #0a3f8f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-狐狸 { --row-primary: #0b3a8c; --row-secondary: #fdbe11; --row-text: #ffffff; }
+tbody tr.row-bg-狼队 { --row-primary: #fdb913; --row-secondary: #231f20; --row-text: #3a2a00; }
+tbody tr.row-bg-老鹰 { --row-primary: #1b458f; --row-secondary: #c4122e; --row-text: #ffffff; }
+tbody tr.row-bg-农场 { --row-primary: #f2f2f2; --row-secondary: #1a1a1a; --row-text: #1a1a2e; }
+tbody tr.row-bg-森林 { --row-primary: #d71920; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-樱桃 { --row-primary: #d71920; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-蜜蜂 { --row-primary: #e30613; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-圣徒 { --row-primary: #d71920; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-利兹 { --row-primary: #f2f2f2; --row-secondary: #1d428a; --row-text: #1a2a4a; }
+tbody tr.row-bg-谢联 { --row-primary: #e2001a; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-伯恩 { --row-primary: #6c1d45; --row-secondary: #99d6ea; --row-text: #ffffff; }
+tbody tr.row-bg-沃特 { --row-primary: #fbee23; --row-secondary: #1a1a1a; --row-text: #3a2a00; }
+tbody tr.row-bg-赫罗 { --row-primary: #cd2534; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-奥萨 { --row-primary: #d91a21; --row-secondary: #0a3463; --row-text: #ffffff; }
+tbody tr.row-bg-塞尔 { --row-primary: #8ac3ee; --row-secondary: #f2f2f2; --row-text: #12324d; }
+tbody tr.row-bg-赫塔 { --row-primary: #005999; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-阿拉 { --row-primary: #0f4f9e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-马略 { --row-primary: #e20613; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-巴列 { --row-primary: #f2f2f2; --row-secondary: #e2001a; --row-text: #1a1a2e; }
+tbody tr.row-bg-西班 { --row-primary: #0072bc; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-加的 { --row-primary: #f7d417; --row-secondary: #0a4da3; --row-text: #3a2a00; }
+tbody tr.row-bg-格拉 { --row-primary: #c8102e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-阿尔 { --row-primary: #d3212c; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-博洛 { --row-primary: #a21c26; --row-secondary: #1b2a55; --row-text: #ffffff; }
+tbody tr.row-bg-都灵 { --row-primary: #8a1e2d; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-萨索 { --row-primary: #00a752; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-热那 { --row-primary: #a01e2f; --row-secondary: #1a2a5e; --row-text: #ffffff; }
+tbody tr.row-bg-蒙扎 { --row-primary: #e30613; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-维罗 { --row-primary: #f6c500; --row-secondary: #1a2a5e; --row-text: #3a2a00; }
+tbody tr.row-bg-恩波 { --row-primary: #1462a8; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-卡利 { --row-primary: #b21e2a; --row-secondary: #1a2a5e; --row-text: #ffffff; }
+tbody tr.row-bg-莱切 { --row-primary: #f7d417; --row-secondary: #d3212c; --row-text: #3a2a00; }
+tbody tr.row-bg-门兴 { --row-primary: #f2f2f2; --row-secondary: #1a1a1a; --row-text: #1a1a2e; }
+tbody tr.row-bg-狼堡 { --row-primary: #65b32e; --row-secondary: #f2f2f2; --row-text: #12320f; }
+tbody tr.row-bg-弗赖 { --row-primary: #f2f2f2; --row-secondary: #e2001a; --row-text: #1a1a2e; }
+tbody tr.row-bg-霍芬 { --row-primary: #1c63b7; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-美因 { --row-primary: #c3141e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-奥格 { --row-primary: #ba3733; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-不莱 { --row-primary: #1d9053; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-柏林 { --row-primary: #eb1923; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-波鸿 { --row-primary: #005ca9; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-海登 { --row-primary: #e30613; --row-secondary: #1a2a5e; --row-text: #ffffff; }
+tbody tr.row-bg-尼斯 { --row-primary: #e2001a; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-朗斯 { --row-primary: #d3212c; --row-secondary: #f7c500; --row-text: #ffffff; }
+tbody tr.row-bg-雷恩 { --row-primary: #e2001a; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-南特 { --row-primary: #f7d417; --row-secondary: #00843d; --row-text: #3a2a00; }
+tbody tr.row-bg-蒙彼 { --row-primary: #0a4da3; --row-secondary: #f5820b; --row-text: #ffffff; }
+tbody tr.row-bg-图卢 { --row-primary: #5f259f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-兰斯 { --row-primary: #e2001a; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-斯特 { --row-primary: #0a4da3; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-布雷 { --row-primary: #d3212c; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-欧塞 { --row-primary: #0a4da3; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-里斯 { --row-primary: #00843d; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-布拉 { --row-primary: #d3212c; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-贝西 { --row-primary: #1a1a1a; --row-secondary: #f2f2f2; --row-text: #f2f2f2; }
+tbody tr.row-bg-费内 { --row-primary: #f7d417; --row-secondary: #0a3463; --row-text: #3a2a00; }
+tbody tr.row-bg-加拉 { --row-primary: #a90432; --row-secondary: #f7b500; --row-text: #ffffff; }
+tbody tr.row-bg-布鲁 { --row-primary: #0a4da3; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-安德 { --row-primary: #5f259f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-泽尼 { --row-primary: #0a3d91; --row-secondary: #7ac3ee; --row-text: #ffffff; }
+tbody tr.row-bg-弗拉 { --row-primary: #d3212c; --row-secondary: #1a1a1a; --row-text: #ffffff; }
+tbody tr.row-bg-帕尔 { --row-primary: #006b3f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-桑托 { --row-primary: #f2f2f2; --row-secondary: #1a1a1a; --row-text: #1a1a2e; }
+tbody tr.row-bg-博卡 { --row-primary: #f7c500; --row-secondary: #0a3463; --row-text: #3a2a00; }
+tbody tr.row-bg-河床 { --row-primary: #f2f2f2; --row-secondary: #e2001a; --row-text: #1a1a2e; }
+tbody tr.row-bg-迈阿 { --row-primary: #f7b5cd; --row-secondary: #1a1a1a; --row-text: #4a1226; }
+tbody tr.row-bg-胜利 { --row-primary: #f7c500; --row-secondary: #0a4da3; --row-text: #3a2a00; }
+tbody tr.row-bg-新月 { --row-primary: #0a4da3; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-海港 { --row-primary: #d21f2b; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-申花 { --row-primary: #1a4fa0; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-泰山 { --row-primary: #e8760e; --row-secondary: #1a1a1a; --row-text: #3a2a00; }
+tbody tr.row-bg-国安 { --row-primary: #0a8f4a; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-蓉城 { --row-primary: #d71920; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-三镇 { --row-primary: #0f5fa6; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-浙江 { --row-primary: #0f7a3d; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-津门 { --row-primary: #0a4da3; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-河南 { --row-primary: #cf1d2e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-海牛 { --row-primary: #12a0d7; --row-secondary: #f2f2f2; --row-text: #12324d; }
+tbody tr.row-bg-西海 { --row-primary: #f5c500; --row-secondary: #0a4da3; --row-text: #3a2a00; }
+tbody tr.row-bg-英博 { --row-primary: #0a3f8f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-玉昆 { --row-primary: #c8102e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-深圳 { --row-primary: #1a4fa0; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-铁人 { --row-primary: #8e1f2f; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-铜梁 { --row-primary: #cf1d2e; --row-secondary: #f2f2f2; --row-text: #ffffff; }
+tbody tr.row-bg-梅州 { --row-primary: #f5c500; --row-secondary: #1a7d3c; --row-text: #3a2a00; }
+tbody tr.row-bg-亚泰 { --row-primary: #0a4da3; --row-secondary: #f2f2f2; --row-text: #ffffff; }
 
 /* ---------- 第二轮美化：视觉层级 / 品牌顶栏 / 进度 / 奖牌 / 空态 / 弹窗 / 动效 ---------- */
 
@@ -2880,5 +2967,336 @@ tbody tr.row-medal-bronze {
 
   .news-row-cat {
     display: none;
+  }
+}
+
+/* ── 足球世界 · 档案 ───────────────────────────────────────── */
+.button.small {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.button.danger {
+  color: var(--danger);
+  border-color: rgba(192, 57, 43, 0.35);
+}
+
+.button.danger:hover {
+  background: rgba(192, 57, 43, 0.08);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.field-stack {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.field-stack .field > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.coach-picks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.coach-picks-label {
+  font-size: 12px;
+}
+
+.coach-pick {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  background: var(--panel-alt);
+  color: var(--text);
+}
+
+.coach-pick:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.coach-pick.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.archive-shell {
+  padding-bottom: 40px;
+}
+
+.archive-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.archive-panel > * {
+  margin: 0;
+}
+
+.archive-current {
+  border-left: 4px solid var(--primary);
+}
+
+.season-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.season-badge.finished {
+  color: var(--success);
+  background: #e6f6ee;
+}
+
+.season-badge.ongoing {
+  color: var(--warning);
+  background: #fbf1dc;
+}
+
+.season-list {
+  display: grid;
+  gap: 12px;
+}
+
+.season-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--panel-alt);
+  display: grid;
+  gap: 8px;
+}
+
+.season-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.season-card-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.season-ordinal {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.season-label {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.season-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.season-card-meta {
+  font-size: 13px;
+}
+
+.season-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.season-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px 4px 8px;
+  font-size: 13px;
+  background: var(--panel);
+}
+
+.season-chip.champ {
+  border-color: rgba(201, 162, 43, 0.6);
+  background: #fdf7e4;
+  font-weight: 600;
+}
+
+.season-chip-icon {
+  font-size: 13px;
+}
+
+.coach-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.coach-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  background: var(--panel-alt);
+  display: grid;
+  gap: 10px;
+}
+
+.coach-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.coach-name {
+  margin: 0;
+  font-size: 18px;
+}
+
+.coach-badges {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.coach-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--panel);
+}
+
+.coach-badge-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.coach-record {
+  font-size: 13px;
+}
+
+.coach-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.coach-drought {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.coach-clubs {
+  font-size: 12px;
+}
+
+.coach-block {
+  display: grid;
+  gap: 6px;
+}
+
+.coach-block-title {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.coach-honors,
+.coach-rivals {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.coach-rival-name {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.coach-rival-record {
+  font-variant-numeric: tabular-nums;
+}
+
+.coach-rival-margin {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.coach-never {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.fact-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.fact-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-alt);
+}
+
+.fact-icon {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.fact-main {
+  display: grid;
+  gap: 2px;
+}
+
+.fact-title {
+  font-weight: 700;
+}
+
+.fact-detail {
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .coach-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

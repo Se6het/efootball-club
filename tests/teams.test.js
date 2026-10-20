@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CLUB_META,
   canonicalTeamName,
   getTeamMeta,
   getTeamMark,
@@ -115,5 +116,94 @@ describe('canonicalTeamName', () => {
   it('keeps empty input empty', () => {
     expect(canonicalTeamName('')).toBe('');
     expect(canonicalTeamName(undefined)).toBe('');
+  });
+});
+
+describe('expanded club catalogue', () => {
+  it('carries crest ids for the newly added clubs', () => {
+    expect(teamCrestCode('埃弗顿')).toBe(45);
+    expect(teamCrestCode('赫罗纳')).toBe(547);
+    expect(teamCrestCode('博洛尼亚')).toBe(500);
+    expect(teamCrestCode('门兴格拉德巴赫')).toBe(163);
+    expect(teamCrestCode('里斯本竞技')).toBe(228);
+    expect(teamCrestCode('博卡青年')).toBe(451);
+    expect(teamCrestCode('利雅得新月')).toBe(2939);
+  });
+
+  it('resolves the new short names and nicknames', () => {
+    expect(canonicalTeamName('太妃糖')).toBe('埃弗顿');
+    expect(canonicalTeamName('圣徒')).toBe('南安普顿');
+    expect(canonicalTeamName('狼堡')).toBe('沃尔夫斯堡');
+    expect(canonicalTeamName('不莱梅')).toBe('云达不莱梅');
+    expect(canonicalTeamName('葡萄牙体育')).toBe('里斯本竞技');
+    expect(canonicalTeamName('新月')).toBe('利雅得新月');
+  });
+
+  it('exposes marks and row background classes for new clubs', () => {
+    expect(getTeamMark('门兴格拉德巴赫')).toBe('门兴');
+    expect(teamRowClass('埃弗顿')).toBe('row-bg-太妃');
+    expect(teamRowClass('博卡青年')).toBe('row-bg-博卡');
+  });
+});
+
+describe('中超 clubs', () => {
+  it('carries real crest URLs from the football-logos catalogue', () => {
+    expect(teamCrestUrl('上海海港')).toBe('https://assets.football-logos.cc/logos/china/512x512/shanghai-port.0aa038ca.png');
+    expect(teamCrestUrl('北京国安')).toMatch(/^https:\/\/assets\.football-logos\.cc\/logos\/china\/512x512\/beijing-guoan\.[0-9a-f]+\.png$/);
+    expect(teamCrestUrl('长春亚泰')).toContain('changchun-yatai');
+  });
+
+  it('resolves common Chinese short names and nicknames', () => {
+    expect(canonicalTeamName('申花')).toBe('上海申花');
+    expect(canonicalTeamName('鲁能')).toBe('山东泰山');
+    expect(canonicalTeamName('国安')).toBe('北京国安');
+    expect(canonicalTeamName('建业')).toBe('河南嵩山龙门');
+    expect(canonicalTeamName('鹏城')).toBe('深圳新鹏城');
+    expect(canonicalTeamName('铜梁')).toBe('重庆铜梁龙');
+  });
+
+  it('exposes marks and row background classes for CSL clubs', () => {
+    expect(getTeamMark('上海海港')).toBe('海港');
+    expect(getTeamMark('浙江队')).toBe('浙江');
+    expect(teamRowClass('山东泰山')).toBe('row-bg-泰山');
+    expect(teamRowClass('青岛西海岸')).toBe('row-bg-西海');
+  });
+});
+
+describe('catalogue integrity', () => {
+  const clubs = [];
+  const seen = new Set();
+  for (const meta of Object.values(CLUB_META)) {
+    if (seen.has(meta)) {
+      continue;
+    }
+    seen.add(meta);
+    clubs.push(meta);
+  }
+
+  it('lists a large catalogue of clubs', () => {
+    expect(clubs.length).toBeGreaterThanOrEqual(100);
+  });
+
+  it('gives every club a crest and a non-empty mark', () => {
+    for (const meta of clubs) {
+      const crestOk = typeof meta.crest === 'number'
+        ? meta.crest > 0
+        : typeof meta.crest === 'string' && meta.crest.startsWith('https://');
+      expect(crestOk).toBe(true);
+      expect(meta.mark.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps every club mark unique', () => {
+    const marks = clubs.map((meta) => meta.mark);
+    expect(new Set(marks).size).toBe(marks.length);
+  });
+
+  it('makes every mark typeable and resolvable back to its club', () => {
+    for (const meta of clubs) {
+      expect(CLUB_META[meta.mark]).toBe(meta);
+      expect(CLUB_META[canonicalTeamName(meta.mark)]).toBe(meta);
+    }
   });
 });

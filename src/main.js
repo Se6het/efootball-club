@@ -15,7 +15,9 @@ import { renderNewsView } from './views/news.js';
 import { renderAwardsView } from './views/awards.js';
 import { renderTeamDetailView } from './views/teamDetail.js';
 import { renderPlayerDetailView } from './views/playerDetail.js';
+import { renderArchiveView } from './views/archive.js';
 import { openMatchForm } from './views/matchForm.js';
+import { addSeason, buildSeasonRecord, loadWorld, makeSeasonId, mergeSeasons, parseWorldBackup, previousCoaches, removeSeason, saveWorld } from './coaches.js';
 import { computeRankProgression, rankTeams } from './standings.js';
 import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './form.js';
 import { computeHeadToHead } from './h2h.js';
@@ -26,6 +28,8 @@ import { buildAwardSummary, isSeasonFinished, normalizeAwardSettings, validateAw
 const app = document.querySelector('#app');
 let activeTab = 'dashboard';
 let state = loadState();
+let world = loadWorld();
+let showArchive = false;
 
 function persist(nextState) {
   state = saveState(nextState);
@@ -36,12 +40,63 @@ function persist(nextState) {
   return saveState.lastPersisted;
 }
 
+function persistWorld(nextWorld) {
+  world = saveWorld(nextWorld);
+  render();
+  if (!saveWorld.lastPersisted) {
+    showToast(saveWorld.lastError, 'error');
+  }
+  return saveWorld.lastPersisted;
+}
+
 function startLeague(nextState) {
   persist(nextState);
 }
 
+function archiveSeason({ silent = false } = {}) {
+  if (!state) {
+    return false;
+  }
+  if (!state.matches.some((match) => match.isPlayed)) {
+    if (!silent) {
+      showToast('本赛季还没有已结算的比赛，暂时无法归档', 'error');
+    }
+    return false;
+  }
+  const record = buildSeasonRecord(state, { id: makeSeasonId() });
+  const result = addSeason(world, record);
+  if (!result.added) {
+    if (!silent) {
+      showToast('归档失败：本赛季数据无法生成有效存档', 'error');
+    }
+    return false;
+  }
+  persistWorld(result.world);
+  if (!silent) {
+    showToast(result.replaced ? '已用最新结果更新世界档案' : '已归档到世界档案');
+  }
+  return true;
+}
+
+function removeArchivedSeason(seasonId) {
+  const season = world.seasons.find((item) => item.id === seasonId);
+  if (!season) {
+    return;
+  }
+  if (!window.confirm(`确定把「${season.label}」移出世界档案吗？移除后教练记录会同步更新。建议先导出。`)) {
+    return;
+  }
+  persistWorld(removeSeason(world, seasonId));
+  showToast('已移出世界档案');
+}
+
 function resetLeague() {
-  if (!window.confirm('确定重置当前赛季吗？所有赛程、比分和球员数据都会被删除。建议先导出备份。')) {
+  if (state && state.matches.some((match) => match.isPlayed)) {
+    if (window.confirm('重置前，先把本赛季的成绩归档到「足球世界 · 档案」吗？')) {
+      archiveSeason({ silent: true });
+    }
+  }
+  if (!window.confirm('确定重置当前赛季吗？所有赛程、比分和球员数据都会被删除。')) {
     return;
   }
   if (!clearState()) {
@@ -177,19 +232,44 @@ function openPlayerDetail(player) {
   });
 }
 
-function exportBackup() {
-  const data = serializeState(state);
-  const blob = new Blob([data], { type: 'application/json' });
+function downloadJson(data, filename) {
+  const blob = new Blob([typeof data === 'string' ? data : JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0, 10);
   anchor.href = url;
-  anchor.download = `efootball-league-备份-${stamp}.json`;
+  anchor.download = filename;
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function exportBackup() {
+  downloadJson(serializeState(state), `efootball-league-备份-${today()}.json`);
   showToast('已导出备份文件');
+}
+
+function exportWorld() {
+  if (world.seasons.length === 0) {
+    showToast('世界档案还是空的，没有可导出的内容', 'error');
+    return;
+  }
+  downloadJson(world, `efootball-足球世界-${today()}.json`);
+  showToast('已导出世界档案');
+}
+
+function exportSeason(seasonId) {
+  const season = world.seasons.find((item) => item.id === seasonId);
+  if (!season) {
+    return;
+  }
+  const safeLabel = season.label.replace(/[\\/:*?"<>|\s]+/g, '-');
+  downloadJson(season, `efootball-赛季-${safeLabel}-${today()}.json`);
+  showToast('已导出该赛季存档');
 }
 
 function importBackup() {
@@ -220,6 +300,78 @@ function importBackup() {
   input.click();
 }
 
+function importWorld() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      const result = parseWorldBackup(String(reader.result ?? ''));
+      if (result.error) {
+        window.alert(result.error);
+        return;
+      }
+      const merged = mergeSeasons(world, result.seasons);
+      if (merged.added === 0) {
+        showToast('这些赛季都已经在世界里了，无需重复导入', 'error');
+        return;
+      }
+      persistWorld(merged.world);
+      showToast(`已把 ${merged.added} 个赛季导入世界档案`);
+    });
+    reader.readAsText(file);
+  });
+  input.click();
+}
+
+function openArchive() {
+  showArchive = true;
+  render();
+}
+
+function closeArchive() {
+  showArchive = false;
+  render();
+}
+
+function archiveCurrent() {
+  if (!state) {
+    return null;
+  }
+  const sourceId = String(state.createdAt ?? '');
+  const existing = sourceId ? world.seasons.find((item) => item.sourceId === sourceId) : null;
+  return {
+    coachA: state.config.playerA,
+    coachB: state.config.playerB,
+    complete: isSeasonFinished(state.matches),
+    played: state.matches.filter((match) => match.isPlayed).length,
+    total: state.matches.length,
+    archived: Boolean(existing),
+    archivedPlayed: existing ? existing.playedMatches : 0,
+  };
+}
+
+function renderArchive() {
+  clear(app);
+  app.append(
+    renderArchiveView({
+      world,
+      current: archiveCurrent(),
+      onArchive: () => archiveSeason(),
+      onBack: closeArchive,
+      onExportWorld: exportWorld,
+      onImportWorld: importWorld,
+      onExportSeason: exportSeason,
+      onRemoveSeason: removeArchivedSeason,
+    })
+  );
+}
+
 function renderSetup() {
   clear(app);
   const sampleConfig = {
@@ -234,6 +386,9 @@ function renderSetup() {
       onStart: startLeague,
       sampleConfig,
       onImport: importBackup,
+      coaches: previousCoaches(world),
+      archiveCount: world.seasons.length,
+      onOpenArchive: openArchive,
     })
   );
 }
@@ -360,6 +515,7 @@ function renderLeague() {
           ]),
         ]),
         el('div', { className: 'banner-toolbar' }, [
+          el('button', { className: 'button', type: 'button', text: '档案', onClick: openArchive }),
           el('button', { className: 'button', type: 'button', text: '导出', onClick: exportBackup }),
           el('button', { className: 'button', type: 'button', text: '导入', onClick: importBackup }),
           el('button', { className: 'button', type: 'button', text: '重置', onClick: resetLeague }),
@@ -372,6 +528,10 @@ function renderLeague() {
 }
 
 function render() {
+  if (showArchive) {
+    renderArchive();
+    return;
+  }
   if (!state) {
     renderSetup();
     return;

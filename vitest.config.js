@@ -14,7 +14,9 @@ export default defineConfig({
         'src/awards.js',
         'src/news.js',
         'src/odds.js',
+        'src/coaches.js',
         'src/views/news.js',
+        'src/views/archive.js',
       ],
       thresholds: {
         lines: 80,

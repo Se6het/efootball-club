@@ -49,7 +49,7 @@ const matches = [
     homeCards: { yellow: 1, red: 0 },
     mvp: { name: '贝林厄姆', team: '皇家马德里', score: 8.6 },
   }),
-  match('m-2', 2, 1, '拜仁慕尼黑', '曼城', 3, 2, true, {
+  match('m-2', 2, 1, '拜仁慕尼黑', '上海海港', 3, 2, true, {
     homeScorers: [{ name: '凯恩', count: 2 }, { name: '穆西亚拉', count: 1 }],
     awayScorers: [{ name: '哈兰德', count: 2 }],
     homeAssists: [{ name: '凯恩', count: 1 }],
@@ -62,18 +62,18 @@ const matches = [
     awayAssists: [{ name: '贝林厄姆', count: 1 }],
     mvp: { name: '维尼修斯', team: '皇家马德里', score: 8.3 },
   }),
-  match('m-4', 4, 2, '曼城', '拜仁慕尼黑', 2, 2, true, {
+  match('m-4', 4, 2, '上海海港', '拜仁慕尼黑', 2, 2, true, {
     homeScorers: [{ name: '哈兰德', count: 2 }],
     awayScorers: [{ name: '凯恩', count: 1 }, { name: '穆西亚拉', count: 1 }],
     homeAssists: [{ name: '德布劳内', count: 1 }],
     awayAssists: [{ name: '凯恩', count: 1 }],
-    mvp: { name: '哈兰德', team: '曼城', score: 8.4 },
+    mvp: { name: '哈兰德', team: '上海海港', score: 8.4 },
   }),
   match('m-5', 5, 3, '皇家马德里', '巴塞罗那', 0, 0, false),
-  match('m-6', 6, 3, '拜仁慕尼黑', '曼城', 0, 0, false),
-  match('m-7', 7, 4, '皇家马德里', '曼城', 0, 0, false),
+  match('m-6', 6, 3, '拜仁慕尼黑', '上海海港', 0, 0, false),
+  match('m-7', 7, 4, '皇家马德里', '上海海港', 0, 0, false),
   match('m-8', 8, 4, '拜仁慕尼黑', '巴塞罗那', 0, 0, false),
-  match('m-9', 9, 5, '曼城', '皇家马德里', 0, 0, false),
+  match('m-9', 9, 5, '上海海港', '皇家马德里', 0, 0, false),
   match('m-10', 10, 5, '巴塞罗那', '拜仁慕尼黑', 0, 0, false),
 ];
 
@@ -84,7 +84,7 @@ const state = {
     playerA: '小明',
     playerB: '小红',
     teamsA: ['皇家马德里', '拜仁慕尼黑'],
-    teamsB: ['巴塞罗那', '曼城'],
+    teamsB: ['巴塞罗那', '上海海港'],
     matchesPerPair: 2,
   },
   awards: {
@@ -95,6 +95,42 @@ const state = {
 };
 
 window.localStorage.setItem('efootball-league:club:v1', JSON.stringify(state));
+
+const world = {
+  version: 1,
+  seasons: [
+    {
+      id: 's-1', sourceId: 'src-1', label: '小明 vs 小红', archivedAt: '2026-09-01T10:00:00.000Z', complete: true,
+      coaches: ['小明', '小红'], playedMatches: 4, totalMatches: 4,
+      standings: [
+        { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 4, wins: 3, draws: 0, losses: 1, goalsFor: 8, goalsAgainst: 4, goalDifference: 4, points: 9 },
+        { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false, played: 4, wins: 1, draws: 0, losses: 3, goalsFor: 4, goalsAgainst: 8, goalDifference: -4, points: 3 },
+      ],
+      awards: {
+        champion: { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+        podium: [
+          { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+          { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false },
+        ],
+        topScorers: [{ name: '维尼修斯', team: '皇家马德里', coach: '小明', goals: 5 }],
+        topAssists: [{ name: '贝林厄姆', team: '皇家马德里', coach: '小明', assists: 4 }],
+        fmvp: { name: '维尼修斯', team: '皇家马德里', coach: '小明', prize: 80 },
+      },
+      h2h: { played: 4, winsA: 3, draws: 0, winsB: 1, goalsA: 8, goalsB: 4, biggestMargin: { diff: 3, score: '4-1', coach: '小明', winner: '皇家马德里', loser: '巴塞罗那' } },
+    },
+    {
+      id: 's-2', sourceId: 'src-2', label: '小红 vs 小刚', archivedAt: '2026-10-01T10:00:00.000Z', complete: false,
+      coaches: ['小红', '小刚'], playedMatches: 2, totalMatches: 6,
+      standings: [
+        { team: '上海海港', coach: '小红', rank: 1, needsPlayoff: false, played: 2, wins: 2, draws: 0, losses: 0, goalsFor: 5, goalsAgainst: 2, goalDifference: 3, points: 6 },
+        { team: '拜仁慕尼黑', coach: '小刚', rank: 2, needsPlayoff: false, played: 2, wins: 0, draws: 0, losses: 2, goalsFor: 2, goalsAgainst: 5, goalDifference: -3, points: 0 },
+      ],
+      awards: { champion: null, podium: [], topScorers: [], topAssists: [], fmvp: null },
+      h2h: { played: 2, winsA: 2, draws: 0, winsB: 0, goalsA: 5, goalsB: 2, biggestMargin: { diff: 2, score: '3-1', coach: '小红', winner: '上海海港', loser: '拜仁慕尼黑' } },
+    },
+  ],
+};
+window.localStorage.setItem('efootball-league:world:v1', JSON.stringify(world));
 
 await import('./src/main.js');
 
@@ -151,6 +187,19 @@ goBack();
 captures['九-新闻详情'] = openTile('新闻');
 goBack();
 
+// 足球世界 · 档案：从联赛页横幅进入，再点「归档本赛季」看归档后的状态。
+const archiveButton = [...app.querySelectorAll('button')].find((button) => button.textContent.trim() === '档案');
+if (!archiveButton) throw new Error('archive button not found');
+archiveButton.click();
+captures['十-世界档案'] = app.innerHTML;
+const archiveCurrentButton = [...app.querySelectorAll('button')].find((button) => button.textContent.trim() === '归档本赛季');
+if (archiveCurrentButton) {
+  archiveCurrentButton.click();
+  captures['十一-归档后的世界档案'] = app.innerHTML;
+}
+const archiveBack = [...app.querySelectorAll('button')].find((button) => button.textContent.includes('返回'));
+if (archiveBack) archiveBack.click();
+
 const firstRender = { innerHTML: dashboardHtml };
 const tileTitles = [...firstRender.innerHTML.matchAll(/tile-title">([^<]*)</g)].map((match) => match[1]);
 console.log('\n四宫格格子顺序:', tileTitles.join(' / ') || '(none)');
@@ -163,7 +212,7 @@ for (const [name, html] of Object.entries(captures)) {
   if (/NaN/.test(html)) flags.push('含 NaN');
   if (/\[object /.test(html)) flags.push('含 [object ...]');
   report += `\n### ${name}  (${html.length} chars)${flags.length ? '  ⚠ ' + flags.join(',') : '  ✓'}\n`;
-  report += `  key markers: ` + ['tile', 'mini-versus', 'mini-fix', 'mini-row', 'mini-news', 'team-crest', 'team-link', 'player-link', 'points-chip', 'form-pill', 'h2h-chip', 'h2h-meeting', 'rank-num-medal', 'form-summary-pill', 'upcoming-row', 'row-idle', 'stat-tile-goals', 'news-view', 'news-card', 'odds-table', 'odd-value']
+  report += `  key markers: ` + ['tile', 'mini-versus', 'mini-fix', 'mini-row', 'mini-news', 'team-crest', 'team-link', 'player-link', 'points-chip', 'form-pill', 'h2h-chip', 'h2h-meeting', 'rank-num-medal', 'form-summary-pill', 'upcoming-row', 'row-idle', 'stat-tile-goals', 'news-view', 'news-card', 'odds-table', 'odd-value', 'shanghai-port', 'row-bg-海港', 'archive-panel', 'archive-current', 'season-card', 'season-badge', 'coach-card', 'coach-pick', 'fact-row', 'coach-rivals']
     .filter((marker) => html.includes(marker))
     .join(', ') + '\n';
   if (html.includes('team-avatar')) report += '  ⚠ 仍出现旧队徽外圈类 team-avatar\n';

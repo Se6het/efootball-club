@@ -11,6 +11,7 @@ const { renderPlayerDetailView } = await import('../src/views/playerDetail.js');
 const { renderScheduleView } = await import('../src/views/schedule.js');
 const { renderNewsView } = await import('../src/views/news.js');
 const { renderSetupView } = await import('../src/views/setup.js');
+const { renderArchiveView } = await import('../src/views/archive.js');
 const { renderAwardsView } = await import('../src/views/awards.js');
 const { openMatchForm } = await import('../src/views/matchForm.js');
 const { computeHeadToHead } = await import('../src/h2h.js');
@@ -445,5 +446,280 @@ describe('standings header cleanup', () => {
     const view = renderStandingsView([rankedTeam('甲队', 1)], () => {}, {});
     expect(view.querySelector('.sort-hint')).toBeNull();
     expect(textOf(view)).not.toContain('点击表头');
+  });
+});
+
+function archiveSeasonFixture(overrides = {}) {
+  return {
+    id: 's-1',
+    sourceId: 'src-1',
+    label: '小明 vs 小红',
+    archivedAt: '2026-01-01T00:00:00.000Z',
+    complete: true,
+    coaches: ['小明', '小红'],
+    playedMatches: 6,
+    totalMatches: 6,
+    standings: [
+      { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 3, wins: 3, draws: 0, losses: 0, goalsFor: 9, goalsAgainst: 1, goalDifference: 8, points: 9 },
+      { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false, played: 3, wins: 0, draws: 0, losses: 3, goalsFor: 1, goalsAgainst: 9, goalDifference: -8, points: 0 },
+    ],
+    awards: {
+      champion: { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+      podium: [
+        { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+        { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false },
+      ],
+      topScorers: [{ name: '张三', team: '皇家马德里', coach: '小明', goals: 5 }],
+      topAssists: [{ name: '王五', team: '皇家马德里', coach: '小明', assists: 3 }],
+      fmvp: null,
+    },
+    h2h: { played: 3, winsA: 3, draws: 0, winsB: 0, goalsA: 9, goalsB: 1, biggestMargin: { diff: 5, score: '5:0', coach: '小明', winner: '皇家马德里', loser: '巴塞罗那' } },
+    ...overrides,
+  };
+}
+
+describe('archive view', () => {
+  it('renders empty states when the world has no seasons yet', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const text = textOf(view);
+    expect(text).toContain('足球世界 · 档案');
+    expect(text).toContain('世界档案还是空的');
+    expect(text).toContain('还没有教练');
+    expect(view.querySelectorAll('.season-card').length).toBe(0);
+    expect(text).not.toContain('[object ');
+  });
+
+  it('lists every season in the world with its champion and awards', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const cards = view.querySelectorAll('.season-card');
+    expect(cards).toHaveLength(1);
+    const text = textOf(cards[0]);
+    expect(text).toContain('第 1 赛季');
+    expect(text).toContain('小明 vs 小红');
+    expect(text).toContain('已结束');
+    expect(text).toContain('冠军 皇家马德里（小明）');
+    expect(text).toContain('张三');
+    expect(text).toContain('2026-01-01');
+    expect(text).not.toContain('undefined');
+  });
+
+  it('marks unfinished seasons and shows a waiting-champion placeholder', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [archiveSeasonFixture({
+          complete: false,
+          playedMatches: 2,
+          totalMatches: 6,
+          awards: { champion: null, podium: [], topScorers: [], topAssists: [], fmvp: null },
+        })],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const text = textOf(view.querySelector('.season-card'));
+    expect(text).toContain('赛季未完');
+    expect(text).toContain('尚未决出冠军');
+  });
+
+  it('falls back to a placeholder when the archived date is missing', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture({ archivedAt: '' })] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    expect(textOf(view.querySelector('.season-card'))).toContain('归档于 未知日期');
+  });
+
+  it('notes a coach who has not coached any settled match yet', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [archiveSeasonFixture({
+          complete: false,
+          playedMatches: 0,
+          standings: [
+            { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 },
+            { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 },
+          ],
+          awards: { champion: null, podium: [], topScorers: [], topAssists: [], fmvp: null },
+          h2h: { played: 0, winsA: 0, draws: 0, winsB: 0, goalsA: 0, goalsB: 0, biggestMargin: null },
+        })],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    expect(textOf(view)).toContain('尚未执教过任何已结算比赛');
+  });
+
+  it('records coach honours, head-to-head and never-faced rivals', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [
+          archiveSeasonFixture(),
+          archiveSeasonFixture({
+            id: 's-2',
+            sourceId: 'src-2',
+            archivedAt: '2026-02-01T00:00:00.000Z',
+            coaches: ['小红', '小刚'],
+            standings: [
+              { team: '曼城', coach: '小刚', rank: 1, needsPlayoff: false, played: 3, wins: 2, draws: 1, losses: 0, goalsFor: 6, goalsAgainst: 0, goalDifference: 6, points: 7 },
+              { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false, played: 3, wins: 0, draws: 1, losses: 2, goalsFor: 0, goalsAgainst: 6, goalDifference: -6, points: 1 },
+            ],
+            awards: { champion: null, podium: [], topScorers: [], topAssists: [], fmvp: null },
+            h2h: { played: 3, winsA: 0, draws: 1, winsB: 2, goalsA: 0, goalsB: 6, biggestMargin: null },
+          }),
+        ],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+
+    const coachCards = view.querySelectorAll('.coach-card');
+    expect(coachCards).toHaveLength(3);
+
+    const ming = coachCards.find((card) => textOf(card.querySelector('.coach-name')) === '小明');
+    const mingText = textOf(ming);
+    expect(mingText).toContain('带 皇家马德里 夺冠');
+    expect(mingText).toContain('金靴：张三');
+    expect(mingText).toContain('对 小红');
+    expect(mingText).toContain('从未交手：小刚');
+    expect(mingText).not.toContain('[object ');
+
+    const gang = coachCards.find((card) => textOf(card.querySelector('.coach-name')) === '小刚');
+    expect(textOf(gang)).toContain('暂未获得荣誉');
+  });
+
+  it('renders world records and the current-season panel', () => {
+    const archived = [];
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      current: { coachA: '小明', coachB: '小红', complete: false, played: 4, total: 6, archived: false, archivedPlayed: 0 },
+      onArchive: () => archived.push(true),
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+
+    const current = view.querySelector('.archive-current');
+    expect(textOf(current)).toContain('本赛季（未归档）');
+    expect(textOf(current)).toContain('4 / 6 场已结算');
+    const archiveButton = view.querySelectorAll('button').find((button) => textOf(button) === '归档本赛季');
+    expect(archiveButton).toBeTruthy();
+    archiveButton.click();
+    expect(archived).toHaveLength(1);
+
+    expect(view.querySelectorAll('.fact-row').length).toBeGreaterThan(0);
+    expect(textOf(view)).toContain('世界之最');
+  });
+
+  it('disables the archive button once the season is already captured', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      current: { coachA: '小明', coachB: '小红', complete: true, played: 6, total: 6, archived: true, archivedPlayed: 6 },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const button = view.querySelectorAll('button').find((item) => textOf(item) === '本赛季已归档');
+    expect(button).toBeTruthy();
+    expect(String(button.getAttribute('disabled'))).toBe('true');
+    expect(textOf(view.querySelector('.archive-current'))).toContain('本赛季（已归档）');
+  });
+
+  it('offers an update when the archived season has new results', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      current: { coachA: '小明', coachB: '小红', complete: false, played: 5, total: 6, archived: true, archivedPlayed: 4 },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    expect(textOf(view.querySelectorAll('button').find((item) => textOf(item) === '更新归档'))).toBeTruthy();
+  });
+
+  it('exports and removes seasons through the toolbar handlers', () => {
+    const exported = [];
+    const removed = [];
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: (id) => exported.push(id),
+      onRemoveSeason: (id) => removed.push(id),
+    });
+    const buttons = view.querySelectorAll('button');
+    buttons.find((button) => textOf(button) === '导出').click();
+    buttons.find((button) => textOf(button) === '移除').click();
+    expect(exported).toEqual(['s-1']);
+    expect(removed).toEqual(['s-1']);
+  });
+});
+
+describe('setup coach history', () => {
+  it('offers previous coaches as clickable pills', () => {
+    const view = renderSetupView({ onStart: () => {}, coaches: ['小明', '小红'] });
+    const picks = view.querySelectorAll('.coach-pick');
+    // 双方各有一排同样的胶囊。
+    expect(picks.map(textOf)).toEqual(['小明', '小红', '小明', '小红']);
+    picks[0].click();
+    expect(view.querySelectorAll('input')[0].getAttribute('value')).toBe('小明');
+  });
+
+  it('links to the world archive with its season count', () => {
+    const opened = [];
+    const view = renderSetupView({ onStart: () => {}, coaches: [], archiveCount: 3, onOpenArchive: () => opened.push(true) });
+    const button = view.querySelectorAll('button').find((item) => textOf(item).includes('档案'));
+    expect(textOf(button)).toContain('3');
+    button.click();
+    expect(opened).toHaveLength(1);
+  });
+
+  it('hides the coach pills before any season has been archived', () => {
+    const view = renderSetupView({ onStart: () => {}, coaches: [] });
+    expect(view.querySelectorAll('.coach-pick').length).toBe(0);
   });
 });

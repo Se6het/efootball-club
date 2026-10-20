@@ -50,7 +50,7 @@ function buildPrizeInputs(prizes, onChange) {
   ]);
 }
 
-export function renderSetupView({ onStart, initialConfig = null, sampleConfig = null, error = '', onImport }) {
+export function renderSetupView({ onStart, initialConfig = null, sampleConfig = null, error = '', onImport, coaches = [], archiveCount = 0, onOpenArchive }) {
   const root = el('div', { className: 'grid-two' });
   const leftTeams = initialConfig?.teamsA ?? [''];
   const rightTeams = initialConfig?.teamsB ?? [''];
@@ -73,32 +73,45 @@ export function renderSetupView({ onStart, initialConfig = null, sampleConfig = 
 
   const errorBox = el('div', { className: 'error', text: error });
 
+  // 教练名字输入 + 已有的教练胶囊：点一下直接沿用之前的教练，想换人就照常输新名字。
+  const coachField = (label, key) => {
+    const field = el('div', { className: 'field-stack' }, [
+      el('label', { className: 'field' }, [
+        el('span', { text: label }),
+        el('input', {
+          type: 'text',
+          value: state[key],
+          onInput: (event) => {
+            state[key] = event.target.value;
+          },
+        }),
+      ]),
+    ]);
+    if (coaches.length > 0) {
+      field.append(el('div', { className: 'coach-picks' }, [
+        el('span', { className: 'coach-picks-label muted', text: '已有教练：' }),
+        ...coaches.map((name) => el('button', {
+          className: name === state[key].trim() ? 'coach-pick active' : 'coach-pick',
+          type: 'button',
+          text: name,
+          onClick: () => {
+            state[key] = name;
+            render();
+          },
+        })),
+      ]));
+    }
+    return field;
+  };
+
   const render = () => {
     clear(root);
     root.append(
       el('div', { className: 'panel' }, [
         el('h2', { text: '赛前配置' }),
         el('div', { className: 'field-grid' }, [
-          el('label', { className: 'field' }, [
-            el('span', { text: '玩家 A 名称' }),
-            el('input', {
-              type: 'text',
-              value: state.playerA,
-              onInput: (event) => {
-                state.playerA = event.target.value;
-              },
-            }),
-          ]),
-          el('label', { className: 'field' }, [
-            el('span', { text: '玩家 B 名称' }),
-            el('input', {
-              type: 'text',
-              value: state.playerB,
-              onInput: (event) => {
-                state.playerB = event.target.value;
-              },
-            }),
-          ]),
+          coachField('玩家 A 名称', 'playerA'),
+          coachField('玩家 B 名称', 'playerB'),
         ]),
         el('div', { className: 'field-grid' }, [
           el('label', { className: 'field' }, [
@@ -171,6 +184,14 @@ export function renderSetupView({ onStart, initialConfig = null, sampleConfig = 
             : null,
           onImport
             ? el('button', { className: 'button', type: 'button', text: '导入备份', onClick: onImport })
+            : null,
+          onOpenArchive
+            ? el('button', {
+                className: 'button',
+                type: 'button',
+                text: archiveCount > 0 ? `足球世界 · 档案（${archiveCount}）` : '足球世界 · 档案',
+                onClick: onOpenArchive,
+              })
             : null,
         ]),
       ]),
