@@ -290,7 +290,8 @@ function standingsBlock(season) {
   ]);
 }
 
-// 赛季卡片：冠军 + 前三 + 金靴 / 助攻王 / FMVP，再附上整张积分榜。
+// 赛季卡片：折叠块。summary 上只放「第几赛季 + 冠军 + 结算进度」，
+// 前三、金靴 / 助攻王 / FMVP 与整张积分榜都收进 body，赛季再多也不用一路往下翻。
 function seasonCard(season, handlers) {
   const champion = season.awards.champion;
   const podium = season.awards.podium ?? [];
@@ -309,49 +310,55 @@ function seasonCard(season, handlers) {
     el('span', { text }),
   ]);
 
-  return el('article', { className: 'season-card' }, [
-    el('div', { className: 'season-card-head' }, [
-      el('h3', { className: 'season-card-title' }, [
-        el('span', { className: 'season-ordinal', text: `第 ${season.ordinal} 赛季` }),
-        el('span', { className: 'season-label muted', text: season.label }),
+  const headline = champion
+    ? el('span', { className: 'season-champ' }, [
+        el('span', { className: 'season-champ-icon', text: '🏆' }),
+        teamBadge(champion.team),
+        el('span', { className: 'season-champ-text', text: `${champion.team}（${champion.coach}）` }),
+      ])
+    : el('span', { className: 'season-champ is-pending muted', text: season.complete ? '名次待加赛' : '尚未决出冠军' });
+
+  return el('details', { className: 'season-card' }, [
+    el('summary', { className: 'season-summary' }, [
+      el('div', { className: 'season-summary-main' }, [
+        el('div', { className: 'season-heading' }, [
+          el('span', { className: 'season-ordinal', text: `第 ${season.ordinal} 赛季` }),
+          el('span', { className: 'season-label muted', text: season.label }),
+        ]),
+        headline,
       ]),
-      el('div', { className: 'season-card-actions' }, [
+      el('div', { className: 'season-summary-side' }, [
         el('span', {
           className: season.complete ? 'season-badge finished' : 'season-badge ongoing',
           text: season.complete ? '已结束' : '赛季未完',
         }),
+        el('span', { className: 'season-progress muted', text: `${season.playedMatches} / ${season.totalMatches} 场 · 归档于 ${formatDate(season.archivedAt)}` }),
+      ]),
+    ]),
+    el('div', { className: 'season-detail' }, [
+      el('div', { className: 'season-card-body' }, [
+        runnerUp ? chip('🥈', `亚军 ${runnerUp.team}（${runnerUp.coach}）`, runnerUp.team) : null,
+        third ? chip('🥉', `季军 ${third.team}（${third.coach}）`, third.team) : null,
+        boots ? chip('👟', `${boots.name}（${boots.team}，${boots.goals} 球）`, boots.team) : null,
+        assists ? chip('🎯', `${assists.name}（${assists.team}，${assists.assists} 次）`, assists.team) : null,
+        fmvp ? chip('⭐', `FMVP ${fmvp.name}（${fmvp.team}，${fmvp.coach}）`, fmvp.team) : null,
+      ]),
+      el('div', { className: 'arc-meta-row' }, [
+        el('span', { className: 'arc-meta-item' }, [
+          el('span', { className: 'arc-meta-k muted', text: '总进球' }),
+          el('span', { className: 'arc-meta-v', text: String(totalGoals) }),
+        ]),
+        el('span', { className: 'arc-meta-item' }, [
+          el('span', { className: 'arc-meta-k muted', text: '场均进球' }),
+          el('span', { className: 'arc-meta-v', text: avgGoals.toFixed(1) }),
+        ]),
+      ]),
+      standingsBlock(season),
+      el('div', { className: 'season-card-actions' }, [
         el('button', { className: 'button small', type: 'button', text: '导出', onClick: () => handlers.onExportSeason(season.id) }),
         el('button', { className: 'button small danger', type: 'button', text: '移除', onClick: () => handlers.onRemoveSeason(season.id) }),
       ]),
     ]),
-    el('p', {
-      className: 'season-card-meta muted',
-      text: `${season.playedMatches} / ${season.totalMatches} 场已结算 · 归档于 ${formatDate(season.archivedAt)}`,
-    }),
-    el('div', { className: 'season-card-body' }, [
-      champion
-        ? el('span', { className: 'season-chip champ' }, [
-            teamBadge(champion.team),
-            el('span', { text: `冠军 ${champion.team}（${champion.coach}）` }),
-          ])
-        : el('span', { className: 'season-chip muted', text: season.complete ? '名次待加赛' : '尚未决出冠军' }),
-      runnerUp ? chip('🥈', `亚军 ${runnerUp.team}（${runnerUp.coach}）`, runnerUp.team) : null,
-      third ? chip('🥉', `季军 ${third.team}（${third.coach}）`, third.team) : null,
-      boots ? chip('👟', `${boots.name}（${boots.team}，${boots.goals} 球）`, boots.team) : null,
-      assists ? chip('🎯', `${assists.name}（${assists.team}，${assists.assists} 次）`, assists.team) : null,
-      fmvp ? chip('⭐', `FMVP ${fmvp.name}（${fmvp.team}，${fmvp.coach}）`, fmvp.team) : null,
-    ]),
-    el('div', { className: 'arc-meta-row' }, [
-      el('span', { className: 'arc-meta-item' }, [
-        el('span', { className: 'arc-meta-k muted', text: '总进球' }),
-        el('span', { className: 'arc-meta-v', text: String(totalGoals) }),
-      ]),
-      el('span', { className: 'arc-meta-item' }, [
-        el('span', { className: 'arc-meta-k muted', text: '场均进球' }),
-        el('span', { className: 'arc-meta-v', text: avgGoals.toFixed(1) }),
-      ]),
-    ]),
-    standingsBlock(season),
   ]);
 }
 
@@ -383,18 +390,6 @@ function currentPanel(current, onArchive) {
   ]);
 }
 
-function overviewPanel(records) {
-  const totalGoals = records.coaches.reduce((sum, profile) => sum + profile.goalsFor, 0);
-  const avgGoals = records.stats.matches > 0 ? (totalGoals / records.stats.matches).toFixed(1) : '0.0';
-  return el('section', { className: 'arc-overview' }, [
-    statTile('赛季', String(records.stats.seasons)),
-    statTile('教练', String(records.stats.coaches)),
-    statTile('已结算比赛', String(records.stats.matches)),
-    statTile('世界总进球', String(totalGoals)),
-    statTile('场均进球', avgGoals),
-  ]);
-}
-
 export function renderArchiveView({ world, current = null, onArchive, onBack, onExportWorld, onImportWorld, onExportSeason, onRemoveSeason }) {
   const records = computeCoachRecords(world);
   const handlers = { onExportSeason, onRemoveSeason };
@@ -418,32 +413,33 @@ export function renderArchiveView({ world, current = null, onArchive, onBack, on
       ]),
     ]),
 
-    records.stats.seasons > 0 ? overviewPanel(records) : null,
-
     currentPanel(current, onArchive),
 
-    el('section', { className: 'archive-panel' }, [
-      el('div', { className: 'panel-head' }, [
-        el('h2', { text: '世界里的赛季' }),
-        el('span', { className: 'muted', text: `${records.seasons.length} 个档` }),
+    // 板块并列：赛季与教练各占一列，各自折叠，点开才展开细节；世界之最横跨整行。
+    el('div', { className: 'archive-columns' }, [
+      el('section', { className: 'archive-panel archive-seasons' }, [
+        el('div', { className: 'panel-head' }, [
+          el('h2', { text: '世界里的赛季' }),
+          el('span', { className: 'muted', text: `${records.seasons.length} 个档` }),
+        ]),
+        records.seasons.length > 0
+          ? el('div', { className: 'season-list' }, records.seasons.map((season) => seasonCard(season, handlers)))
+          : emptyState('🗂️', '世界档案还是空的', '打完一个赛季后，点上面的「归档本赛季」把成绩收进世界'),
       ]),
-      records.seasons.length > 0
-        ? el('div', { className: 'season-list' }, records.seasons.map((season) => seasonCard(season, handlers)))
-        : emptyState('🗂️', '世界档案还是空的', '打完一个赛季后，点上面的「归档本赛季」把成绩收进世界'),
-    ]),
 
-    el('section', { className: 'archive-panel' }, [
-      el('div', { className: 'panel-head' }, [
-        el('h2', { text: '教练记录' }),
-        el('span', { className: 'muted', text: `${records.coaches.length} 位教练` }),
+      el('section', { className: 'archive-panel archive-coaches' }, [
+        el('div', { className: 'panel-head' }, [
+          el('h2', { text: '教练记录' }),
+          el('span', { className: 'muted', text: `${records.coaches.length} 位教练` }),
+        ]),
+        records.coaches.length > 0
+          ? el('div', { className: 'coach-grid' }, records.coaches.map(coachCard))
+          : emptyState('🧑‍🏫', '还没有教练', '归档第一个赛季后，这里会开始记录每位教练的荣誉与交手'),
       ]),
-      records.coaches.length > 0
-        ? el('div', { className: 'coach-grid' }, records.coaches.map(coachCard))
-        : emptyState('🧑‍🏫', '还没有教练', '归档第一个赛季后，这里会开始记录每位教练的荣誉与交手'),
     ]),
 
     records.facts.length > 0
-      ? el('section', { className: 'archive-panel' }, [
+      ? el('section', { className: 'archive-panel archive-facts' }, [
           el('div', { className: 'panel-head' }, [el('h2', { text: '世界之最' })]),
           el('ul', { className: 'fact-list' }, records.facts.map((fact) =>
             el('li', { className: 'fact-row' }, [

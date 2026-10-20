@@ -513,7 +513,7 @@ describe('archive view', () => {
     expect(text).toContain('第 1 赛季');
     expect(text).toContain('小明 vs 小红');
     expect(text).toContain('已结束');
-    expect(text).toContain('冠军 皇家马德里（小明）');
+    expect(text).toContain('皇家马德里（小明）');
     expect(text).toContain('张三');
     expect(text).toContain('2026-01-01');
     expect(text).not.toContain('undefined');
@@ -789,11 +789,51 @@ describe('archive view', () => {
       onRemoveSeason: () => {},
     });
     const card = view.querySelector('.season-card');
-    // 冠军 chip 自带一枚队徽。（测试 DOM 只支持简单选择器，这里用 class 过滤。）
-    const chips = card.querySelectorAll('.season-chip');
-    const champChip = chips.find((chip) => String(chip.className).includes('champ'));
-    expect(champChip).toBeTruthy();
-    expect(champChip.querySelectorAll('img').length).toBe(1);
+    // 摘要里的冠军一行自带一枚队徽，冠军不用展开就能看到。
+    const champ = card.querySelector('.season-summary').querySelector('.season-champ');
+    expect(champ).toBeTruthy();
+    expect(champ.querySelectorAll('img').length).toBe(1);
+  });
+
+  it('folds season cards so long worlds do not scroll forever', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const card = view.querySelector('.season-card');
+    expect(card.tagName).toBe('DETAILS');
+    expect(card.getAttribute('open')).toBeUndefined();
+    const summary = card.querySelector('.season-summary');
+    expect(summary.tagName).toBe('SUMMARY');
+    expect(textOf(summary)).toContain('第 1 赛季');
+    expect(textOf(summary)).toContain('皇家马德里（小明）');
+    // 细节（奖项、积分榜）折叠在 summary 之外。
+    expect(summary.querySelector('.season-table')).toBeNull();
+    expect(card.querySelector('.season-detail').querySelector('.season-table')).toBeTruthy();
+  });
+
+  it('lays the archive out as parallel panels with no overview banner', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const columns = view.querySelector('.archive-columns');
+    expect(columns).toBeTruthy();
+    expect(columns.querySelector('.archive-seasons')).toBeTruthy();
+    expect(columns.querySelector('.archive-coaches')).toBeTruthy();
+    // 顶部那排总进球 / 总场次的大数字整块删掉了。
+    expect(view.querySelector('.arc-overview')).toBeNull();
+    expect(view.querySelectorAll('.arc-overview').length).toBe(0);
   });
 
   it('enriches coach cards with highlight stats, a form bar and a season log', () => {
@@ -806,9 +846,6 @@ describe('archive view', () => {
       onExportSeason: () => {},
       onRemoveSeason: () => {},
     });
-    expect(view.querySelector('.arc-overview').querySelectorAll('.arc-tile')).toHaveLength(5);
-    expect(textOf(view)).toContain('世界总进球');
-
     const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
     expect(ming.querySelector('.arc-stat-grid').querySelectorAll('.arc-tile')).toHaveLength(4);
     expect(ming.querySelector('.arc-wdl')).toBeTruthy();

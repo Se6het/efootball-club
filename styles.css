@@ -3055,11 +3055,18 @@ tbody tr.row-medal-bronze {
   border-left: 5px solid var(--primary);
 }
 
-/* 世界总览：一排大数字 */
-.arc-overview {
+/* 板块并列：赛季 / 教练各占一列，世界之最横跨整行 */
+.archive-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 1080px) {
+  .archive-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .arc-tile {
@@ -3109,28 +3116,64 @@ tbody tr.row-medal-bronze {
 
 .season-list {
   display: grid;
-  gap: 16px;
-}
-
-.season-card {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px 22px;
-  background: var(--panel-alt);
-  display: grid;
   gap: 14px;
 }
 
-.season-card-head {
+/* 赛季卡本身是折叠块：summary 一眼看清第几赛季、冠军与进度，细节点开再看。 */
+.season-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: var(--panel-alt);
+}
+
+.season-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
+  position: relative;
+  padding-right: 26px;
+  cursor: pointer;
+  list-style: none;
 }
 
-.season-card-title {
-  margin: 0;
+.season-summary::-webkit-details-marker {
+  display: none;
+}
+
+.season-summary::marker {
+  content: '';
+}
+
+.season-summary::after {
+  content: '▾';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.season-card[open] > .season-summary::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.season-summary:hover .season-ordinal {
+  color: var(--primary);
+}
+
+.season-summary-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.season-heading {
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -3148,14 +3191,46 @@ tbody tr.row-medal-bronze {
   font-weight: 400;
 }
 
+.season-champ {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.season-champ .team-crest {
+  --s: 22px;
+}
+
+.season-champ.is-pending {
+  font-weight: 400;
+}
+
+.season-summary-side {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  text-align: right;
+}
+
+.season-progress {
+  font-size: 13px;
+}
+
+.season-detail {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+
 .season-card-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-}
-
-.season-card-meta {
-  font-size: 14px;
 }
 
 .season-card-body {
@@ -3644,13 +3719,13 @@ tbody tr.row-medal-bronze {
 }
 
 .season-table {
-  min-width: 620px;
+  min-width: 560px;
   font-size: 13px;
 }
 
 .season-table th,
 .season-table td {
-  padding: 7px 8px;
+  padding: 6px 7px;
   text-align: center;
   vertical-align: middle;
 }
