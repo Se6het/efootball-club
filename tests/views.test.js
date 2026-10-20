@@ -613,24 +613,45 @@ describe('archive view', () => {
 
     const ming = coachCards.find((card) => textOf(card.querySelector('.coach-name')) === '小明');
     const mingText = textOf(ming);
-    expect(mingText).toContain('第 1 赛季 带');
+    expect(mingText).toContain('第 1 赛季');
     expect(mingText).toContain('皇家马德里');
-    expect(mingText).toContain('夺冠');
-    expect(mingText).toContain('金靴');
-    expect(mingText).toContain('张三');
     expect(mingText).toContain('对 小红');
     expect(mingText).toContain('从未交手：小刚');
     expect(mingText).not.toContain('[object ');
 
-    // 荣誉栏是一块独立面板，每条荣誉都带上球队队徽。
+    // 荣誉栏只认冠亚季：球员奖项（金靴/助攻王/FMVP）不再挂在教练名下。
     const honors = ming.querySelector('.arc-honors');
     expect(honors).toBeTruthy();
-    const honorRows = honors.querySelectorAll('.coach-honor');
-    expect(honorRows).toHaveLength(3);
-    expect(honorRows[0].querySelectorAll('img').length).toBe(1);
+    const titleRows = honors.querySelectorAll('.honor-title');
+    expect(titleRows).toHaveLength(1);
+    expect(titleRows[0].querySelectorAll('img').length).toBe(1);
+    expect(textOf(honors)).toContain('夺冠率');
+    expect(textOf(honors)).not.toContain('金靴');
+    expect(mingText).not.toContain('FMVP');
 
     const gang = coachCards.find((card) => textOf(card.querySelector('.coach-name')) === '小刚');
-    expect(textOf(gang)).toContain('暂未获得荣誉');
+    expect(textOf(gang)).toContain('暂无冠亚季军');
+  });
+
+  it('folds every coach card and keeps the glanceable part in the summary', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const card = view.querySelector('.coach-card');
+    expect(card.tagName).toBe('DETAILS');
+    expect(card.getAttribute('open')).toBeUndefined();
+    const summary = card.querySelector('.coach-head');
+    expect(summary.tagName).toBe('SUMMARY');
+    expect(textOf(summary)).toContain('小明');
+    // 详情（荣誉、履历、交手）折叠在 summary 之外。
+    expect(summary.querySelector('.arc-honors')).toBeNull();
+    expect(card.querySelector('.coach-body').querySelector('.arc-honors')).toBeTruthy();
   });
 
   it('renders world records and the current-season panel', () => {
@@ -708,7 +729,7 @@ describe('archive view', () => {
     expect(removed).toEqual(['s-1']);
   });
 
-  it('shows the podium, FMVP, coach roster and season stats on a season card', () => {
+  it('shows the podium, FMVP, full standings and season stats on a season card', () => {
     const view = renderArchiveView({
       world: {
         version: 1,
@@ -745,14 +766,16 @@ describe('archive view', () => {
     expect(text).toContain('FMVP 张三（皇家马德里，小明）');
     expect(text).toContain('总进球');
     expect(text).not.toContain('undefined');
-    const roster = card.querySelectorAll('.arc-roster-row');
-    expect(roster).toHaveLength(2);
-    // 球队改成队徽 + 队名，徽章图在 roster 行里。
-    expect(roster[0].querySelectorAll('.arc-team')).toHaveLength(2);
-    expect(roster[0].querySelectorAll('img').length).toBe(2);
-    expect(textOf(roster[0])).toContain('皇家马德里');
-    expect(textOf(roster[0])).toContain('曼城');
-    expect(textOf(roster[1])).toContain('巴塞罗那');
+    // 过往赛季不再只留前三：整张积分榜都摆出来。
+    expect(text).toContain('全部名次');
+    expect(card.querySelectorAll('.arc-roster-row')).toHaveLength(0);
+    const body = card.querySelector('.season-table').querySelector('tbody');
+    const rows = body.querySelectorAll('tr');
+    expect(rows).toHaveLength(3);
+    expect(textOf(rows[0])).toContain('皇家马德里');
+    expect(textOf(rows[0])).toContain('小明');
+    expect(rows[0].querySelectorAll('img').length).toBe(1);
+    expect(textOf(rows[2])).toContain('巴塞罗那');
   });
 
   it('puts a crest next to every team it names in the season card', () => {
@@ -787,7 +810,7 @@ describe('archive view', () => {
     expect(textOf(view)).toContain('世界总进球');
 
     const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
-    expect(ming.querySelector('.arc-stat-grid').querySelectorAll('.arc-tile')).toHaveLength(5);
+    expect(ming.querySelector('.arc-stat-grid').querySelectorAll('.arc-tile')).toHaveLength(4);
     expect(ming.querySelector('.arc-wdl')).toBeTruthy();
     const log = ming.querySelector('.arc-season-log').querySelectorAll('.arc-log-row');
     expect(log).toHaveLength(1);

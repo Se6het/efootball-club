@@ -47,59 +47,62 @@ function teamChipList(teams) {
   return nodes;
 }
 
-// 教练荣誉的结构化条目：奖杯图标 + 说明 + 带徽章的球队（+ 尾巴，如球员与数据）。
-function honorEntries(profile) {
-  const rows = [];
-  const push = (icon, lead, teams, tail) => rows.push({ icon, lead, teams, tail });
-  for (const item of profile.titles) push('🏆', `${item.seasonLabel} 带`, [item.team], '夺冠');
-  for (const item of profile.sweeps) push('🥇', `${item.seasonLabel} 包揽前三`, item.teams, '');
-  for (const item of profile.runnerUps) push('🥈', `${item.seasonLabel} 亚军`, [item.team], '');
-  for (const item of profile.thirds) push('🥉', `${item.seasonLabel} 季军`, [item.team], '');
-  for (const item of profile.goldenBoots) push('👟', `${item.seasonLabel} 金靴`, [item.team], `${item.player} · ${item.goals} 球`);
-  for (const item of profile.assistCrowns) push('🎯', `${item.seasonLabel} 助攻王`, [item.team], `${item.player} · ${item.assists} 助攻`);
-  for (const item of profile.fmvps) push('⭐', `${item.seasonLabel} FMVP`, [item.team], item.player);
-  return rows;
+function seasonNumber(label) {
+  return String(label).replace(/^第\s*/, '').replace(/\s*赛季$/, '');
 }
 
-// 荣誉栏：单独一块醒目的面板，放在教练卡靠上的位置。
+// 荣誉栏：只认冠亚季。冠军逐季单列、金框高亮——每个冠军都是实打实的成绩，
+// 不跟亚军季军摆在同一行；亚军季军收成底部一行次要文字，不影响冠军的分量。
 function honorBlock(profile) {
-  const entries = honorEntries(profile);
+  const sweepIds = new Set(profile.sweeps.map((item) => item.seasonId));
+
+  const titleRows = profile.titles.map((item) =>
+    el('li', { className: 'honor-title' }, [
+      el('span', { className: 'honor-cup', text: '🏆' }),
+      el('span', { className: 'honor-title-season', text: item.seasonLabel }),
+      teamChip(item.team),
+      sweepIds.has(item.seasonId) ? el('span', { className: 'honor-sweep', text: '包揽前三' }) : null,
+    ])
+  );
+
+  const minorItem = (icon, label, items) => el('span', { className: 'honor-minor-item' }, [
+    el('span', { className: 'honor-minor-icon', text: icon }),
+    el('span', { text: `${label} ${items.length} 次` }),
+    el('span', { className: 'honor-minor-seasons muted', text: items.map((item) => seasonNumber(item.seasonLabel)).join('、') }),
+  ]);
+
+  const minor = [];
+  if (profile.runnerUps.length > 0) minor.push(minorItem('🥈', '亚军', profile.runnerUps));
+  if (profile.thirds.length > 0) minor.push(minorItem('🥉', '季军', profile.thirds));
+
   return el('div', { className: 'arc-honors' }, [
     el('div', { className: 'arc-honors-head' }, [
       el('span', { className: 'arc-honors-title', text: '荣誉' }),
-      entries.length > 0 ? el('span', { className: 'arc-honors-count', text: `${entries.length} 项` }) : null,
+      profile.completeSeasons > 0
+        ? el('span', { className: 'arc-honors-rate', text: `夺冠率 ${percentOf(profile.titleRate)}` })
+        : null,
     ]),
-    entries.length > 0
-      ? el('ul', { className: 'coach-honors' }, entries.map((entry) =>
-          el('li', { className: 'coach-honor' }, [
-            el('span', { className: 'honor-medal', text: entry.icon }),
-            el('span', { className: 'honor-body' }, [
-              el('span', { className: 'honor-lead', text: entry.lead }),
-              ...teamChipList(entry.teams),
-              entry.tail ? el('span', { className: 'honor-tail muted', text: entry.tail }) : null,
-            ]),
-          ])
-        ))
-      : el('p', { className: 'coach-honors-empty muted', text: '暂无冠军、奖项记录' }),
+    titleRows.length > 0
+      ? el('ul', { className: 'honor-titles' }, titleRows)
+      : el('p', { className: 'honor-none muted', text: '尚未夺冠' }),
+    minor.length > 0 ? el('div', { className: 'honor-minor' }, minor) : null,
   ]);
 }
 
+// 教练名旁的速览徽章：只看冠亚季，冠军用金底加重。
 function badgeRow(profile) {
   const badges = [
     ['🏆', profile.titlesCount, '冠军'],
     ['🥈', profile.runnerUpCount, '亚军'],
     ['🥉', profile.thirdCount, '季军'],
-    ['👟', profile.goldenBootCount, '金靴'],
-    ['🎯', profile.assistCrownCount, '助攻王'],
-    ['⭐', profile.fmvpCount, 'FMVP'],
   ].filter(([, count]) => count > 0);
 
   if (badges.length === 0) {
-    return el('span', { className: 'coach-badges muted', text: '暂未获得荣誉' });
+    return el('span', { className: 'coach-badges muted', text: '暂无冠亚季军' });
   }
 
   return el('span', { className: 'coach-badges' }, badges.map(([icon, count, label]) =>
-    el('span', { className: 'coach-badge', title: label }, [
+    el('span', { className: label === '冠军' ? 'coach-badge is-title' : 'coach-badge', title: label }, [
       el('span', { className: 'coach-badge-icon', text: icon }),
       el('span', { className: 'coach-badge-count', text: `×${count}` }),
     ])
@@ -148,8 +151,23 @@ function coachStats(profile) {
     statTile('场均进球', profile.goalsForPerGame.toFixed(2)),
     statTile('场均失球', profile.goalsAgainstPerGame.toFixed(2)),
     statTile('净胜球', signed(profile.goalDifference)),
-    statTile('夺冠率', percentOf(profile.titleRate)),
   ]);
+}
+
+// 名次的两种写法：赛季履历里写全「🏆 冠军」，积分榜里只放紧凑奖牌。
+function rankLabel(rank, complete) {
+  if (!complete || rank === null) return el('span', { className: 'arc-rank muted', text: complete ? '—' : '未完赛' });
+  if (rank === 1) return el('span', { className: 'arc-rank is-1', text: '🏆 冠军' });
+  if (rank === 2) return el('span', { className: 'arc-rank is-2', text: '🥈 亚军' });
+  if (rank === 3) return el('span', { className: 'arc-rank is-3', text: '🥉 季军' });
+  return el('span', { className: 'arc-rank', text: `第 ${rank} 名` });
+}
+
+function rankMedal(rank) {
+  if (rank <= 3) {
+    return el('span', { className: 'rank-num rank-num-medal', text: ['🏆', '🥈', '🥉'][rank - 1] });
+  }
+  return el('span', { className: 'rank-num', text: String(rank) });
 }
 
 function seasonLogBlock(profile) {
@@ -160,13 +178,10 @@ function seasonLogBlock(profile) {
   return el('ul', { className: 'arc-season-log' }, entries.map((entry) =>
     el('li', { className: entry.champion ? 'arc-log-row champ' : 'arc-log-row' }, [
       el('span', { className: 'arc-log-season', text: `第 ${entry.ordinal} 赛季` }),
-      entry.champion ? el('span', { className: 'arc-log-flag', text: '🏆' }) : null,
       el('span', { className: 'arc-log-teams' }, entry.teams.length > 0
         ? teamChipList(entry.teams)
         : [el('span', { className: 'muted', text: '未带任何球队' })]),
-      entry.bestRank !== null
-        ? el('span', { className: 'arc-log-rank muted', text: `最好第 ${entry.bestRank} 名` })
-        : (entry.complete ? null : el('span', { className: 'arc-log-rank muted', text: '未完赛' })),
+      rankLabel(entry.bestRank, entry.complete),
     ])
   ));
 }
@@ -191,45 +206,91 @@ function coachCard(profile) {
       ])
     : null;
 
-  return el('article', { className: 'coach-card' }, [
-    el('div', { className: 'coach-card-head' }, [
-      el('h3', { className: 'coach-name', text: profile.name }),
-      badgeRow(profile),
+  // 卡片本身就是折叠块：外面只留姓名、冠亚季徽章与战绩，细节点开再看。
+  return el('details', { className: 'coach-card' }, [
+    el('summary', { className: 'coach-head' }, [
+      el('div', { className: 'coach-card-head' }, [
+        el('h3', { className: 'coach-name', text: profile.name }),
+        badgeRow(profile),
+      ]),
+      el('p', { className: 'coach-record muted', text: recordLine(profile) }),
+      recordBar(profile),
     ]),
-    el('p', { className: 'coach-record muted', text: recordLine(profile) }),
-    recordBar(profile),
-    coachStats(profile),
-    honorBlock(profile),
-    el('div', { className: 'coach-meta' }, [
-      el('span', { text: `参赛 ${profile.seasons} 个赛季` }),
-      profile.completeSeasons !== profile.seasons
-        ? el('span', { className: 'muted', text: `（含 ${profile.seasons - profile.completeSeasons} 个未完赛季）` })
-        : null,
-      profile.bestFinish !== null
-        ? el('span', { text: `最好名次 第 ${profile.bestFinish} 名` })
-        : null,
+    el('div', { className: 'coach-body' }, [
+      honorBlock(profile),
+      coachStats(profile),
+      el('div', { className: 'coach-meta' }, [
+        el('span', { text: `参赛 ${profile.seasons} 个赛季` }),
+        profile.completeSeasons !== profile.seasons
+          ? el('span', { className: 'muted', text: `（含 ${profile.seasons - profile.completeSeasons} 个未完赛季）` })
+          : null,
+        profile.bestFinish !== null
+          ? el('span', { text: `最好名次 第 ${profile.bestFinish} 名` })
+          : null,
+        profile.clubCount > 0
+          ? el('span', { text: `执教过 ${profile.clubCount} 支俱乐部` })
+          : null,
+        profile.titlesCount === 0 && profile.seasons >= 2
+          ? el('span', { className: 'coach-drought', text: `已 ${profile.seasons} 个赛季无冠` })
+          : null,
+      ]),
       profile.clubCount > 0
-        ? el('span', { text: `执教过 ${profile.clubCount} 支俱乐部` })
+        ? el('div', { className: 'coach-clubs' }, [
+            el('span', { className: 'coach-clubs-label', text: '执教过' }),
+            ...profile.clubList.map((item) => el('span', { className: 'club-chip' }, [
+              teamBadge(item.team),
+              el('span', { className: 'club-chip-name', text: item.team }),
+              el('span', { className: 'club-chip-count', text: `${item.count} 季` }),
+            ])),
+          ])
         : null,
-      profile.titlesCount === 0 && profile.seasons >= 2
-        ? el('span', { className: 'coach-drought', text: `已 ${profile.seasons} 个赛季无冠` })
-        : null,
+      listBlock('赛季履历', seasonLogBlock(profile), '还没有执教记录'),
+      listBlock('交手', rivalNode, '还没有与世界里的其他教练交过手'),
     ]),
-    profile.clubCount > 0
-      ? el('div', { className: 'coach-clubs' }, [
-          el('span', { className: 'coach-clubs-label muted', text: '执教过' }),
-          ...profile.clubList.map((item) => el('span', { className: 'arc-team' }, [
-            teamBadge(item.team),
-            el('span', { className: 'arc-team-name', text: `${item.team}（${item.count} 季）` }),
-          ])),
-        ])
-      : null,
-    listBlock('赛季履历', seasonLogBlock(profile), '还没有执教记录'),
-    listBlock('交手', rivalNode, '还没有与世界里的其他教练交过手'),
   ]);
 }
 
-// 赛季卡片：冠军 + 前三 + 金靴 / 助攻王 / FMVP，再列出每位教练带的球队与赛季数据。
+// 过往赛季的全部名次：不再只留前三，整张积分榜都摆在卡里，想看随时看。
+function standingsBlock(season) {
+  if (season.standings.length === 0) {
+    return null;
+  }
+  const head = (label) => el('th', { text: label });
+  return el('div', { className: 'season-standings' }, [
+    el('div', { className: 'season-standings-head' }, [
+      el('h4', { className: 'coach-block-title', text: '全部名次' }),
+      el('span', { className: 'muted', text: `${season.standings.length} 支球队` }),
+    ]),
+    el('div', { className: 'table-wrap' }, [
+      el('table', { className: 'season-table' }, [
+        el('thead', {}, [el('tr', {}, [
+          el('th', { className: 'cell-rank', text: '名次' }),
+          el('th', { className: 'cell-team', text: '球队' }),
+          el('th', { className: 'cell-coach', text: '教练' }),
+          head('场'), head('胜'), head('平'), head('负'), head('进'), head('失'), head('净'),
+          el('th', { className: 'cell-points', text: '积分' }),
+        ])]),
+        el('tbody', {}, season.standings.map((row) =>
+          el('tr', { className: row.rank === 1 ? 'is-champ' : null }, [
+            el('td', { className: 'cell-rank' }, [rankMedal(row.rank)]),
+            el('td', { className: 'cell-team' }, [teamChip(row.team)]),
+            el('td', { className: 'cell-coach muted', text: row.coach || '—' }),
+            el('td', { text: String(row.played) }),
+            el('td', { text: String(row.wins) }),
+            el('td', { text: String(row.draws) }),
+            el('td', { text: String(row.losses) }),
+            el('td', { className: 'goals-for', text: String(row.goalsFor) }),
+            el('td', { className: 'goals-against', text: String(row.goalsAgainst) }),
+            el('td', { className: 'cell-gd', text: signed(row.goalDifference) }),
+            el('td', { className: 'cell-points' }, [el('span', { className: 'points-chip', text: String(row.points) })]),
+          ])
+        )),
+      ]),
+    ]),
+  ]);
+}
+
+// 赛季卡片：冠军 + 前三 + 金靴 / 助攻王 / FMVP，再附上整张积分榜。
 function seasonCard(season, handlers) {
   const champion = season.awards.champion;
   const podium = season.awards.podium ?? [];
@@ -241,13 +302,6 @@ function seasonCard(season, handlers) {
 
   const totalGoals = season.standings.reduce((sum, row) => sum + row.goalsFor, 0);
   const avgGoals = season.playedMatches > 0 ? totalGoals / season.playedMatches : 0;
-
-  const roster = new Map();
-  for (const row of season.standings) {
-    if (!row.coach) continue;
-    if (!roster.has(row.coach)) roster.set(row.coach, []);
-    roster.get(row.coach).push(row.team);
-  }
 
   const chip = (icon, text, team) => el('span', { className: 'season-chip' }, [
     el('span', { className: 'season-chip-icon', text: icon }),
@@ -297,14 +351,7 @@ function seasonCard(season, handlers) {
         el('span', { className: 'arc-meta-v', text: avgGoals.toFixed(1) }),
       ]),
     ]),
-    roster.size > 0
-      ? el('div', { className: 'arc-roster' }, [...roster.entries()].map(([name, teams]) =>
-          el('div', { className: 'arc-roster-row' }, [
-            el('span', { className: 'arc-roster-coach', text: name }),
-            el('span', { className: 'arc-roster-teams' }, teamChipList(teams)),
-          ])
-        ))
-      : null,
+    standingsBlock(season),
   ]);
 }
 

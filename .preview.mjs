@@ -212,7 +212,7 @@ for (const [name, html] of Object.entries(captures)) {
   if (/NaN/.test(html)) flags.push('含 NaN');
   if (/\[object /.test(html)) flags.push('含 [object ...]');
   report += `\n### ${name}  (${html.length} chars)${flags.length ? '  ⚠ ' + flags.join(',') : '  ✓'}\n`;
-  report += `  key markers: ` + ['tile', 'mini-versus', 'mini-fix', 'mini-row', 'mini-news', 'team-crest', 'team-link', 'player-link', 'points-chip', 'form-pill', 'h2h-chip', 'h2h-meeting', 'rank-num-medal', 'form-summary-pill', 'upcoming-row', 'row-idle', 'stat-tile-goals', 'news-view', 'news-card', 'odds-table', 'odd-value', 'shanghai-port', 'row-bg-海港', 'world-strip', 'world-hero', 'archive-panel', 'archive-current', 'arc-overview', 'arc-tile', 'arc-wdl', 'arc-season-log', 'arc-roster', 'season-card', 'season-badge', 'coach-card', 'coach-pick', 'fact-row', 'coach-rivals']
+  report += `  key markers: ` + ['tile', 'mini-versus', 'mini-fix', 'mini-row', 'mini-news', 'team-crest', 'team-link', 'player-link', 'points-chip', 'form-pill', 'h2h-chip', 'h2h-meeting', 'rank-num-medal', 'form-summary-pill', 'upcoming-row', 'row-idle', 'stat-tile-goals', 'news-view', 'news-card', 'odds-table', 'odd-value', 'shanghai-port', 'row-bg-海港', 'world-strip', 'world-hero', 'archive-panel', 'archive-current', 'arc-overview', 'arc-tile', 'arc-wdl', 'arc-season-log', 'season-table', 'honor-title', 'club-chip', 'arc-rank', 'season-card', 'season-badge', 'coach-card', 'coach-pick', 'fact-row', 'coach-rivals']
     .filter((marker) => html.includes(marker))
     .join(', ') + '\n';
   if (html.includes('team-avatar')) report += '  ⚠ 仍出现旧队徽外圈类 team-avatar\n';
