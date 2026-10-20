@@ -1,169 +1,168 @@
-// 俱乐部元数据：中文名 → 队徽 CDN id + 主题配色。
+// 俱乐部元数据：中文名 → 队徽图 URL + 主题配色。
 // primary/secondary 用于行底色与徽章渐变，text 为底色上的文字色（保证对比度）。
-// mark 是队徽图加载失败时的中文缩写兜底，crest 通常是 api-football 队徽图 id；
-// 中超在 api-football 没有稳定 id，crest 直接放名称化的 football-logos 图片 URL。
-
-const CSL_CREST_BASE = 'https://assets.football-logos.cc/logos/china/512x512';
+// mark 是队徽图加载失败时的中文缩写兜底。
+// crest 统一用 football-logos.cc 的「名字化」URL：图片路径里带俱乐部名（如 .../al-hilal.xxx.png），
+// 队徽和球队一一对应，不会再出现「队徽张冠李戴」；换来源只需换 slug，不用去猜数字 id。
 
 const CLUB_META = {
-  皇家马德里: { mark: '皇马', crest: 541, primary: '#f5f6f8', secondary: '#c9a22b', text: '#1a1a2e' },
-  巴塞罗那: { mark: '巴萨', crest: 529, primary: '#a50044', secondary: '#004d98', text: '#ffffff' },
-  马德里竞技: { mark: '马竞', crest: 530, primary: '#cb3524', secondary: '#f2f2f2', text: '#ffffff' },
-  塞维利亚: { mark: '塞维', crest: 536, primary: '#f2f3f6', secondary: '#e30613', text: '#1a1a2e' },
-  皇家贝蒂斯: { mark: '贝蒂', crest: 544, primary: '#00954c', secondary: '#f2f2f2', text: '#ffffff' },
-  巴伦西亚: { mark: '巴伦', crest: 532, primary: '#f2a100', secondary: '#1a1a1a', text: '#3a2a00' },
-  比利亚雷亚尔: { mark: '黄潜', crest: 533, primary: '#f5c500', secondary: '#3b3f47', text: '#3a2a00' },
-  皇家社会: { mark: '社会', crest: 548, primary: '#f0f4fa', secondary: '#0a4da3', text: '#1a2a4a' },
-  毕尔巴鄂竞技: { mark: '雄狮', crest: 531, primary: '#e32636', secondary: '#f2f2f2', text: '#ffffff' },
-  曼城: { mark: '曼城', crest: 50, primary: '#6caddf', secondary: '#f5f5f5', text: '#12324d' },
-  曼联: { mark: '红魔', crest: 33, primary: '#e8261e', secondary: '#1a1a1a', text: '#ffffff' },
-  利物浦: { mark: '红军', crest: 40, primary: '#c8102e', secondary: '#00b2a9', text: '#ffffff' },
-  切尔西: { mark: '蓝军', crest: 49, primary: '#034694', secondary: '#f2f2f2', text: '#ffffff' },
-  阿森纳: { mark: '枪手', crest: 42, primary: '#ef0107', secondary: '#f2f2f2', text: '#ffffff' },
-  托特纳姆热刺: { mark: '热刺', crest: 47, primary: '#f2f2f2', secondary: '#0c2340', text: '#1a2a4a' },
-  纽卡斯尔联: { mark: '喜鹊', crest: 34, primary: '#1a1a1a', secondary: '#f2f2f2', text: '#f2f2f2' },
-  阿斯顿维拉: { mark: '维拉', crest: 66, primary: '#670e36', secondary: '#95bfe5', text: '#ffffff' },
-  西汉姆联: { mark: '铁锤', crest: 48, primary: '#7a263a', secondary: '#1bb1e7', text: '#ffffff' },
-  布莱顿: { mark: '海鸥', crest: 51, primary: '#0057b8', secondary: '#f2f2f2', text: '#ffffff' },
-  尤文图斯: { mark: '尤文', crest: 496, primary: '#f2f2f2', secondary: '#0c0c0c', text: '#1a1a1a' },
-  国际米兰: { mark: '国米', crest: 505, primary: '#0068a8', secondary: '#0d0d0d', text: '#ffffff' },
-  AC米兰: { mark: '米兰', crest: 489, primary: '#e81b33', secondary: '#111111', text: '#ffffff' },
-  那不勒斯: { mark: '天蓝', crest: 492, primary: '#12a0d7', secondary: '#f2f2f2', text: '#12324d' },
-  罗马: { mark: '罗马', crest: 497, primary: '#8e1f2f', secondary: '#f2b91e', text: '#ffffff' },
-  拉齐奥: { mark: '拉齐', crest: 487, primary: '#c0cad9', secondary: '#69b7e2', text: '#1a2a4a' },
-  佛罗伦萨: { mark: '百合', crest: 494, primary: '#5a2d82', secondary: '#f2f2f2', text: '#ffffff' },
-  亚特兰大: { mark: '亚特', crest: 499, primary: '#0b1f3a', secondary: '#1f5da8', text: '#ffffff' },
-  拜仁慕尼黑: { mark: '拜仁', crest: 157, primary: '#dc052d', secondary: '#0066b2', text: '#ffffff' },
-  多特蒙德: { mark: '多特', crest: 165, primary: '#fde100', secondary: '#111111', text: '#3a2a00' },
-  勒沃库森: { mark: '药厂', crest: 168, primary: '#e32219', secondary: '#111111', text: '#ffffff' },
-  法兰克福: { mark: '法兰', crest: 169, primary: '#f2f2f2', secondary: '#e7000f', text: '#1a1a2e' },
-  莱比锡红牛: { mark: '红牛', crest: 173, primary: '#f2f2f2', secondary: '#d2042d', text: '#1a1a2e' },
-  斯图加特: { mark: '斯图', crest: 172, primary: '#e8e8e8', secondary: '#a11f22', text: '#1a1a2e' },
-  巴黎圣日耳曼: { mark: '巴黎', crest: 85, primary: '#004170', secondary: '#da291c', text: '#ffffff' },
-  马赛: { mark: '马赛', crest: 81, primary: '#2faee0', secondary: '#f2f2f2', text: '#0f2b5e' },
-  里昂: { mark: '里昂', crest: 80, primary: '#2e3a8c', secondary: '#e7131a', text: '#ffffff' },
-  摩纳哥: { mark: '摩纳', crest: 91, primary: '#eaeaea', secondary: '#e62b3a', text: '#1a1a1a' },
-  里尔: { mark: '里尔', crest: 79, primary: '#e01e35', secondary: '#0f4fa3', text: '#ffffff' },
-  本菲卡: { mark: '本菲', crest: 211, primary: '#e8101f', secondary: '#f2f2f2', text: '#ffffff' },
-  波尔图: { mark: '波尔', crest: 212, primary: '#0d3f8e', secondary: '#f2f2f2', text: '#ffffff' },
-  阿贾克斯: { mark: '阿贾', crest: 94, primary: '#d31145', secondary: '#f2f2f2', text: '#ffffff' },
-  埃因霍温: { mark: '埃因', crest: 674, primary: '#f2f2f2', secondary: '#dd1f2d', text: '#1a1a2e' },
-  费耶诺德: { mark: '费耶', crest: 675, primary: '#ed1a3b', secondary: '#f2f2f2', text: '#ffffff' },
-  凯尔特人: { mark: '凯尔', crest: 235, primary: '#018749', secondary: '#f2f2f2', text: '#ffffff' },
-  格拉斯哥流浪者: { mark: '流浪', crest: 236, primary: '#f2f2f2', secondary: '#1a3f85', text: '#1a2a4a' },
+  皇家马德里: { mark: '皇马', crest: 'https://assets.football-logos.cc/logos/spain/256x256/real-madrid.5ce15611.png', primary: '#f5f6f8', secondary: '#c9a22b', text: '#1a1a2e' },
+  巴塞罗那: { mark: '巴萨', crest: 'https://assets.football-logos.cc/logos/spain/256x256/barcelona.481f5fb3.png', primary: '#a50044', secondary: '#004d98', text: '#ffffff' },
+  马德里竞技: { mark: '马竞', crest: 'https://assets.football-logos.cc/logos/spain/256x256/atletico-madrid.ba72e2cf.png', primary: '#cb3524', secondary: '#f2f2f2', text: '#ffffff' },
+  塞维利亚: { mark: '塞维', crest: 'https://assets.football-logos.cc/logos/spain/256x256/sevilla.b741a6ce.png', primary: '#f2f3f6', secondary: '#e30613', text: '#1a1a2e' },
+  皇家贝蒂斯: { mark: '贝蒂', crest: 'https://assets.football-logos.cc/logos/spain/256x256/real-betis.96fdee2c.png', primary: '#00954c', secondary: '#f2f2f2', text: '#ffffff' },
+  巴伦西亚: { mark: '巴伦', crest: 'https://assets.football-logos.cc/logos/spain/256x256/valencia.f9d9eee2.png', primary: '#f2a100', secondary: '#1a1a1a', text: '#3a2a00' },
+  比利亚雷亚尔: { mark: '黄潜', crest: 'https://assets.football-logos.cc/logos/spain/256x256/villarreal.b0313369.png', primary: '#f5c500', secondary: '#3b3f47', text: '#3a2a00' },
+  皇家社会: { mark: '社会', crest: 'https://assets.football-logos.cc/logos/spain/256x256/real-sociedad.501e3b1e.png', primary: '#f0f4fa', secondary: '#0a4da3', text: '#1a2a4a' },
+  毕尔巴鄂竞技: { mark: '雄狮', crest: 'https://assets.football-logos.cc/logos/spain/256x256/athletic-club.e1bfba0c.png', primary: '#e32636', secondary: '#f2f2f2', text: '#ffffff' },
+  曼城: { mark: '曼城', crest: 'https://assets.football-logos.cc/logos/england/256x256/manchester-city.62f9d1f2.png', primary: '#6caddf', secondary: '#f5f5f5', text: '#12324d' },
+  曼联: { mark: '红魔', crest: 'https://assets.football-logos.cc/logos/england/256x256/manchester-united.7ab9d343.png', primary: '#e8261e', secondary: '#1a1a1a', text: '#ffffff' },
+  利物浦: { mark: '红军', crest: 'https://assets.football-logos.cc/logos/england/256x256/liverpool.99c48ae3.png', primary: '#c8102e', secondary: '#00b2a9', text: '#ffffff' },
+  切尔西: { mark: '蓝军', crest: 'https://assets.football-logos.cc/logos/england/256x256/chelsea.ede8a2a7.png', primary: '#034694', secondary: '#f2f2f2', text: '#ffffff' },
+  阿森纳: { mark: '枪手', crest: 'https://assets.football-logos.cc/logos/england/256x256/arsenal.e5528ede.png', primary: '#ef0107', secondary: '#f2f2f2', text: '#ffffff' },
+  托特纳姆热刺: { mark: '热刺', crest: 'https://assets.football-logos.cc/logos/england/256x256/tottenham.2d86d721.png', primary: '#f2f2f2', secondary: '#0c2340', text: '#1a2a4a' },
+  纽卡斯尔联: { mark: '喜鹊', crest: 'https://assets.football-logos.cc/logos/england/256x256/newcastle.d43c5c6f.png', primary: '#1a1a1a', secondary: '#f2f2f2', text: '#f2f2f2' },
+  阿斯顿维拉: { mark: '维拉', crest: 'https://assets.football-logos.cc/logos/england/256x256/aston-villa.07a2646c.png', primary: '#670e36', secondary: '#95bfe5', text: '#ffffff' },
+  西汉姆联: { mark: '铁锤', crest: 'https://assets.football-logos.cc/logos/england/256x256/west-ham.c86eebf5.png', primary: '#7a263a', secondary: '#1bb1e7', text: '#ffffff' },
+  布莱顿: { mark: '海鸥', crest: 'https://assets.football-logos.cc/logos/england/256x256/brighton.5da206a0.png', primary: '#0057b8', secondary: '#f2f2f2', text: '#ffffff' },
+  尤文图斯: { mark: '尤文', crest: 'https://assets.football-logos.cc/logos/italy/256x256/juventus.a8baf848.png', primary: '#f2f2f2', secondary: '#0c0c0c', text: '#1a1a1a' },
+  国际米兰: { mark: '国米', crest: 'https://assets.football-logos.cc/logos/italy/256x256/inter.3a7ce90c.png', primary: '#0068a8', secondary: '#0d0d0d', text: '#ffffff' },
+  AC米兰: { mark: '米兰', crest: 'https://assets.football-logos.cc/logos/italy/256x256/milan.75d56f90.png', primary: '#e81b33', secondary: '#111111', text: '#ffffff' },
+  那不勒斯: { mark: '天蓝', crest: 'https://assets.football-logos.cc/logos/italy/256x256/napoli.ee47a50b.png', primary: '#12a0d7', secondary: '#f2f2f2', text: '#12324d' },
+  罗马: { mark: '罗马', crest: 'https://assets.football-logos.cc/logos/italy/256x256/roma.034a933e.png', primary: '#8e1f2f', secondary: '#f2b91e', text: '#ffffff' },
+  拉齐奥: { mark: '拉齐', crest: 'https://assets.football-logos.cc/logos/italy/256x256/lazio.2386d28d.png', primary: '#c0cad9', secondary: '#69b7e2', text: '#1a2a4a' },
+  佛罗伦萨: { mark: '百合', crest: 'https://assets.football-logos.cc/logos/italy/256x256/fiorentina.7ba101c2.png', primary: '#5a2d82', secondary: '#f2f2f2', text: '#ffffff' },
+  亚特兰大: { mark: '亚特', crest: 'https://assets.football-logos.cc/logos/italy/256x256/atalanta.45225436.png', primary: '#0b1f3a', secondary: '#1f5da8', text: '#ffffff' },
+  拜仁慕尼黑: { mark: '拜仁', crest: 'https://assets.football-logos.cc/logos/germany/256x256/bayern-munchen.6c38f13a.png', primary: '#dc052d', secondary: '#0066b2', text: '#ffffff' },
+  多特蒙德: { mark: '多特', crest: 'https://assets.football-logos.cc/logos/germany/256x256/borussia-dortmund.09ffedcd.png', primary: '#fde100', secondary: '#111111', text: '#3a2a00' },
+  勒沃库森: { mark: '药厂', crest: 'https://assets.football-logos.cc/logos/germany/256x256/bayer-leverkusen.72f211d8.png', primary: '#e32219', secondary: '#111111', text: '#ffffff' },
+  法兰克福: { mark: '法兰', crest: 'https://assets.football-logos.cc/logos/germany/256x256/eintracht-frankfurt.a8244b07.png', primary: '#f2f2f2', secondary: '#e7000f', text: '#1a1a2e' },
+  莱比锡红牛: { mark: '红牛', crest: 'https://assets.football-logos.cc/logos/germany/256x256/rb-leipzig.9d65faeb.png', primary: '#f2f2f2', secondary: '#d2042d', text: '#1a1a2e' },
+  斯图加特: { mark: '斯图', crest: 'https://assets.football-logos.cc/logos/germany/256x256/vfb-stuttgart.5b4b15e7.png', primary: '#e8e8e8', secondary: '#a11f22', text: '#1a1a2e' },
+  巴黎圣日耳曼: { mark: '巴黎', crest: 'https://assets.football-logos.cc/logos/france/256x256/paris-saint-germain.7d591ccb.png', primary: '#004170', secondary: '#da291c', text: '#ffffff' },
+  马赛: { mark: '马赛', crest: 'https://assets.football-logos.cc/logos/france/256x256/marseille.92b6437c.png', primary: '#2faee0', secondary: '#f2f2f2', text: '#0f2b5e' },
+  里昂: { mark: '里昂', crest: 'https://assets.football-logos.cc/logos/france/256x256/lyon.b44ff7aa.png', primary: '#2e3a8c', secondary: '#e7131a', text: '#ffffff' },
+  摩纳哥: { mark: '摩纳', crest: 'https://assets.football-logos.cc/logos/france/256x256/as-monaco.51dd5065.png', primary: '#eaeaea', secondary: '#e62b3a', text: '#1a1a1a' },
+  里尔: { mark: '里尔', crest: 'https://assets.football-logos.cc/logos/france/256x256/lille.451f5326.png', primary: '#e01e35', secondary: '#0f4fa3', text: '#ffffff' },
+  本菲卡: { mark: '本菲', crest: 'https://assets.football-logos.cc/logos/portugal/256x256/benfica.3e4d3034.png', primary: '#e8101f', secondary: '#f2f2f2', text: '#ffffff' },
+  波尔图: { mark: '波尔', crest: 'https://assets.football-logos.cc/logos/portugal/256x256/fc-porto.b58f31f6.png', primary: '#0d3f8e', secondary: '#f2f2f2', text: '#ffffff' },
+  阿贾克斯: { mark: '阿贾', crest: 'https://assets.football-logos.cc/logos/netherlands/256x256/ajax.fadc62c4.png', primary: '#d31145', secondary: '#f2f2f2', text: '#ffffff' },
+  埃因霍温: { mark: '埃因', crest: 'https://assets.football-logos.cc/logos/netherlands/256x256/psv.b5ebd0db.png', primary: '#f2f2f2', secondary: '#dd1f2d', text: '#1a1a2e' },
+  费耶诺德: { mark: '费耶', crest: 'https://assets.football-logos.cc/logos/netherlands/256x256/feyenoord.06e393bc.png', primary: '#ed1a3b', secondary: '#f2f2f2', text: '#ffffff' },
+  凯尔特人: { mark: '凯尔', crest: 'https://assets.football-logos.cc/logos/scotland/256x256/celtic.e765443b.png', primary: '#018749', secondary: '#f2f2f2', text: '#ffffff' },
+  格拉斯哥流浪者: { mark: '流浪', crest: 'https://assets.football-logos.cc/logos/scotland/256x256/rangers.05ce20d9.png', primary: '#f2f2f2', secondary: '#1a3f85', text: '#1a2a4a' },
 
   // 英超
-  埃弗顿: { mark: '太妃', crest: 45, primary: '#0a3f8f', secondary: '#f2f2f2', text: '#ffffff' },
-  莱斯特城: { mark: '狐狸', crest: 46, primary: '#0b3a8c', secondary: '#fdbe11', text: '#ffffff' },
-  狼队: { mark: '狼队', crest: 39, primary: '#fdb913', secondary: '#231f20', text: '#3a2a00' },
-  水晶宫: { mark: '老鹰', crest: 52, primary: '#1b458f', secondary: '#c4122e', text: '#ffffff' },
-  富勒姆: { mark: '农场', crest: 36, primary: '#f2f2f2', secondary: '#1a1a1a', text: '#1a1a2e' },
-  诺丁汉森林: { mark: '森林', crest: 65, primary: '#d71920', secondary: '#f2f2f2', text: '#ffffff' },
-  伯恩茅斯: { mark: '樱桃', crest: 35, primary: '#d71920', secondary: '#1a1a1a', text: '#ffffff' },
-  布伦特福德: { mark: '蜜蜂', crest: 55, primary: '#e30613', secondary: '#f2f2f2', text: '#ffffff' },
-  南安普顿: { mark: '圣徒', crest: 41, primary: '#d71920', secondary: '#f2f2f2', text: '#ffffff' },
-  利兹联: { mark: '利兹', crest: 63, primary: '#f2f2f2', secondary: '#1d428a', text: '#1a2a4a' },
-  谢菲尔德联: { mark: '谢联', crest: 62, primary: '#e2001a', secondary: '#1a1a1a', text: '#ffffff' },
-  伯恩利: { mark: '伯恩', crest: 44, primary: '#6c1d45', secondary: '#99d6ea', text: '#ffffff' },
-  沃特福德: { mark: '沃特', crest: 38, primary: '#fbee23', secondary: '#1a1a1a', text: '#3a2a00' },
+  埃弗顿: { mark: '太妃', crest: 'https://assets.football-logos.cc/logos/england/256x256/everton.6b635cd7.png', primary: '#0a3f8f', secondary: '#f2f2f2', text: '#ffffff' },
+  莱斯特城: { mark: '狐狸', crest: 'https://assets.football-logos.cc/logos/england/256x256/leicester.9c13bc7c.png', primary: '#0b3a8c', secondary: '#fdbe11', text: '#ffffff' },
+  狼队: { mark: '狼队', crest: 'https://assets.football-logos.cc/logos/england/256x256/wolves.2c773758.png', primary: '#fdb913', secondary: '#231f20', text: '#3a2a00' },
+  水晶宫: { mark: '老鹰', crest: 'https://assets.football-logos.cc/logos/england/256x256/crystal-palace.53067b96.png', primary: '#1b458f', secondary: '#c4122e', text: '#ffffff' },
+  富勒姆: { mark: '农场', crest: 'https://assets.football-logos.cc/logos/england/256x256/fulham.4c7ce48b.png', primary: '#f2f2f2', secondary: '#1a1a1a', text: '#1a1a2e' },
+  诺丁汉森林: { mark: '森林', crest: 'https://assets.football-logos.cc/logos/england/256x256/nottingham-forest.43b53a26.png', primary: '#d71920', secondary: '#f2f2f2', text: '#ffffff' },
+  伯恩茅斯: { mark: '樱桃', crest: 'https://assets.football-logos.cc/logos/england/256x256/bournemouth.1a237aee.png', primary: '#d71920', secondary: '#1a1a1a', text: '#ffffff' },
+  布伦特福德: { mark: '蜜蜂', crest: 'https://assets.football-logos.cc/logos/england/256x256/brentford.e3296e20.png', primary: '#e30613', secondary: '#f2f2f2', text: '#ffffff' },
+  南安普顿: { mark: '圣徒', crest: 'https://assets.football-logos.cc/logos/england/256x256/southampton.2a25d8e7.png', primary: '#d71920', secondary: '#f2f2f2', text: '#ffffff' },
+  利兹联: { mark: '利兹', crest: 'https://assets.football-logos.cc/logos/england/256x256/leeds-united.26dba8f5.png', primary: '#f2f2f2', secondary: '#1d428a', text: '#1a2a4a' },
+  谢菲尔德联: { mark: '谢联', crest: 'https://assets.football-logos.cc/logos/england/256x256/sheffield-united.1c8f00ec.png', primary: '#e2001a', secondary: '#1a1a1a', text: '#ffffff' },
+  伯恩利: { mark: '伯恩', crest: 'https://assets.football-logos.cc/logos/england/256x256/burnley.7baea7d7.png', primary: '#6c1d45', secondary: '#99d6ea', text: '#ffffff' },
+  沃特福德: { mark: '沃特', crest: 'https://assets.football-logos.cc/logos/england/256x256/watford.99d74158.png', primary: '#fbee23', secondary: '#1a1a1a', text: '#3a2a00' },
 
   // 西甲
-  赫罗纳: { mark: '赫罗', crest: 547, primary: '#cd2534', secondary: '#f2f2f2', text: '#ffffff' },
-  奥萨苏纳: { mark: '奥萨', crest: 727, primary: '#d91a21', secondary: '#0a3463', text: '#ffffff' },
-  塞尔塔: { mark: '塞尔', crest: 538, primary: '#8ac3ee', secondary: '#f2f2f2', text: '#12324d' },
-  赫塔菲: { mark: '赫塔', crest: 546, primary: '#005999', secondary: '#f2f2f2', text: '#ffffff' },
-  阿拉维斯: { mark: '阿拉', crest: 542, primary: '#0f4f9e', secondary: '#f2f2f2', text: '#ffffff' },
-  马略卡: { mark: '马略', crest: 798, primary: '#e20613', secondary: '#1a1a1a', text: '#ffffff' },
-  巴列卡诺: { mark: '巴列', crest: 728, primary: '#f2f2f2', secondary: '#e2001a', text: '#1a1a2e' },
-  西班牙人: { mark: '西班', crest: 540, primary: '#0072bc', secondary: '#f2f2f2', text: '#ffffff' },
-  加的斯: { mark: '加的', crest: 724, primary: '#f7d417', secondary: '#0a4da3', text: '#3a2a00' },
-  格拉纳达: { mark: '格拉', crest: 715, primary: '#c8102e', secondary: '#f2f2f2', text: '#ffffff' },
-  阿尔梅里亚: { mark: '阿尔', crest: 723, primary: '#d3212c', secondary: '#f2f2f2', text: '#ffffff' },
+  赫罗纳: { mark: '赫罗', crest: 'https://assets.football-logos.cc/logos/spain/256x256/girona.14b919ce.png', primary: '#cd2534', secondary: '#f2f2f2', text: '#ffffff' },
+  奥萨苏纳: { mark: '奥萨', crest: 'https://assets.football-logos.cc/logos/spain/256x256/osasuna.c82eefd4.png', primary: '#d91a21', secondary: '#0a3463', text: '#ffffff' },
+  塞尔塔: { mark: '塞尔', crest: 'https://assets.football-logos.cc/logos/spain/256x256/celta.37e88c80.png', primary: '#8ac3ee', secondary: '#f2f2f2', text: '#12324d' },
+  赫塔菲: { mark: '赫塔', crest: 'https://assets.football-logos.cc/logos/spain/256x256/getafe.edd42c3d.png', primary: '#005999', secondary: '#f2f2f2', text: '#ffffff' },
+  阿拉维斯: { mark: '阿拉', crest: 'https://assets.football-logos.cc/logos/spain/256x256/deportivo.0a00d5ef.png', primary: '#0f4f9e', secondary: '#f2f2f2', text: '#ffffff' },
+  马略卡: { mark: '马略', crest: 'https://assets.football-logos.cc/logos/spain/256x256/mallorca.d244a18a.png', primary: '#e20613', secondary: '#1a1a1a', text: '#ffffff' },
+  巴列卡诺: { mark: '巴列', crest: 'https://assets.football-logos.cc/logos/spain/256x256/rayo-vallecano.01403ff8.png', primary: '#f2f2f2', secondary: '#e2001a', text: '#1a1a2e' },
+  西班牙人: { mark: '西班', crest: 'https://assets.football-logos.cc/logos/spain/256x256/espanyol.813c5e9a.png', primary: '#0072bc', secondary: '#f2f2f2', text: '#ffffff' },
+  加的斯: { mark: '加的', crest: 'https://assets.football-logos.cc/logos/spain/256x256/cadiz.7a92622e.png', primary: '#f7d417', secondary: '#0a4da3', text: '#3a2a00' },
+  格拉纳达: { mark: '格拉', crest: 'https://assets.football-logos.cc/logos/spain/256x256/granada.041e574a.png', primary: '#c8102e', secondary: '#f2f2f2', text: '#ffffff' },
+  阿尔梅里亚: { mark: '阿尔', crest: 'https://assets.football-logos.cc/logos/spain/256x256/almeria.035789c9.png', primary: '#d3212c', secondary: '#f2f2f2', text: '#ffffff' },
 
   // 意甲
-  博洛尼亚: { mark: '博洛', crest: 500, primary: '#a21c26', secondary: '#1b2a55', text: '#ffffff' },
-  都灵: { mark: '都灵', crest: 503, primary: '#8a1e2d', secondary: '#f2f2f2', text: '#ffffff' },
-  萨索洛: { mark: '萨索', crest: 502, primary: '#00a752', secondary: '#1a1a1a', text: '#ffffff' },
-  热那亚: { mark: '热那', crest: 495, primary: '#a01e2f', secondary: '#1a2a5e', text: '#ffffff' },
-  蒙扎: { mark: '蒙扎', crest: 490, primary: '#e30613', secondary: '#f2f2f2', text: '#ffffff' },
-  维罗纳: { mark: '维罗', crest: 504, primary: '#f6c500', secondary: '#1a2a5e', text: '#3a2a00' },
-  恩波利: { mark: '恩波', crest: 511, primary: '#1462a8', secondary: '#f2f2f2', text: '#ffffff' },
-  卡利亚里: { mark: '卡利', crest: 510, primary: '#b21e2a', secondary: '#1a2a5e', text: '#ffffff' },
-  莱切: { mark: '莱切', crest: 521, primary: '#f7d417', secondary: '#d3212c', text: '#3a2a00' },
+  博洛尼亚: { mark: '博洛', crest: 'https://assets.football-logos.cc/logos/italy/256x256/bologna.a78d435f.png', primary: '#a21c26', secondary: '#1b2a55', text: '#ffffff' },
+  都灵: { mark: '都灵', crest: 'https://assets.football-logos.cc/logos/italy/256x256/torino.a6c78dd6.png', primary: '#8a1e2d', secondary: '#f2f2f2', text: '#ffffff' },
+  萨索洛: { mark: '萨索', crest: 'https://assets.football-logos.cc/logos/italy/256x256/sassuolo.1b38db1d.png', primary: '#00a752', secondary: '#1a1a1a', text: '#ffffff' },
+  热那亚: { mark: '热那', crest: 'https://assets.football-logos.cc/logos/italy/256x256/genoa.a5ec9be4.png', primary: '#a01e2f', secondary: '#1a2a5e', text: '#ffffff' },
+  蒙扎: { mark: '蒙扎', crest: 'https://assets.football-logos.cc/logos/italy/256x256/monza.a0b0c166.png', primary: '#e30613', secondary: '#f2f2f2', text: '#ffffff' },
+  维罗纳: { mark: '维罗', crest: 'https://assets.football-logos.cc/logos/italy/256x256/verona.1da2d2b7.png', primary: '#f6c500', secondary: '#1a2a5e', text: '#3a2a00' },
+  恩波利: { mark: '恩波', crest: 'https://assets.football-logos.cc/logos/italy/256x256/empoli.1eeeb2b4.png', primary: '#1462a8', secondary: '#f2f2f2', text: '#ffffff' },
+  卡利亚里: { mark: '卡利', crest: 'https://assets.football-logos.cc/logos/italy/256x256/cagliari.1c3353f1.png', primary: '#b21e2a', secondary: '#1a2a5e', text: '#ffffff' },
+  莱切: { mark: '莱切', crest: 'https://assets.football-logos.cc/logos/italy/256x256/lecce.18baee06.png', primary: '#f7d417', secondary: '#d3212c', text: '#3a2a00' },
 
   // 德甲
-  门兴格拉德巴赫: { mark: '门兴', crest: 163, primary: '#f2f2f2', secondary: '#1a1a1a', text: '#1a1a2e' },
-  沃尔夫斯堡: { mark: '狼堡', crest: 161, primary: '#65b32e', secondary: '#f2f2f2', text: '#12320f' },
-  弗赖堡: { mark: '弗赖', crest: 160, primary: '#f2f2f2', secondary: '#e2001a', text: '#1a1a2e' },
-  霍芬海姆: { mark: '霍芬', crest: 167, primary: '#1c63b7', secondary: '#f2f2f2', text: '#ffffff' },
-  美因茨: { mark: '美因', crest: 164, primary: '#c3141e', secondary: '#f2f2f2', text: '#ffffff' },
-  奥格斯堡: { mark: '奥格', crest: 170, primary: '#ba3733', secondary: '#f2f2f2', text: '#ffffff' },
-  云达不莱梅: { mark: '不莱', crest: 162, primary: '#1d9053', secondary: '#f2f2f2', text: '#ffffff' },
-  柏林联合: { mark: '柏林', crest: 182, primary: '#eb1923', secondary: '#f2f2f2', text: '#ffffff' },
-  波鸿: { mark: '波鸿', crest: 176, primary: '#005ca9', secondary: '#f2f2f2', text: '#ffffff' },
-  海登海姆: { mark: '海登', crest: 180, primary: '#e30613', secondary: '#1a2a5e', text: '#ffffff' },
+  门兴格拉德巴赫: { mark: '门兴', crest: 'https://assets.football-logos.cc/logos/germany/256x256/borussia-monchengladbach.94366357.png', primary: '#f2f2f2', secondary: '#1a1a1a', text: '#1a1a2e' },
+  沃尔夫斯堡: { mark: '狼堡', crest: 'https://assets.football-logos.cc/logos/germany/256x256/wolfsburg.11ad950e.png', primary: '#65b32e', secondary: '#f2f2f2', text: '#12320f' },
+  弗赖堡: { mark: '弗赖', crest: 'https://assets.football-logos.cc/logos/germany/256x256/freiburg.2eec4784.png', primary: '#f2f2f2', secondary: '#e2001a', text: '#1a1a2e' },
+  霍芬海姆: { mark: '霍芬', crest: 'https://assets.football-logos.cc/logos/germany/256x256/hoffenheim.23c07771.png', primary: '#1c63b7', secondary: '#f2f2f2', text: '#ffffff' },
+  美因茨: { mark: '美因', crest: 'https://assets.football-logos.cc/logos/germany/256x256/mainz-05.508fc81a.png', primary: '#c3141e', secondary: '#f2f2f2', text: '#ffffff' },
+  奥格斯堡: { mark: '奥格', crest: 'https://assets.football-logos.cc/logos/germany/256x256/augsburg.2bc910e0.png', primary: '#ba3733', secondary: '#f2f2f2', text: '#ffffff' },
+  云达不莱梅: { mark: '不莱', crest: 'https://assets.football-logos.cc/logos/germany/256x256/werder-bremen.f8333154.png', primary: '#1d9053', secondary: '#f2f2f2', text: '#ffffff' },
+  柏林联合: { mark: '柏林', crest: 'https://assets.football-logos.cc/logos/germany/256x256/union-berlin.b0d180f9.png', primary: '#eb1923', secondary: '#f2f2f2', text: '#ffffff' },
+  波鸿: { mark: '波鸿', crest: 'https://assets.football-logos.cc/logos/germany/256x256/vfl-bochum.6288d903.png', primary: '#005ca9', secondary: '#f2f2f2', text: '#ffffff' },
+  海登海姆: { mark: '海登', crest: 'https://assets.football-logos.cc/logos/germany/256x256/fc-heidenheim.5798143f.png', primary: '#e30613', secondary: '#1a2a5e', text: '#ffffff' },
 
   // 法甲
-  尼斯: { mark: '尼斯', crest: 84, primary: '#e2001a', secondary: '#1a1a1a', text: '#ffffff' },
-  朗斯: { mark: '朗斯', crest: 116, primary: '#d3212c', secondary: '#f7c500', text: '#ffffff' },
-  雷恩: { mark: '雷恩', crest: 82, primary: '#e2001a', secondary: '#1a1a1a', text: '#ffffff' },
-  南特: { mark: '南特', crest: 83, primary: '#f7d417', secondary: '#00843d', text: '#3a2a00' },
-  蒙彼利埃: { mark: '蒙彼', crest: 89, primary: '#0a4da3', secondary: '#f5820b', text: '#ffffff' },
-  图卢兹: { mark: '图卢', crest: 96, primary: '#5f259f', secondary: '#f2f2f2', text: '#ffffff' },
-  兰斯: { mark: '兰斯', crest: 93, primary: '#e2001a', secondary: '#f2f2f2', text: '#ffffff' },
-  斯特拉斯堡: { mark: '斯特', crest: 95, primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
-  布雷斯特: { mark: '布雷', crest: 106, primary: '#d3212c', secondary: '#f2f2f2', text: '#ffffff' },
-  欧塞尔: { mark: '欧塞', crest: 108, primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
+  尼斯: { mark: '尼斯', crest: 'https://assets.football-logos.cc/logos/france/256x256/nice.e1cdc4f3.png', primary: '#e2001a', secondary: '#1a1a1a', text: '#ffffff' },
+  朗斯: { mark: '朗斯', crest: 'https://assets.football-logos.cc/logos/france/256x256/rc-lens.efcf2aff.png', primary: '#d3212c', secondary: '#f7c500', text: '#ffffff' },
+  雷恩: { mark: '雷恩', crest: 'https://assets.football-logos.cc/logos/france/256x256/rennes.6d90b3c1.png', primary: '#e2001a', secondary: '#1a1a1a', text: '#ffffff' },
+  南特: { mark: '南特', crest: 'https://assets.football-logos.cc/logos/france/256x256/nantes.92be1c98.png', primary: '#f7d417', secondary: '#00843d', text: '#3a2a00' },
+  蒙彼利埃: { mark: '蒙彼', crest: 'https://assets.football-logos.cc/logos/france/256x256/montpellier.e048338a.png', primary: '#0a4da3', secondary: '#f5820b', text: '#ffffff' },
+  图卢兹: { mark: '图卢', crest: 'https://assets.football-logos.cc/logos/france/256x256/toulouse.67db8b0f.png', primary: '#5f259f', secondary: '#f2f2f2', text: '#ffffff' },
+  兰斯: { mark: '兰斯', crest: 'https://assets.football-logos.cc/logos/france/256x256/stade-de-reims.8cae745b.png', primary: '#e2001a', secondary: '#f2f2f2', text: '#ffffff' },
+  斯特拉斯堡: { mark: '斯特', crest: 'https://assets.football-logos.cc/logos/france/256x256/rc-strasbourg-alsace.d91bd009.png', primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
+  布雷斯特: { mark: '布雷', crest: 'https://assets.football-logos.cc/logos/france/256x256/brest.bdb50f5e.png', primary: '#d3212c', secondary: '#f2f2f2', text: '#ffffff' },
+  欧塞尔: { mark: '欧塞', crest: 'https://assets.football-logos.cc/logos/france/256x256/auxerre.1eaae387.png', primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
 
   // 葡超
-  里斯本竞技: { mark: '里斯', crest: 228, primary: '#00843d', secondary: '#f2f2f2', text: '#ffffff' },
-  布拉加: { mark: '布拉', crest: 229, primary: '#d3212c', secondary: '#f2f2f2', text: '#ffffff' },
+  里斯本竞技: { mark: '里斯', crest: 'https://assets.football-logos.cc/logos/portugal/256x256/sporting-cp.8b32e971.png', primary: '#00843d', secondary: '#f2f2f2', text: '#ffffff' },
+  布拉加: { mark: '布拉', crest: 'https://assets.football-logos.cc/logos/portugal/256x256/sc-braga.07de49c7.png', primary: '#d3212c', secondary: '#f2f2f2', text: '#ffffff' },
 
   // 土超
-  贝西克塔斯: { mark: '贝西', crest: 610, primary: '#1a1a1a', secondary: '#f2f2f2', text: '#f2f2f2' },
-  费内巴切: { mark: '费内', crest: 611, primary: '#f7d417', secondary: '#0a3463', text: '#3a2a00' },
-  加拉塔萨雷: { mark: '加拉', crest: 645, primary: '#a90432', secondary: '#f7b500', text: '#ffffff' },
+  贝西克塔斯: { mark: '贝西', crest: 'https://assets.football-logos.cc/logos/turkey/256x256/besiktas.44876961.png', primary: '#1a1a1a', secondary: '#f2f2f2', text: '#f2f2f2' },
+  费内巴切: { mark: '费内', crest: 'https://assets.football-logos.cc/logos/turkey/256x256/fenerbahce.2a1e22fd.png', primary: '#f7d417', secondary: '#0a3463', text: '#3a2a00' },
+  加拉塔萨雷: { mark: '加拉', crest: 'https://assets.football-logos.cc/logos/turkey/256x256/galatasaray.67179bf9.png', primary: '#a90432', secondary: '#f7b500', text: '#ffffff' },
 
   // 比甲
-  布鲁日: { mark: '布鲁', crest: 448, primary: '#0a4da3', secondary: '#1a1a1a', text: '#ffffff' },
-  安德莱赫特: { mark: '安德', crest: 449, primary: '#5f259f', secondary: '#f2f2f2', text: '#ffffff' },
+  布鲁日: { mark: '布鲁', crest: 'https://assets.football-logos.cc/logos/belgium/256x256/club-brugge.b8870937.png', primary: '#0a4da3', secondary: '#1a1a1a', text: '#ffffff' },
+  安德莱赫特: { mark: '安德', crest: 'https://assets.football-logos.cc/logos/belgium/256x256/anderlecht.225ae34e.png', primary: '#5f259f', secondary: '#f2f2f2', text: '#ffffff' },
 
   // 俄超
-  圣彼得堡泽尼特: { mark: '泽尼', crest: 600, primary: '#0a3d91', secondary: '#7ac3ee', text: '#ffffff' },
+  圣彼得堡泽尼特: { mark: '泽尼', crest: 'https://assets.football-logos.cc/logos/russia/256x256/zenit.fb627da5.png', primary: '#0a3d91', secondary: '#7ac3ee', text: '#ffffff' },
 
   // 巴甲
-  弗拉门戈: { mark: '弗拉', crest: 127, primary: '#d3212c', secondary: '#1a1a1a', text: '#ffffff' },
-  帕尔梅拉斯: { mark: '帕尔', crest: 121, primary: '#006b3f', secondary: '#f2f2f2', text: '#ffffff' },
-  桑托斯: { mark: '桑托', crest: 128, primary: '#f2f2f2', secondary: '#1a1a1a', text: '#1a1a2e' },
+  弗拉门戈: { mark: '弗拉', crest: 'https://assets.football-logos.cc/logos/brazil/256x256/flamengo.9c3055f2.png', primary: '#d3212c', secondary: '#1a1a1a', text: '#ffffff' },
+  帕尔梅拉斯: { mark: '帕尔', crest: 'https://assets.football-logos.cc/logos/brazil/256x256/palmeiras.9ab1d558.png', primary: '#006b3f', secondary: '#f2f2f2', text: '#ffffff' },
+  桑托斯: { mark: '桑托', crest: 'https://assets.football-logos.cc/logos/brazil/256x256/santos.d23b4286.png', primary: '#f2f2f2', secondary: '#1a1a1a', text: '#1a1a2e' },
 
   // 阿甲
-  博卡青年: { mark: '博卡', crest: 451, primary: '#f7c500', secondary: '#0a3463', text: '#3a2a00' },
-  河床: { mark: '河床', crest: 435, primary: '#f2f2f2', secondary: '#e2001a', text: '#1a1a2e' },
+  博卡青年: { mark: '博卡', crest: 'https://assets.football-logos.cc/logos/argentina/256x256/boca-juniors.533fd0f6.png', primary: '#f7c500', secondary: '#0a3463', text: '#3a2a00' },
+  河床: { mark: '河床', crest: 'https://assets.football-logos.cc/logos/argentina/256x256/river-plate.44a77530.png', primary: '#f2f2f2', secondary: '#e2001a', text: '#1a1a2e' },
 
   // 美职联 / 沙特
-  迈阿密国际: { mark: '迈阿', crest: 1354, primary: '#f7b5cd', secondary: '#1a1a1a', text: '#4a1226' },
-  利雅得胜利: { mark: '胜利', crest: 2932, primary: '#f7c500', secondary: '#0a4da3', text: '#3a2a00' },
-  利雅得新月: { mark: '新月', crest: 2939, primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
+  迈阿密国际: { mark: '迈阿', crest: 'https://assets.football-logos.cc/logos/usa/256x256/inter-miami-cf.e2a16c34.png', primary: '#f7b5cd', secondary: '#1a1a1a', text: '#4a1226' },
+  利雅得胜利: { mark: '胜利', crest: 'https://assets.football-logos.cc/logos/saudi-arabia/256x256/al-nassr.7e60a8fc.png', primary: '#f7c500', secondary: '#0a4da3', text: '#3a2a00' },
+  利雅得新月: { mark: '新月', crest: 'https://assets.football-logos.cc/logos/saudi-arabia/256x256/al-hilal.fc7a4d70.png', primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
 
   // 中超
-  上海海港: { mark: '海港', crest: `${CSL_CREST_BASE}/shanghai-port.0aa038ca.png`, primary: '#d21f2b', secondary: '#f2f2f2', text: '#ffffff' },
-  上海申花: { mark: '申花', crest: `${CSL_CREST_BASE}/shanghai-shenhua.cbc94596.png`, primary: '#1a4fa0', secondary: '#f2f2f2', text: '#ffffff' },
-  山东泰山: { mark: '泰山', crest: `${CSL_CREST_BASE}/shandong-taishan.a66e8c94.png`, primary: '#e8760e', secondary: '#1a1a1a', text: '#3a2a00' },
-  北京国安: { mark: '国安', crest: `${CSL_CREST_BASE}/beijing-guoan.1df87f4d.png`, primary: '#0a8f4a', secondary: '#f2f2f2', text: '#ffffff' },
-  成都蓉城: { mark: '蓉城', crest: `${CSL_CREST_BASE}/chengdu-rongcheng.2bc45ba4.png`, primary: '#d71920', secondary: '#f2f2f2', text: '#ffffff' },
-  武汉三镇: { mark: '三镇', crest: `${CSL_CREST_BASE}/wuhan-three-towns.6be65d9a.png`, primary: '#0f5fa6', secondary: '#f2f2f2', text: '#ffffff' },
-  浙江队: { mark: '浙江', crest: `${CSL_CREST_BASE}/zhejiang-professional.4f74e6f0.png`, primary: '#0f7a3d', secondary: '#f2f2f2', text: '#ffffff' },
-  天津津门虎: { mark: '津门', crest: `${CSL_CREST_BASE}/tianjin-jinmen-tiger.0607a525.png`, primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
-  河南嵩山龙门: { mark: '河南', crest: `${CSL_CREST_BASE}/henan-songshan-longmen.3cd0d41d.png`, primary: '#cf1d2e', secondary: '#f2f2f2', text: '#ffffff' },
-  青岛海牛: { mark: '海牛', crest: `${CSL_CREST_BASE}/qingdao-hainiu.c30126cd.png`, primary: '#12a0d7', secondary: '#f2f2f2', text: '#12324d' },
-  青岛西海岸: { mark: '西海', crest: `${CSL_CREST_BASE}/qingdao-west-coast.6d386f2c.png`, primary: '#f5c500', secondary: '#0a4da3', text: '#3a2a00' },
-  大连英博: { mark: '英博', crest: `${CSL_CREST_BASE}/dalian-yingbo.69d1000a.png`, primary: '#0a3f8f', secondary: '#f2f2f2', text: '#ffffff' },
-  云南玉昆: { mark: '玉昆', crest: `${CSL_CREST_BASE}/yunnan-yukun.1030dde0.png`, primary: '#c8102e', secondary: '#f2f2f2', text: '#ffffff' },
-  深圳新鹏城: { mark: '深圳', crest: `${CSL_CREST_BASE}/shenzhen-xinpengcheng.adc9e767.png`, primary: '#1a4fa0', secondary: '#f2f2f2', text: '#ffffff' },
-  辽宁铁人: { mark: '铁人', crest: `${CSL_CREST_BASE}/liaoning-tiening.2898060b.png`, primary: '#8e1f2f', secondary: '#f2f2f2', text: '#ffffff' },
-  重庆铜梁龙: { mark: '铜梁', crest: `${CSL_CREST_BASE}/chongqing-tonglianglong.53547953.png`, primary: '#cf1d2e', secondary: '#f2f2f2', text: '#ffffff' },
-  梅州客家: { mark: '梅州', crest: `${CSL_CREST_BASE}/meizhou-hakka.2e5499a2.png`, primary: '#f5c500', secondary: '#1a7d3c', text: '#3a2a00' },
-  长春亚泰: { mark: '亚泰', crest: `${CSL_CREST_BASE}/changchun-yatai.73366586.png`, primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
+  上海海港: { mark: '海港', crest: 'https://assets.football-logos.cc/logos/china/256x256/shanghai-port.af639000.png', primary: '#d21f2b', secondary: '#f2f2f2', text: '#ffffff' },
+  上海申花: { mark: '申花', crest: 'https://assets.football-logos.cc/logos/china/256x256/shanghai-shenhua.c81063b4.png', primary: '#1a4fa0', secondary: '#f2f2f2', text: '#ffffff' },
+  山东泰山: { mark: '泰山', crest: 'https://assets.football-logos.cc/logos/china/256x256/shandong-taishan.26d2df27.png', primary: '#e8760e', secondary: '#1a1a1a', text: '#3a2a00' },
+  北京国安: { mark: '国安', crest: 'https://assets.football-logos.cc/logos/china/256x256/beijing-guoan.2337dee6.png', primary: '#0a8f4a', secondary: '#f2f2f2', text: '#ffffff' },
+  成都蓉城: { mark: '蓉城', crest: 'https://assets.football-logos.cc/logos/china/256x256/chengdu-rongcheng.b1770fd5.png', primary: '#d71920', secondary: '#f2f2f2', text: '#ffffff' },
+  武汉三镇: { mark: '三镇', crest: 'https://assets.football-logos.cc/logos/china/256x256/wuhan-three-towns.e979d588.png', primary: '#0f5fa6', secondary: '#f2f2f2', text: '#ffffff' },
+  浙江队: { mark: '浙江', crest: 'https://assets.football-logos.cc/logos/china/256x256/zhejiang-professional.8dee2e5b.png', primary: '#0f7a3d', secondary: '#f2f2f2', text: '#ffffff' },
+  天津津门虎: { mark: '津门', crest: 'https://assets.football-logos.cc/logos/china/256x256/tianjin-jinmen-tiger.7549c4ea.png', primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
+  河南嵩山龙门: { mark: '河南', crest: 'https://assets.football-logos.cc/logos/china/256x256/henan-songshan-longmen.062f6c4e.png', primary: '#cf1d2e', secondary: '#f2f2f2', text: '#ffffff' },
+  青岛海牛: { mark: '海牛', crest: 'https://assets.football-logos.cc/logos/china/256x256/qingdao-hainiu.041b4a85.png', primary: '#12a0d7', secondary: '#f2f2f2', text: '#12324d' },
+  青岛西海岸: { mark: '西海', crest: 'https://assets.football-logos.cc/logos/china/256x256/qingdao-west-coast.b27c8f29.png', primary: '#f5c500', secondary: '#0a4da3', text: '#3a2a00' },
+  大连英博: { mark: '英博', crest: 'https://assets.football-logos.cc/logos/china/256x256/dalian-yingbo.b94a0e34.png', primary: '#0a3f8f', secondary: '#f2f2f2', text: '#ffffff' },
+  云南玉昆: { mark: '玉昆', crest: 'https://assets.football-logos.cc/logos/china/256x256/yunnan-yukun.cd3e7e8d.png', primary: '#c8102e', secondary: '#f2f2f2', text: '#ffffff' },
+  深圳新鹏城: { mark: '深圳', crest: 'https://assets.football-logos.cc/logos/china/256x256/shenzhen-xinpengcheng.68d9d377.png', primary: '#1a4fa0', secondary: '#f2f2f2', text: '#ffffff' },
+  辽宁铁人: { mark: '铁人', crest: 'https://assets.football-logos.cc/logos/china/256x256/liaoning-tiening.5e45daaf.png', primary: '#8e1f2f', secondary: '#f2f2f2', text: '#ffffff' },
+  重庆铜梁龙: { mark: '铜梁', crest: 'https://assets.football-logos.cc/logos/china/256x256/chongqing-tonglianglong.cb69abc3.png', primary: '#cf1d2e', secondary: '#f2f2f2', text: '#ffffff' },
+  梅州客家: { mark: '梅州', crest: 'https://assets.football-logos.cc/logos/china/256x256/meizhou-hakka.c605831a.png', primary: '#f5c500', secondary: '#1a7d3c', text: '#3a2a00' },
+  长春亚泰: { mark: '亚泰', crest: 'https://assets.football-logos.cc/logos/china/256x256/changchun-yatai.2bad1128.png', primary: '#0a4da3', secondary: '#f2f2f2', text: '#ffffff' },
 };
 
 // 常见中文别名 → 规范名，方便直接输入「皇马」「巴萨」这类简称。
@@ -375,20 +374,9 @@ export function teamMark(team) {
   return getTeamMeta(team).mark;
 }
 
-export function teamCrestCode(team) {
-  return getTeamMeta(team).crest;
-}
-
-// api-football 队徽图；crest 为完整 URL 时直接使用；无队徽或未知球队返回空串（UI 降级为主题色圆徽）。
+// 队徽图 URL；未知球队返回空串（UI 降级为中文缩写）。
 export function teamCrestUrl(team) {
-  const crest = teamCrestCode(team);
-  if (!crest) {
-    return '';
-  }
-  if (typeof crest === 'string') {
-    return crest;
-  }
-  return `https://media.api-sports.io/football/teams/${crest}.png`;
+  return getTeamMeta(team).crest || '';
 }
 
 export function teamRowClass(team) {

@@ -4,7 +4,6 @@ import {
   canonicalTeamName,
   getTeamMeta,
   getTeamMark,
-  teamCrestCode,
   teamCrestUrl,
   teamPrimary,
   teamSecondary,
@@ -16,25 +15,25 @@ describe('getTeamMeta', () => {
   it('returns metadata for a known club', () => {
     const meta = getTeamMeta('皇家马德里');
     expect(meta.mark).toBe('皇马');
-    expect(meta.crest).toBe(541);
+    expect(meta.crest).toContain('/spain/256x256/real-madrid.');
     expect(meta.primary).toBe('#f5f6f8');
     expect(meta.text).toBe('#1a1a2e');
   });
 
   it('matches a common Chinese alias (皇马 → 皇家马德里)', () => {
     const meta = getTeamMeta('皇马');
-    expect(meta.crest).toBe(541);
+    expect(meta.crest).toContain('real-madrid');
     expect(meta.mark).toBe('皇马');
   });
 
   it('matches by normalized prefix (皇家马德里队 → 皇家马德里)', () => {
     const meta = getTeamMeta('皇家马德里队');
-    expect(meta.crest).toBe(541);
+    expect(meta.crest).toContain('real-madrid');
   });
 
   it('matches with the football club suffix (利物浦足球俱乐部 → 利物浦)', () => {
     const meta = getTeamMeta('利物浦足球俱乐部');
-    expect(meta.crest).toBe(40);
+    expect(meta.crest).toContain('liverpool');
   });
 
   it('returns default meta for unknown teams', () => {
@@ -62,16 +61,15 @@ describe('team accessors', () => {
 });
 
 describe('teamCrestUrl', () => {
-  it('builds an api-football crest URL from the team id', () => {
-    expect(teamCrestUrl('皇家马德里')).toBe('https://media.api-sports.io/football/teams/541.png');
+  it('returns the name-based football-logos crest URL for a club', () => {
+    expect(teamCrestUrl('皇家马德里')).toMatch(
+      /^https:\/\/assets\.football-logos\.cc\/logos\/spain\/256x256\/real-madrid\.[0-9a-f]+\.png$/
+    );
+    expect(teamCrestUrl('拜仁慕尼黑')).toContain('/germany/256x256/bayern-munchen.');
   });
 
   it('returns empty string for unknown teams', () => {
     expect(teamCrestUrl('未知队')).toBe('');
-  });
-
-  it('exposes the crest code separately', () => {
-    expect(teamCrestCode('拜仁慕尼黑')).toBe(157);
   });
 });
 
@@ -120,14 +118,18 @@ describe('canonicalTeamName', () => {
 });
 
 describe('expanded club catalogue', () => {
-  it('carries crest ids for the newly added clubs', () => {
-    expect(teamCrestCode('埃弗顿')).toBe(45);
-    expect(teamCrestCode('赫罗纳')).toBe(547);
-    expect(teamCrestCode('博洛尼亚')).toBe(500);
-    expect(teamCrestCode('门兴格拉德巴赫')).toBe(163);
-    expect(teamCrestCode('里斯本竞技')).toBe(228);
-    expect(teamCrestCode('博卡青年')).toBe(451);
-    expect(teamCrestCode('利雅得新月')).toBe(2939);
+  it('carries name-based crest URLs for the newly added clubs', () => {
+    expect(teamCrestUrl('埃弗顿')).toContain('/england/256x256/everton.');
+    expect(teamCrestUrl('赫罗纳')).toContain('/spain/256x256/girona.');
+    expect(teamCrestUrl('门兴格拉德巴赫')).toContain('/germany/256x256/borussia-monchengladbach.');
+    expect(teamCrestUrl('里斯本竞技')).toContain('/portugal/256x256/sporting-cp.');
+    expect(teamCrestUrl('博卡青年')).toContain('/argentina/256x256/boca-juniors.');
+  });
+
+  it('keeps the two Riyadh clubs on their own crests', () => {
+    // 之前这两支的队徽张冠李戴，名字化 URL 之后必须各归各位。
+    expect(teamCrestUrl('利雅得新月')).toContain('/saudi-arabia/256x256/al-hilal.');
+    expect(teamCrestUrl('利雅得胜利')).toContain('/saudi-arabia/256x256/al-nassr.');
   });
 
   it('resolves the new short names and nicknames', () => {
@@ -148,8 +150,10 @@ describe('expanded club catalogue', () => {
 
 describe('中超 clubs', () => {
   it('carries real crest URLs from the football-logos catalogue', () => {
-    expect(teamCrestUrl('上海海港')).toBe('https://assets.football-logos.cc/logos/china/512x512/shanghai-port.0aa038ca.png');
-    expect(teamCrestUrl('北京国安')).toMatch(/^https:\/\/assets\.football-logos\.cc\/logos\/china\/512x512\/beijing-guoan\.[0-9a-f]+\.png$/);
+    expect(teamCrestUrl('上海海港')).toMatch(
+      /^https:\/\/assets\.football-logos\.cc\/logos\/china\/256x256\/shanghai-port\.[0-9a-f]+\.png$/
+    );
+    expect(teamCrestUrl('北京国安')).toMatch(/^https:\/\/assets\.football-logos\.cc\/logos\/china\/256x256\/beijing-guoan\.[0-9a-f]+\.png$/);
     expect(teamCrestUrl('长春亚泰')).toContain('changchun-yatai');
   });
 
@@ -185,14 +189,16 @@ describe('catalogue integrity', () => {
     expect(clubs.length).toBeGreaterThanOrEqual(100);
   });
 
-  it('gives every club a crest and a non-empty mark', () => {
+  it('gives every club a crest URL and a non-empty mark', () => {
     for (const meta of clubs) {
-      const crestOk = typeof meta.crest === 'number'
-        ? meta.crest > 0
-        : typeof meta.crest === 'string' && meta.crest.startsWith('https://');
-      expect(crestOk).toBe(true);
+      expect(meta.crest).toMatch(/^https:\/\/assets\.football-logos\.cc\/logos\//);
       expect(meta.mark.length).toBeGreaterThan(0);
     }
+  });
+
+  it('never points two different clubs at the same crest', () => {
+    const slugs = clubs.map((meta) => meta.crest);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   it('keeps every club mark unique', () => {

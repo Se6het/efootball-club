@@ -27,16 +27,61 @@ function recordLine(profile) {
   return `${profile.matches} 场 · ${profile.wins} 胜 ${profile.draws} 平 ${profile.losses} 负 · 胜率 ${percentOf(profile.winRate)} · 进 ${profile.goalsFor} 失 ${profile.goalsAgainst}`;
 }
 
-function honorLines(profile) {
-  const lines = [];
-  for (const item of profile.titles) lines.push(`🏆 ${item.seasonLabel} 带 ${item.team} 夺冠`);
-  for (const item of profile.sweeps) lines.push(`🥇 ${item.seasonLabel} 包揽前三（${item.teams.join(' / ')}）`);
-  for (const item of profile.runnerUps) lines.push(`🥈 ${item.seasonLabel} 亚军（${item.team}）`);
-  for (const item of profile.thirds) lines.push(`🥉 ${item.seasonLabel} 季军（${item.team}）`);
-  for (const item of profile.goldenBoots) lines.push(`👟 ${item.seasonLabel} 金靴：${item.player}（${item.team}，${item.goals} 球）`);
-  for (const item of profile.assistCrowns) lines.push(`🎯 ${item.seasonLabel} 助攻王：${item.player}（${item.team}，${item.assists} 次）`);
-  for (const item of profile.fmvps) lines.push(`⭐ ${item.seasonLabel} FMVP：${item.player}（${item.team}）`);
-  return lines;
+// 队徽 + 队名：档案里凡是出现球队的地方都用它，比纯文字直观得多。
+function teamChip(team) {
+  return el('span', { className: 'arc-team' }, [
+    teamBadge(team),
+    el('span', { className: 'arc-team-name', text: team }),
+  ]);
+}
+
+// 一串球队：顿号分隔，每支都带队徽。
+function teamChipList(teams) {
+  const nodes = [];
+  teams.forEach((team, index) => {
+    if (index > 0) {
+      nodes.push(el('span', { className: 'arc-team-sep', text: '、' }));
+    }
+    nodes.push(teamChip(team));
+  });
+  return nodes;
+}
+
+// 教练荣誉的结构化条目：奖杯图标 + 说明 + 带徽章的球队（+ 尾巴，如球员与数据）。
+function honorEntries(profile) {
+  const rows = [];
+  const push = (icon, lead, teams, tail) => rows.push({ icon, lead, teams, tail });
+  for (const item of profile.titles) push('🏆', `${item.seasonLabel} 带`, [item.team], '夺冠');
+  for (const item of profile.sweeps) push('🥇', `${item.seasonLabel} 包揽前三`, item.teams, '');
+  for (const item of profile.runnerUps) push('🥈', `${item.seasonLabel} 亚军`, [item.team], '');
+  for (const item of profile.thirds) push('🥉', `${item.seasonLabel} 季军`, [item.team], '');
+  for (const item of profile.goldenBoots) push('👟', `${item.seasonLabel} 金靴`, [item.team], `${item.player} · ${item.goals} 球`);
+  for (const item of profile.assistCrowns) push('🎯', `${item.seasonLabel} 助攻王`, [item.team], `${item.player} · ${item.assists} 助攻`);
+  for (const item of profile.fmvps) push('⭐', `${item.seasonLabel} FMVP`, [item.team], item.player);
+  return rows;
+}
+
+// 荣誉栏：单独一块醒目的面板，放在教练卡靠上的位置。
+function honorBlock(profile) {
+  const entries = honorEntries(profile);
+  return el('div', { className: 'arc-honors' }, [
+    el('div', { className: 'arc-honors-head' }, [
+      el('span', { className: 'arc-honors-title', text: '荣誉' }),
+      entries.length > 0 ? el('span', { className: 'arc-honors-count', text: `${entries.length} 项` }) : null,
+    ]),
+    entries.length > 0
+      ? el('ul', { className: 'coach-honors' }, entries.map((entry) =>
+          el('li', { className: 'coach-honor' }, [
+            el('span', { className: 'honor-medal', text: entry.icon }),
+            el('span', { className: 'honor-body' }, [
+              el('span', { className: 'honor-lead', text: entry.lead }),
+              ...teamChipList(entry.teams),
+              entry.tail ? el('span', { className: 'honor-tail muted', text: entry.tail }) : null,
+            ]),
+          ])
+        ))
+      : el('p', { className: 'coach-honors-empty muted', text: '暂无冠军、奖项记录' }),
+  ]);
 }
 
 function badgeRow(profile) {
@@ -116,10 +161,9 @@ function seasonLogBlock(profile) {
     el('li', { className: entry.champion ? 'arc-log-row champ' : 'arc-log-row' }, [
       el('span', { className: 'arc-log-season', text: `第 ${entry.ordinal} 赛季` }),
       entry.champion ? el('span', { className: 'arc-log-flag', text: '🏆' }) : null,
-      el('span', {
-        className: 'arc-log-teams',
-        text: entry.teams.length > 0 ? entry.teams.join('、') : '未带任何球队',
-      }),
+      el('span', { className: 'arc-log-teams' }, entry.teams.length > 0
+        ? teamChipList(entry.teams)
+        : [el('span', { className: 'muted', text: '未带任何球队' })]),
       entry.bestRank !== null
         ? el('span', { className: 'arc-log-rank muted', text: `最好第 ${entry.bestRank} 名` })
         : (entry.complete ? null : el('span', { className: 'arc-log-rank muted', text: '未完赛' })),
@@ -128,12 +172,7 @@ function seasonLogBlock(profile) {
 }
 
 function coachCard(profile) {
-  const honors = honorLines(profile);
   const rivals = profile.rivals.filter((rival) => rival.played > 0);
-
-  const honorNode = honors.length > 0
-    ? el('ul', { className: 'coach-honors' }, honors.map((line) => el('li', { text: line })))
-    : null;
 
   const rivalNode = rivals.length > 0 || profile.neverFaced.length > 0
     ? el('div', {}, [
@@ -166,6 +205,7 @@ function coachCard(profile) {
     el('p', { className: 'coach-record muted', text: recordLine(profile) }),
     recordBar(profile),
     coachStats(profile),
+    honorBlock(profile),
     el('div', { className: 'coach-meta' }, [
       el('span', { text: `参赛 ${profile.seasons} 个赛季` }),
       profile.completeSeasons !== profile.seasons
@@ -182,10 +222,15 @@ function coachCard(profile) {
         : null,
     ]),
     profile.clubCount > 0
-      ? el('p', { className: 'coach-clubs muted', text: `俱乐部：${profile.clubList.map((item) => `${item.team}（${item.count} 季）`).join('、')}` })
+      ? el('div', { className: 'coach-clubs' }, [
+          el('span', { className: 'coach-clubs-label muted', text: '执教过' }),
+          ...profile.clubList.map((item) => el('span', { className: 'arc-team' }, [
+            teamBadge(item.team),
+            el('span', { className: 'arc-team-name', text: `${item.team}（${item.count} 季）` }),
+          ])),
+        ])
       : null,
     listBlock('赛季履历', seasonLogBlock(profile), '还没有执教记录'),
-    listBlock('荣誉', honorNode, '暂无冠军、奖项记录'),
     listBlock('交手', rivalNode, '还没有与世界里的其他教练交过手'),
   ]);
 }
@@ -211,8 +256,9 @@ function seasonCard(season, handlers) {
     roster.get(row.coach).push(row.team);
   }
 
-  const chip = (icon, text) => el('span', { className: 'season-chip' }, [
+  const chip = (icon, text, team) => el('span', { className: 'season-chip' }, [
     el('span', { className: 'season-chip-icon', text: icon }),
+    team ? teamBadge(team) : null,
     el('span', { text }),
   ]);
 
@@ -242,11 +288,11 @@ function seasonCard(season, handlers) {
             el('span', { text: `冠军 ${champion.team}（${champion.coach}）` }),
           ])
         : el('span', { className: 'season-chip muted', text: season.complete ? '名次待加赛' : '尚未决出冠军' }),
-      runnerUp ? chip('🥈', `亚军 ${runnerUp.team}（${runnerUp.coach}）`) : null,
-      third ? chip('🥉', `季军 ${third.team}（${third.coach}）`) : null,
-      boots ? chip('👟', `${boots.name}（${boots.team}，${boots.goals} 球）`) : null,
-      assists ? chip('🎯', `${assists.name}（${assists.team}，${assists.assists} 次）`) : null,
-      fmvp ? chip('⭐', `FMVP ${fmvp.name}（${fmvp.team}，${fmvp.coach}）`) : null,
+      runnerUp ? chip('🥈', `亚军 ${runnerUp.team}（${runnerUp.coach}）`, runnerUp.team) : null,
+      third ? chip('🥉', `季军 ${third.team}（${third.coach}）`, third.team) : null,
+      boots ? chip('👟', `${boots.name}（${boots.team}，${boots.goals} 球）`, boots.team) : null,
+      assists ? chip('🎯', `${assists.name}（${assists.team}，${assists.assists} 次）`, assists.team) : null,
+      fmvp ? chip('⭐', `FMVP ${fmvp.name}（${fmvp.team}，${fmvp.coach}）`, fmvp.team) : null,
     ]),
     el('div', { className: 'arc-meta-row' }, [
       el('span', { className: 'arc-meta-item' }, [
@@ -266,7 +312,7 @@ function seasonCard(season, handlers) {
       ? el('div', { className: 'arc-roster' }, [...roster.entries()].map(([name, teams]) =>
           el('div', { className: 'arc-roster-row' }, [
             el('span', { className: 'arc-roster-coach', text: name }),
-            el('span', { className: 'arc-roster-teams', text: teams.join('、') }),
+            el('span', { className: 'arc-roster-teams' }, teamChipList(teams)),
           ])
         ))
       : null,

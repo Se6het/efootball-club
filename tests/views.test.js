@@ -613,11 +613,21 @@ describe('archive view', () => {
 
     const ming = coachCards.find((card) => textOf(card.querySelector('.coach-name')) === '小明');
     const mingText = textOf(ming);
-    expect(mingText).toContain('带 皇家马德里 夺冠');
-    expect(mingText).toContain('金靴：张三');
+    expect(mingText).toContain('第 1 赛季 带');
+    expect(mingText).toContain('皇家马德里');
+    expect(mingText).toContain('夺冠');
+    expect(mingText).toContain('金靴');
+    expect(mingText).toContain('张三');
     expect(mingText).toContain('对 小红');
     expect(mingText).toContain('从未交手：小刚');
     expect(mingText).not.toContain('[object ');
+
+    // 荣誉栏是一块独立面板，每条荣誉都带上球队队徽。
+    const honors = ming.querySelector('.arc-honors');
+    expect(honors).toBeTruthy();
+    const honorRows = honors.querySelectorAll('.coach-honor');
+    expect(honorRows).toHaveLength(3);
+    expect(honorRows[0].querySelectorAll('img').length).toBe(1);
 
     const gang = coachCards.find((card) => textOf(card.querySelector('.coach-name')) === '小刚');
     expect(textOf(gang)).toContain('暂未获得荣誉');
@@ -736,7 +746,31 @@ describe('archive view', () => {
     expect(text).toContain('总进球');
     expect(text).not.toContain('undefined');
     const roster = card.querySelectorAll('.arc-roster-row');
-    expect(roster.map(textOf)).toEqual(['小明皇家马德里、曼城', '小红巴塞罗那']);
+    expect(roster).toHaveLength(2);
+    // 球队改成队徽 + 队名，徽章图在 roster 行里。
+    expect(roster[0].querySelectorAll('.arc-team')).toHaveLength(2);
+    expect(roster[0].querySelectorAll('img').length).toBe(2);
+    expect(textOf(roster[0])).toContain('皇家马德里');
+    expect(textOf(roster[0])).toContain('曼城');
+    expect(textOf(roster[1])).toContain('巴塞罗那');
+  });
+
+  it('puts a crest next to every team it names in the season card', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const card = view.querySelector('.season-card');
+    // 冠军 chip 自带一枚队徽。（测试 DOM 只支持简单选择器，这里用 class 过滤。）
+    const chips = card.querySelectorAll('.season-chip');
+    const champChip = chips.find((chip) => String(chip.className).includes('champ'));
+    expect(champChip).toBeTruthy();
+    expect(champChip.querySelectorAll('img').length).toBe(1);
   });
 
   it('enriches coach cards with highlight stats, a form bar and a season log', () => {

@@ -3230,6 +3230,10 @@ tbody tr.row-medal-bronze {
 }
 
 .arc-roster-teams {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
   font-size: 14px;
   color: var(--text);
 }
@@ -3359,7 +3363,15 @@ tbody tr.row-medal-bronze {
 }
 
 .coach-clubs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
   font-size: 13px;
+}
+
+.coach-clubs-label {
+  font-weight: 700;
 }
 
 .coach-block {
@@ -3374,7 +3386,6 @@ tbody tr.row-medal-bronze {
   font-weight: 700;
 }
 
-.coach-honors,
 .coach-rivals {
   margin: 0;
   padding-left: 20px;
@@ -3439,6 +3450,104 @@ tbody tr.row-medal-bronze {
 
 .arc-log-rank {
   font-size: 13px;
+}
+
+/* 档案里的「队徽 + 队名」：一串球队用顿号分隔，每支都带队徽。 */
+.arc-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.arc-team .team-crest {
+  --s: 20px;
+}
+
+.season-chip .team-crest {
+  --s: 20px;
+}
+
+.arc-team-sep {
+  color: var(--muted);
+  margin: 0 1px;
+}
+
+/* 荣誉栏：金色描边独立面板，把教练荣誉从一堆小字里拎出来。 */
+.arc-honors {
+  border: 1px solid rgba(201, 162, 43, 0.55);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fffaf0, #fdf2d6);
+  display: grid;
+  gap: 10px;
+}
+
+.arc-honors-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.arc-honors-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #8a6d15;
+}
+
+.arc-honors-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a8862f;
+}
+
+.coach-honors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.coach-honor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(201, 162, 43, 0.28);
+}
+
+.coach-honor .team-crest {
+  --s: 20px;
+}
+
+.honor-medal {
+  font-size: 18px;
+  flex: none;
+}
+
+.honor-body {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.honor-tail {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.coach-honors-empty {
+  margin: 0;
+  font-size: 14px;
 }
 
 .fact-list {
