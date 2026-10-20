@@ -3033,16 +3033,18 @@ tbody tr.row-medal-bronze {
 }
 
 .archive-shell {
-  padding-bottom: 40px;
+  padding-bottom: 56px;
+  gap: 22px;
 }
 
 .archive-panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 18px;
+  padding: 24px 26px;
   display: grid;
-  gap: 12px;
+  gap: 18px;
+  box-shadow: var(--shadow-sm);
 }
 
 .archive-panel > * {
@@ -3050,13 +3052,47 @@ tbody tr.row-medal-bronze {
 }
 
 .archive-current {
-  border-left: 4px solid var(--primary);
+  border-left: 5px solid var(--primary);
+}
+
+/* 世界总览：一排大数字 */
+.arc-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.arc-tile {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--panel), color-mix(in srgb, var(--primary) 4%, var(--panel)));
+  box-shadow: var(--shadow-sm);
+}
+
+.arc-tile-value {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+}
+
+.arc-tile-label {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.arc-tile-hint {
+  font-size: 12px;
 }
 
 .season-badge {
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -3073,23 +3109,23 @@ tbody tr.row-medal-bronze {
 
 .season-list {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .season-card {
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 20px 22px;
   background: var(--panel-alt);
   display: grid;
-  gap: 8px;
+  gap: 14px;
 }
 
 .season-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -3097,44 +3133,45 @@ tbody tr.row-medal-bronze {
   margin: 0;
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .season-ordinal {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
 }
 
 .season-label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
 }
 
 .season-card-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .season-card-meta {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .season-card-body {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .season-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 4px 12px 4px 8px;
-  font-size: 13px;
+  padding: 7px 16px 7px 12px;
+  font-size: 14px;
   background: var(--panel);
 }
 
@@ -3145,51 +3182,101 @@ tbody tr.row-medal-bronze {
 }
 
 .season-chip-icon {
+  font-size: 15px;
+}
+
+/* 赛季数据小条 + 教练-球队名录 */
+.arc-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  padding-top: 2px;
+}
+
+.arc-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.arc-meta-k {
   font-size: 13px;
+}
+
+.arc-meta-v {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.arc-roster {
+  display: grid;
+  gap: 8px;
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
+}
+
+.arc-roster-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.arc-roster-coach {
+  font-weight: 700;
+  font-size: 15px;
+  min-width: 64px;
+}
+
+.arc-roster-teams {
+  font-size: 14px;
+  color: var(--text);
 }
 
 .coach-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
 }
 
 .coach-card {
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 22px;
   background: var(--panel-alt);
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .coach-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .coach-name {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .coach-badges {
   display: inline-flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .coach-badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   background: var(--panel);
 }
 
@@ -3199,14 +3286,70 @@ tbody tr.row-medal-bronze {
 }
 
 .coach-record {
+  font-size: 15px;
+}
+
+/* 胜/平/负比例条 */
+.arc-wdl {
+  display: flex;
+  height: 34px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.arc-wdl-seg {
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.arc-wdl-seg.win {
+  background: var(--success);
+}
+
+.arc-wdl-seg.draw {
+  background: #8a97b5;
+}
+
+.arc-wdl-seg.loss {
+  background: #c0392b;
+}
+
+.arc-wdl-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 教练数据：大数字平铺 */
+.arc-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.coach-card .arc-tile {
+  padding: 12px 14px;
+  background: var(--panel);
+}
+
+.coach-card .arc-tile-value {
+  font-size: 22px;
+}
+
+.coach-card .arc-tile-label {
   font-size: 13px;
 }
 
 .coach-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  font-size: 13px;
+  gap: 8px 16px;
+  font-size: 14px;
   color: var(--text);
 }
 
@@ -3216,17 +3359,17 @@ tbody tr.row-medal-bronze {
 }
 
 .coach-clubs {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .coach-block {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .coach-block-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
   font-weight: 700;
 }
@@ -3234,10 +3377,10 @@ tbody tr.row-medal-bronze {
 .coach-honors,
 .coach-rivals {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 20px;
   display: grid;
-  gap: 4px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 14px;
 }
 
 .coach-rival-name {
@@ -3251,12 +3394,51 @@ tbody tr.row-medal-bronze {
 
 .coach-rival-margin {
   margin-left: 8px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .coach-never {
-  margin: 4px 0 0;
-  font-size: 12px;
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+/* 赛季履历 */
+.arc-season-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.arc-log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.arc-log-row.champ {
+  border-color: rgba(201, 162, 43, 0.6);
+  background: #fdf7e4;
+}
+
+.arc-log-season {
+  font-weight: 700;
+  min-width: 72px;
+}
+
+.arc-log-teams {
+  flex: 1;
+}
+
+.arc-log-rank {
+  font-size: 13px;
 }
 
 .fact-list {
@@ -3264,39 +3446,141 @@ tbody tr.row-medal-bronze {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
 }
 
 .fact-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
-  padding: 10px 12px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--panel-alt);
 }
 
 .fact-icon {
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: 26px;
+  line-height: 1.1;
 }
 
 .fact-main {
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 
 .fact-title {
   font-weight: 700;
+  font-size: 16px;
 }
 
 .fact-detail {
+  font-size: 14px;
+}
+
+/* ── 足球世界入口：初始页大卡 + 联赛页横幅 ───────────────────── */
+.setup-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.world-hero,
+.world-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 22px 26px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  background: linear-gradient(135deg, #22366f 0%, #2a5ce0 55%, #4f8bff 100%);
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.world-hero-main,
+.world-strip-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.world-hero-logo,
+.world-strip-logo {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.world-hero-text h2,
+.world-strip-title {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0.3px;
+  color: #fff;
+}
+
+.world-hero-sub,
+.world-strip-sub {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 620px;
+}
+
+.world-hero-enter,
+.world-strip-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 13px 24px;
+  border-radius: 999px;
+  border: none;
+  background: #fff;
+  color: #1c3aa9;
+  box-shadow: 0 6px 18px rgba(8, 20, 60, 0.28);
+  cursor: pointer;
+}
+
+.world-hero-enter:hover,
+.world-strip-enter:hover {
+  transform: translateY(-1px);
+  background: #f2f6ff;
+}
+
+.world-hero-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #1c3aa9;
+  color: #fff;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 640px) {
   .coach-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fact-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .world-hero,
+  .world-strip {
+    padding: 18px;
   }
 }

@@ -637,4 +637,66 @@ describe('computeCoachRecords', () => {
     expect(hong.worstFinish).toBe(2);
     expect(records.facts.map((fact) => fact.id)).toContain('fact-lastplace');
   });
+
+  it('computes per-game averages and a per-season log for each coach', () => {
+    const world = worldOf(seasonOf({
+      standings: [row('皇马', '小明', 1, { played: 4, goalsFor: 8, goalsAgainst: 4, points: 9 })],
+    }));
+    const ming = computeCoachRecords(world).coaches.find((coach) => coach.name === '小明');
+    expect(ming.pointsPerGame).toBeCloseTo(9 / 4);
+    expect(ming.goalsForPerGame).toBeCloseTo(2);
+    expect(ming.goalsAgainstPerGame).toBeCloseTo(1);
+    expect(ming.goalDifference).toBe(4);
+    expect(ming.titleRate).toBeCloseTo(1);
+    expect(ming.seasonEntries).toHaveLength(1);
+    expect(ming.seasonEntries[0]).toMatchObject({
+      ordinal: 1,
+      complete: true,
+      teams: ['皇马'],
+      bestRank: 1,
+      champion: true,
+    });
+  });
+
+  it('adds sharper and deeper world records', () => {
+    const strongRow = row('皇马', '小明', 1, { played: 6, wins: 5, draws: 0, losses: 1, goalsFor: 18, goalsAgainst: 4, points: 15 });
+    const weakRow = row('巴萨', '小红', 2, { played: 6, wins: 1, draws: 0, losses: 5, goalsFor: 4, goalsAgainst: 18, points: 3 });
+    const strongAwards = {
+      champion: { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+      podium: [
+        { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+        { team: '巴萨', coach: '小红', rank: 2, needsPlayoff: false },
+      ],
+      topScorers: [],
+      topAssists: [],
+      fmvp: null,
+    };
+    const world = worldOf(
+      seasonOf({
+        id: 's-1',
+        standings: [strongRow, weakRow],
+        awards: strongAwards,
+        h2h: { played: 6, winsA: 5, draws: 0, winsB: 1, goalsA: 18, goalsB: 4, biggestMargin: { diff: 4, score: '5:1', coach: '小明', winner: '皇马', loser: '巴萨' } },
+      }),
+      seasonOf({
+        id: 's-2',
+        sourceId: 'src-2',
+        standings: [strongRow, weakRow],
+        awards: strongAwards,
+        h2h: { played: 6, winsA: 6, draws: 0, winsB: 0, goalsA: 20, goalsB: 2, biggestMargin: { diff: 5, score: '6:1', coach: '小明', winner: '皇马', loser: '巴萨' } },
+      }),
+    );
+
+    const records = computeCoachRecords(world);
+    const ids = records.facts.map((fact) => fact.id);
+    expect(ids).toContain('fact-king');
+    expect(ids).toContain('fact-winrate');
+    expect(ids).toContain('fact-firepower');
+    expect(ids).toContain('fact-fortress');
+    expect(ids).toContain('fact-blowout');
+    expect(ids).toContain('fact-crushed');
+    expect(ids).toContain('fact-goals');
+    expect(records.facts.find((fact) => fact.id === 'fact-king').title).toContain('小明');
+    expect(records.facts.find((fact) => fact.id === 'fact-goals').detail).toContain('44');
+  });
 });

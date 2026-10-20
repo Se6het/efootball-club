@@ -50,8 +50,30 @@ function buildPrizeInputs(prizes, onChange) {
   ]);
 }
 
+// 「足球世界 · 档案」是独立的一整块入口，不塞在赛前配置里，一进来就能看到。
+function worldHero(archiveCount, onOpenArchive) {
+  return el('section', { className: 'world-hero' }, [
+    el('div', { className: 'world-hero-main' }, [
+      el('span', { className: 'world-hero-logo', text: '📚' }),
+      el('div', { className: 'world-hero-text' }, [
+        el('h2', { text: '足球世界 · 档案' }),
+        el('p', {
+          className: 'world-hero-sub',
+          text: archiveCount > 0
+            ? `已经收进 ${archiveCount} 个赛季，想看跨赛季的教练荣誉与纪录，从这里进。`
+            : '把每一档成绩收进同一个世界，跨赛季的教练荣誉与纪录都在里面。',
+        }),
+      ]),
+    ]),
+    el('button', { className: 'world-hero-enter', type: 'button', onClick: onOpenArchive }, [
+      el('span', { text: '打开档案' }),
+      archiveCount > 0 ? el('span', { className: 'world-hero-count', text: String(archiveCount) }) : null,
+    ]),
+  ]);
+}
+
 export function renderSetupView({ onStart, initialConfig = null, sampleConfig = null, error = '', onImport, coaches = [], archiveCount = 0, onOpenArchive }) {
-  const root = el('div', { className: 'grid-two' });
+  const root = el('div', { className: 'setup-shell' });
   const leftTeams = initialConfig?.teamsA ?? [''];
   const rightTeams = initialConfig?.teamsB ?? [''];
   const initialAwards = initialConfig?.awards ?? {};
@@ -106,108 +128,107 @@ export function renderSetupView({ onStart, initialConfig = null, sampleConfig = 
 
   const render = () => {
     clear(root);
-    root.append(
-      el('div', { className: 'panel' }, [
-        el('h2', { text: '赛前配置' }),
-        el('div', { className: 'field-grid' }, [
-          coachField('玩家 A 名称', 'playerA'),
-          coachField('玩家 B 名称', 'playerB'),
-        ]),
-        el('div', { className: 'field-grid' }, [
-          el('label', { className: 'field' }, [
-            el('span', { text: '每位玩家选择俱乐部数量 x' }),
-            el('input', {
-              type: 'number',
-              min: '1',
-              step: '1',
-              value: String(state.teamsA.length),
-              onInput: (event) => {
-                const next = Math.max(1, Number(event.target.value || 1));
-                state.teamsA = Array.from({ length: next }, (_, index) => state.teamsA[index] ?? '');
-                state.teamsB = Array.from({ length: next }, (_, index) => state.teamsB[index] ?? '');
-                onStart?.preview?.();
-                render();
-              },
-            }),
-          ]),
-          el('label', { className: 'field' }, [
-            el('span', { text: '每组对战场次 y（偶数）' }),
-            el('input', {
-              type: 'number',
-              min: '2',
-              step: '2',
-              value: String(state.matchesPerPair),
-              onInput: (event) => {
-                state.matchesPerPair = numberValue(event.target);
-              },
-            }),
-          ]),
-        ]),
-        el('div', { className: 'grid-two' }, [
-          buildTeamInputs('玩家 A', state.teamsA, (index, value) => {
-            state.teamsA[index] = value;
-          }),
-          buildTeamInputs('玩家 B', state.teamsB, (index, value) => {
-            state.teamsB[index] = value;
+
+    const configPanel = el('div', { className: 'panel' }, [
+      el('h2', { text: '赛前配置' }),
+      el('div', { className: 'field-grid' }, [
+        coachField('玩家 A 名称', 'playerA'),
+        coachField('玩家 B 名称', 'playerB'),
+      ]),
+      el('div', { className: 'field-grid' }, [
+        el('label', { className: 'field' }, [
+          el('span', { text: '每位玩家选择俱乐部数量 x' }),
+          el('input', {
+            type: 'number',
+            min: '1',
+            step: '1',
+            value: String(state.teamsA.length),
+            onInput: (event) => {
+              const next = Math.max(1, Number(event.target.value || 1));
+              state.teamsA = Array.from({ length: next }, (_, index) => state.teamsA[index] ?? '');
+              state.teamsB = Array.from({ length: next }, (_, index) => state.teamsB[index] ?? '');
+              onStart?.preview?.();
+              render();
+            },
           }),
         ]),
-        buildPrizeInputs(state.awards, (key, value) => {
-          state.awards[key] = value;
-        }),
-        errorBox,
-        el('div', { className: 'toolbar' }, [
-          el('button', { className: 'button primary', type: 'button', text: '生成赛程', onClick: () => {
-            const errorText = validateSetup({ teamsA: state.teamsA, teamsB: state.teamsB, matchesPerPair: state.matchesPerPair });
-            if (errorText) {
-              errorBox.textContent = errorText;
-              return;
-            }
-            const nextState = createInitialState({
-              playerA: state.playerA.trim() || '玩家A',
-              playerB: state.playerB.trim() || '玩家B',
-              teamsA: state.teamsA.map((team) => team.trim()),
-              teamsB: state.teamsB.map((team) => team.trim()),
-              matchesPerPair: Number(state.matchesPerPair),
-              awards: state.awards,
-            });
-            onStart(nextState);
-          }}),
-          sampleConfig
-            ? el('button', { className: 'button', type: 'button', text: '加载示例', onClick: () => {
-                state.playerA = sampleConfig.playerA;
-                state.playerB = sampleConfig.playerB;
-                state.matchesPerPair = sampleConfig.matchesPerPair;
-                state.teamsA = [...sampleConfig.teamsA];
-                state.teamsB = [...sampleConfig.teamsB];
-                render();
-              } })
-            : null,
-          onImport
-            ? el('button', { className: 'button', type: 'button', text: '导入备份', onClick: onImport })
-            : null,
-          onOpenArchive
-            ? el('button', {
-                className: 'button',
-                type: 'button',
-                text: archiveCount > 0 ? `足球世界 · 档案（${archiveCount}）` : '足球世界 · 档案',
-                onClick: onOpenArchive,
-              })
-            : null,
+        el('label', { className: 'field' }, [
+          el('span', { text: '每组对战场次 y（偶数）' }),
+          el('input', {
+            type: 'number',
+            min: '2',
+            step: '2',
+            value: String(state.matchesPerPair),
+            onInput: (event) => {
+              state.matchesPerPair = numberValue(event.target);
+            },
+          }),
         ]),
       ]),
-      el('div', { className: 'panel' }, [
-        el('h2', { text: '说明' }),
-        el('p', {
-          className: 'muted',
-          text: '输入双方玩家名称、各自俱乐部和对阵场次后，系统会自动生成完整赛程并保存到浏览器。',
+      el('div', { className: 'grid-two' }, [
+        buildTeamInputs('玩家 A', state.teamsA, (index, value) => {
+          state.teamsA[index] = value;
         }),
-        el('div', { className: 'setup-tips' }, [
-          el('div', { className: 'setup-tip' }, ['🛡️ ', '输入俱乐部名后，赛程/榜单会自动带上队徽配色']),
-          el('div', { className: 'setup-tip' }, ['📈 ', '录完比分即可查看球队榜、球员榜和赛季颁奖']),
-          el('div', { className: 'setup-tip' }, ['💾 ', '数据保存在浏览器本地，无需账号']),
-        ]),
-      ])
-    );
+        buildTeamInputs('玩家 B', state.teamsB, (index, value) => {
+          state.teamsB[index] = value;
+        }),
+      ]),
+      buildPrizeInputs(state.awards, (key, value) => {
+        state.awards[key] = value;
+      }),
+      errorBox,
+      el('div', { className: 'toolbar' }, [
+        el('button', { className: 'button primary', type: 'button', text: '生成赛程', onClick: () => {
+          const errorText = validateSetup({ teamsA: state.teamsA, teamsB: state.teamsB, matchesPerPair: state.matchesPerPair });
+          if (errorText) {
+            errorBox.textContent = errorText;
+            return;
+          }
+          const nextState = createInitialState({
+            playerA: state.playerA.trim() || '玩家A',
+            playerB: state.playerB.trim() || '玩家B',
+            teamsA: state.teamsA.map((team) => team.trim()),
+            teamsB: state.teamsB.map((team) => team.trim()),
+            matchesPerPair: Number(state.matchesPerPair),
+            awards: state.awards,
+          });
+          onStart(nextState);
+        }}),
+        sampleConfig
+          ? el('button', { className: 'button', type: 'button', text: '加载示例', onClick: () => {
+              state.playerA = sampleConfig.playerA;
+              state.playerB = sampleConfig.playerB;
+              state.matchesPerPair = sampleConfig.matchesPerPair;
+              state.teamsA = [...sampleConfig.teamsA];
+              state.teamsB = [...sampleConfig.teamsB];
+              render();
+            } })
+          : null,
+        onImport
+          ? el('button', { className: 'button', type: 'button', text: '导入备份', onClick: onImport })
+          : null,
+      ]),
+    ]);
+
+    const helpPanel = el('div', { className: 'panel' }, [
+      el('h2', { text: '说明' }),
+      el('p', {
+        className: 'muted',
+        text: '输入双方玩家名称、各自俱乐部和对阵场次后，系统会自动生成完整赛程并保存到浏览器。',
+      }),
+      el('div', { className: 'setup-tips' }, [
+        el('div', { className: 'setup-tip' }, ['🛡️ ', '输入俱乐部名后，赛程/榜单会自动带上队徽配色']),
+        el('div', { className: 'setup-tip' }, ['📈 ', '录完比分即可查看球队榜、球员榜和赛季颁奖']),
+        el('div', { className: 'setup-tip' }, ['💾 ', '数据保存在浏览器本地，无需账号']),
+      ]),
+    ]);
+
+    // 只 append 真正存在的节点：原生 append 会把 null 当成文本 "null" 插进去。
+    const children = [
+      onOpenArchive ? worldHero(archiveCount, onOpenArchive) : null,
+      el('div', { className: 'grid-two' }, [configPanel, helpPanel]),
+    ].filter(Boolean);
+    root.append(...children);
   };
 
   render();

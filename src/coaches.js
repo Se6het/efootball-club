@@ -332,6 +332,7 @@ function emptyProfile(name) {
     losses: 0,
     goalsFor: 0,
     goalsAgainst: 0,
+    pointsFor: 0,
     clubs: new Map(),
     titles: [],
     runnerUps: [],
@@ -344,6 +345,7 @@ function emptyProfile(name) {
     worstFinish: null,
     lastPlaces: 0,
     seasonOrder: [],
+    seasonEntries: [],
     titleSeasonIds: new Set(),
     firstTitle: null,
     titleDrought: 0,
@@ -365,6 +367,11 @@ function decorate(profile) {
   profile.honorCount = profile.titlesCount + profile.runnerUpCount + profile.thirdCount +
     profile.goldenBootCount + profile.assistCrownCount + profile.fmvpCount + profile.sweepCount;
   profile.winRate = profile.matches > 0 ? profile.wins / profile.matches : 0;
+  profile.goalDifference = profile.goalsFor - profile.goalsAgainst;
+  profile.pointsPerGame = profile.matches > 0 ? profile.pointsFor / profile.matches : 0;
+  profile.goalsForPerGame = profile.matches > 0 ? profile.goalsFor / profile.matches : 0;
+  profile.goalsAgainstPerGame = profile.matches > 0 ? profile.goalsAgainst / profile.matches : 0;
+  profile.titleRate = profile.completeSeasons > 0 ? profile.titlesCount / profile.completeSeasons : 0;
   profile.clubList = [...profile.clubs.entries()]
     .map(([team, count]) => ({ team, count }))
     .sort((left, right) => right.count - left.count || byName(left.team, right.team));
@@ -487,6 +494,88 @@ function buildFacts(profiles, pairs, stats, firstChampion) {
     });
   }
 
+  const mostTitles = profiles
+    .filter((profile) => profile.titlesCount >= 2)
+    .sort((left, right) => right.titlesCount - left.titlesCount || byName(left.name, right.name))[0];
+  if (mostTitles) {
+    facts.push({
+      id: 'fact-king',
+      icon: '🏆',
+      title: `夺冠最多：${mostTitles.name}`,
+      detail: `已经 ${mostTitles.titlesCount} 次带队登顶，夺冠率 ${Math.round(mostTitles.titleRate * 100)}%。`,
+    });
+  }
+
+  const sharpest = profiles
+    .filter((profile) => profile.matches >= 4)
+    .sort((left, right) => right.winRate - left.winRate || right.matches - left.matches || byName(left.name, right.name))[0];
+  if (sharpest && sharpest.winRate > 0) {
+    facts.push({
+      id: 'fact-winrate',
+      icon: '📈',
+      title: `胜率之王：${sharpest.name}`,
+      detail: `${sharpest.matches} 场拿下 ${sharpest.wins} 胜，胜率 ${Math.round(sharpest.winRate * 100)}%。`,
+    });
+  }
+
+  const firepower = profiles
+    .filter((profile) => profile.matches >= 4)
+    .sort((left, right) => right.goalsForPerGame - left.goalsForPerGame || byName(left.name, right.name))[0];
+  if (firepower && firepower.goalsForPerGame >= 2) {
+    facts.push({
+      id: 'fact-firepower',
+      icon: '🔥',
+      title: `火力最猛：${firepower.name}`,
+      detail: `场均打进 ${firepower.goalsForPerGame.toFixed(1)} 球，是世界里最锋利的进攻。`,
+    });
+  }
+
+  const fortress = profiles
+    .filter((profile) => profile.matches >= 4)
+    .sort((left, right) => left.goalsAgainstPerGame - right.goalsAgainstPerGame || right.matches - left.matches || byName(left.name, right.name))[0];
+  if (fortress) {
+    facts.push({
+      id: 'fact-fortress',
+      icon: '🛡️',
+      title: `防守最稳：${fortress.name}`,
+      detail: `场均只丢 ${fortress.goalsAgainstPerGame.toFixed(1)} 球，是最难攻破的防线。`,
+    });
+  }
+
+  const blowout = profiles
+    .filter((profile) => profile.biggestWin)
+    .sort((left, right) => right.biggestWin.margin - left.biggestWin.margin || byName(left.name, right.name))[0];
+  if (blowout) {
+    facts.push({
+      id: 'fact-blowout',
+      icon: '💥',
+      title: `最大屠杀：${blowout.name}`,
+      detail: `最酣畅的一战 ${blowout.biggestWin.score}，净胜 ${blowout.biggestWin.margin} 球（${blowout.biggestWin.club}）。`,
+    });
+  }
+
+  const crushed = profiles
+    .filter((profile) => profile.biggestLoss)
+    .sort((left, right) => right.biggestLoss.margin - left.biggestLoss.margin || byName(left.name, right.name))[0];
+  if (crushed) {
+    facts.push({
+      id: 'fact-crushed',
+      icon: '🩹',
+      title: `最惨失利：${crushed.name}`,
+      detail: `曾以 ${crushed.biggestLoss.score} 吞下败仗，净负 ${crushed.biggestLoss.margin} 球（${crushed.biggestLoss.club}）。`,
+    });
+  }
+
+  const totalGoals = profiles.reduce((sum, profile) => sum + profile.goalsFor, 0);
+  if (stats.matches > 0) {
+    facts.push({
+      id: 'fact-goals',
+      icon: '🥅',
+      title: '世界总进球',
+      detail: `至今一共打进了 ${totalGoals} 球，平均每场 ${(totalGoals / stats.matches).toFixed(1)} 球。`,
+    });
+  }
+
   return facts;
 }
 
@@ -526,12 +615,37 @@ export function computeCoachRecords(world) {
       profile.losses += row.losses;
       profile.goalsFor += row.goalsFor;
       profile.goalsAgainst += row.goalsAgainst;
+      profile.pointsFor += row.points;
       profile.clubs.set(row.team, (profile.clubs.get(row.team) ?? 0) + 1);
       if (season.complete) {
         profile.bestFinish = profile.bestFinish === null ? row.rank : Math.min(profile.bestFinish, row.rank);
         profile.worstFinish = profile.worstFinish === null ? row.rank : Math.max(profile.worstFinish, row.rank);
         if (row.rank === season.standings.length) profile.lastPlaces += 1;
       }
+    }
+
+    // 每位教练在本赛季的履历：带了哪些队、最好名次、是否封王。赛季多了也能一眼看清谁带过哪些队。
+    const teamsByCoach = new Map();
+    for (const row of season.standings) {
+      if (!isText(row.coach)) continue;
+      if (!teamsByCoach.has(row.coach)) teamsByCoach.set(row.coach, []);
+      teamsByCoach.get(row.coach).push(row);
+    }
+    const seasonChampion = season.complete && season.awards.champion ? season.awards.champion.coach : null;
+    for (const name of season.coaches) {
+      const profile = profiles.get(name);
+      if (!profile) continue;
+      const rows = (teamsByCoach.get(name) ?? []).slice().sort((left, right) => left.rank - right.rank);
+      profile.seasonEntries.push({
+        seasonId: season.id,
+        ordinal: season.ordinal,
+        seasonLabel,
+        complete: season.complete,
+        teams: rows.map((item) => item.team),
+        ranks: rows.map((item) => item.rank),
+        bestRank: season.complete && rows.length > 0 ? rows[0].rank : null,
+        champion: seasonChampion === name,
+      });
     }
 
     // 荣誉只在「赛季已结束」时结算，尽量避开半截赛季的临时名次。

@@ -17,7 +17,7 @@ import { renderTeamDetailView } from './views/teamDetail.js';
 import { renderPlayerDetailView } from './views/playerDetail.js';
 import { renderArchiveView } from './views/archive.js';
 import { openMatchForm } from './views/matchForm.js';
-import { addSeason, buildSeasonRecord, loadWorld, makeSeasonId, mergeSeasons, parseWorldBackup, previousCoaches, removeSeason, saveWorld } from './coaches.js';
+import { addSeason, buildSeasonRecord, loadWorld, makeSeasonId, mergeSeasons, parseWorldBackup, previousCoaches, removeSeason, saveWorld, worldStats } from './coaches.js';
 import { computeRankProgression, rankTeams } from './standings.js';
 import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './form.js';
 import { computeHeadToHead } from './h2h.js';
@@ -356,6 +356,26 @@ function archiveCurrent() {
   };
 }
 
+// 联赛页里的「足球世界」入口：一条醒目横幅，替掉原来右上角那个不起眼的小按钮。
+function worldStrip() {
+  const stats = worldStats(world);
+  return el('section', { className: 'world-strip' }, [
+    el('div', { className: 'world-strip-main' }, [
+      el('span', { className: 'world-strip-logo', text: '📚' }),
+      el('div', {}, [
+        el('h2', { className: 'world-strip-title', text: '足球世界 · 档案' }),
+        el('p', {
+          className: 'world-strip-sub',
+          text: stats.seasons > 0
+            ? `已收进 ${stats.seasons} 个赛季 · ${stats.coaches} 位教练 · ${stats.matches} 场已结算比赛`
+            : '把本赛季归档后，跨赛季的教练荣誉与纪录都会留在这里',
+        }),
+      ]),
+    ]),
+    el('button', { className: 'world-strip-enter', type: 'button', text: '进入足球世界', onClick: openArchive }),
+  ]);
+}
+
 function renderArchive() {
   clear(app);
   app.append(
@@ -515,13 +535,13 @@ function renderLeague() {
           ]),
         ]),
         el('div', { className: 'banner-toolbar' }, [
-          el('button', { className: 'button', type: 'button', text: '档案', onClick: openArchive }),
           el('button', { className: 'button', type: 'button', text: '导出', onClick: exportBackup }),
           el('button', { className: 'button', type: 'button', text: '导入', onClick: importBackup }),
           el('button', { className: 'button', type: 'button', text: '重置', onClick: resetLeague }),
         ]),
       ]),
       progressCard,
+      worldStrip(),
       content,
     ])
   );

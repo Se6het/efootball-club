@@ -1,5 +1,8 @@
 // 「档案」页：足球世界的入口。上半部分是本赛季（未归档），下半部分是已归档进世界里的每个赛季，
 // 再往下是按教练汇总的记录与世界之最。
+//
+// 这个界面是贯穿始终的：档越多内容越厚，所以版式走「大留白 + 大数字」，把教练胜平负、
+// 赛季归属、世界之最都放大展开，而不是挤成一堆小字。
 
 import { el, emptyState, teamBadge } from '../ui.js';
 import { computeCoachRecords } from '../coaches.js';
@@ -11,6 +14,10 @@ function percentOf(rate) {
 function formatDate(iso) {
   const text = String(iso ?? '');
   return text.length >= 10 ? text.slice(0, 10) : text || '未知日期';
+}
+
+function signed(value) {
+  return value > 0 ? `+${value}` : String(value);
 }
 
 function recordLine(profile) {
@@ -61,6 +68,65 @@ function listBlock(title, node, emptyText) {
   ]);
 }
 
+function statTile(label, value, hint = '') {
+  return el('div', { className: 'arc-tile' }, [
+    el('span', { className: 'arc-tile-value', text: value }),
+    el('span', { className: 'arc-tile-label', text: label }),
+    hint ? el('span', { className: 'arc-tile-hint muted', text: hint }) : null,
+  ]);
+}
+
+// 胜 / 平 / 负 比例条：三段按场次伸缩，数字直接写在段里。
+function recordBar(profile) {
+  if (profile.matches === 0) {
+    return null;
+  }
+  const segment = (cls, count, label) => el('span', {
+    className: `arc-wdl-seg ${cls}`,
+    style: `flex-grow: ${count}`,
+    title: `${count} ${label}`,
+  }, count > 0 ? [el('span', { className: 'arc-wdl-num', text: String(count) })] : []);
+
+  return el('div', { className: 'arc-wdl' }, [
+    segment('win', profile.wins, '胜'),
+    segment('draw', profile.draws, '平'),
+    segment('loss', profile.losses, '负'),
+  ]);
+}
+
+function coachStats(profile) {
+  if (profile.matches === 0) {
+    return null;
+  }
+  return el('div', { className: 'arc-stat-grid' }, [
+    statTile('场均积分', profile.pointsPerGame.toFixed(2)),
+    statTile('场均进球', profile.goalsForPerGame.toFixed(2)),
+    statTile('场均失球', profile.goalsAgainstPerGame.toFixed(2)),
+    statTile('净胜球', signed(profile.goalDifference)),
+    statTile('夺冠率', percentOf(profile.titleRate)),
+  ]);
+}
+
+function seasonLogBlock(profile) {
+  const entries = [...profile.seasonEntries].sort((left, right) => left.ordinal - right.ordinal);
+  if (entries.length === 0) {
+    return null;
+  }
+  return el('ul', { className: 'arc-season-log' }, entries.map((entry) =>
+    el('li', { className: entry.champion ? 'arc-log-row champ' : 'arc-log-row' }, [
+      el('span', { className: 'arc-log-season', text: `第 ${entry.ordinal} 赛季` }),
+      entry.champion ? el('span', { className: 'arc-log-flag', text: '🏆' }) : null,
+      el('span', {
+        className: 'arc-log-teams',
+        text: entry.teams.length > 0 ? entry.teams.join('、') : '未带任何球队',
+      }),
+      entry.bestRank !== null
+        ? el('span', { className: 'arc-log-rank muted', text: `最好第 ${entry.bestRank} 名` })
+        : (entry.complete ? null : el('span', { className: 'arc-log-rank muted', text: '未完赛' })),
+    ])
+  ));
+}
+
 function coachCard(profile) {
   const honors = honorLines(profile);
   const rivals = profile.rivals.filter((rival) => rival.played > 0);
@@ -81,7 +147,7 @@ function coachCard(profile) {
             rival.biggestMargin && rival.biggestMargin.diff !== 0
               ? el('span', {
                   className: 'coach-rival-margin muted',
-                  text: `最大 ${rival.biggestMargin.diff > 0 ? '+' : ''}${rival.biggestMargin.diff}`,
+                  text: `最大 ${signed(rival.biggestMargin.diff)}`,
                 })
               : null,
           ])
@@ -98,6 +164,8 @@ function coachCard(profile) {
       badgeRow(profile),
     ]),
     el('p', { className: 'coach-record muted', text: recordLine(profile) }),
+    recordBar(profile),
+    coachStats(profile),
     el('div', { className: 'coach-meta' }, [
       el('span', { text: `参赛 ${profile.seasons} 个赛季` }),
       profile.completeSeasons !== profile.seasons
@@ -116,15 +184,37 @@ function coachCard(profile) {
     profile.clubCount > 0
       ? el('p', { className: 'coach-clubs muted', text: `俱乐部：${profile.clubList.map((item) => `${item.team}（${item.count} 季）`).join('、')}` })
       : null,
+    listBlock('赛季履历', seasonLogBlock(profile), '还没有执教记录'),
     listBlock('荣誉', honorNode, '暂无冠军、奖项记录'),
     listBlock('交手', rivalNode, '还没有与世界里的其他教练交过手'),
   ]);
 }
 
+// 赛季卡片：冠军 + 前三 + 金靴 / 助攻王 / FMVP，再列出每位教练带的球队与赛季数据。
 function seasonCard(season, handlers) {
   const champion = season.awards.champion;
+  const podium = season.awards.podium ?? [];
+  const runnerUp = podium.find((entry) => entry.rank === 2);
+  const third = podium.find((entry) => entry.rank === 3);
   const boots = season.awards.topScorers[0];
   const assists = season.awards.topAssists[0];
+  const fmvp = season.awards.fmvp;
+
+  const totalGoals = season.standings.reduce((sum, row) => sum + row.goalsFor, 0);
+  const avgGoals = season.playedMatches > 0 ? totalGoals / season.playedMatches : 0;
+  const margin = season.h2h.biggestMargin;
+
+  const roster = new Map();
+  for (const row of season.standings) {
+    if (!row.coach) continue;
+    if (!roster.has(row.coach)) roster.set(row.coach, []);
+    roster.get(row.coach).push(row.team);
+  }
+
+  const chip = (icon, text) => el('span', { className: 'season-chip' }, [
+    el('span', { className: 'season-chip-icon', text: icon }),
+    el('span', { text }),
+  ]);
 
   return el('article', { className: 'season-card' }, [
     el('div', { className: 'season-card-head' }, [
@@ -152,19 +242,34 @@ function seasonCard(season, handlers) {
             el('span', { text: `冠军 ${champion.team}（${champion.coach}）` }),
           ])
         : el('span', { className: 'season-chip muted', text: season.complete ? '名次待加赛' : '尚未决出冠军' }),
-      boots
-        ? el('span', { className: 'season-chip' }, [
-            el('span', { className: 'season-chip-icon', text: '👟' }),
-            el('span', { text: `${boots.name}（${boots.team}，${boots.goals} 球）` }),
-          ])
-        : null,
-      assists
-        ? el('span', { className: 'season-chip' }, [
-            el('span', { className: 'season-chip-icon', text: '🎯' }),
-            el('span', { text: `${assists.name}（${assists.team}，${assists.assists} 次）` }),
-          ])
-        : null,
+      runnerUp ? chip('🥈', `亚军 ${runnerUp.team}（${runnerUp.coach}）`) : null,
+      third ? chip('🥉', `季军 ${third.team}（${third.coach}）`) : null,
+      boots ? chip('👟', `${boots.name}（${boots.team}，${boots.goals} 球）`) : null,
+      assists ? chip('🎯', `${assists.name}（${assists.team}，${assists.assists} 次）`) : null,
+      fmvp ? chip('⭐', `FMVP ${fmvp.name}（${fmvp.team}，${fmvp.coach}）`) : null,
     ]),
+    el('div', { className: 'arc-meta-row' }, [
+      el('span', { className: 'arc-meta-item' }, [
+        el('span', { className: 'arc-meta-k muted', text: '总进球' }),
+        el('span', { className: 'arc-meta-v', text: String(totalGoals) }),
+      ]),
+      el('span', { className: 'arc-meta-item' }, [
+        el('span', { className: 'arc-meta-k muted', text: '场均进球' }),
+        el('span', { className: 'arc-meta-v', text: avgGoals.toFixed(1) }),
+      ]),
+      el('span', { className: 'arc-meta-item' }, [
+        el('span', { className: 'arc-meta-k muted', text: '最大分差' }),
+        el('span', { className: 'arc-meta-v', text: margin ? `${margin.score}（${Math.abs(margin.diff)}）` : '—' }),
+      ]),
+    ]),
+    roster.size > 0
+      ? el('div', { className: 'arc-roster' }, [...roster.entries()].map(([name, teams]) =>
+          el('div', { className: 'arc-roster-row' }, [
+            el('span', { className: 'arc-roster-coach', text: name }),
+            el('span', { className: 'arc-roster-teams', text: teams.join('、') }),
+          ])
+        ))
+      : null,
   ]);
 }
 
@@ -196,6 +301,18 @@ function currentPanel(current, onArchive) {
   ]);
 }
 
+function overviewPanel(records) {
+  const totalGoals = records.coaches.reduce((sum, profile) => sum + profile.goalsFor, 0);
+  const avgGoals = records.stats.matches > 0 ? (totalGoals / records.stats.matches).toFixed(1) : '0.0';
+  return el('section', { className: 'arc-overview' }, [
+    statTile('赛季', String(records.stats.seasons)),
+    statTile('教练', String(records.stats.coaches)),
+    statTile('已结算比赛', String(records.stats.matches)),
+    statTile('世界总进球', String(totalGoals)),
+    statTile('场均进球', avgGoals),
+  ]);
+}
+
 export function renderArchiveView({ world, current = null, onArchive, onBack, onExportWorld, onImportWorld, onExportSeason, onRemoveSeason }) {
   const records = computeCoachRecords(world);
   const handlers = { onExportSeason, onRemoveSeason };
@@ -218,6 +335,8 @@ export function renderArchiveView({ world, current = null, onArchive, onBack, on
         el('button', { className: 'button', type: 'button', text: '← 返回', onClick: () => onBack() }),
       ]),
     ]),
+
+    records.stats.seasons > 0 ? overviewPanel(records) : null,
 
     currentPanel(current, onArchive),
 

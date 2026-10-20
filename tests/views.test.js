@@ -697,6 +697,70 @@ describe('archive view', () => {
     expect(exported).toEqual(['s-1']);
     expect(removed).toEqual(['s-1']);
   });
+
+  it('shows the podium, FMVP, coach roster and season stats on a season card', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [archiveSeasonFixture({
+          standings: [
+            { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 3, wins: 2, draws: 1, losses: 0, goalsFor: 7, goalsAgainst: 2, goalDifference: 5, points: 7 },
+            { team: '曼城', coach: '小明', rank: 2, needsPlayoff: false, played: 3, wins: 1, draws: 1, losses: 1, goalsFor: 4, goalsAgainst: 4, goalDifference: 0, points: 4 },
+            { team: '巴塞罗那', coach: '小红', rank: 3, needsPlayoff: false, played: 3, wins: 0, draws: 0, losses: 3, goalsFor: 1, goalsAgainst: 6, goalDifference: -5, points: 0 },
+          ],
+          awards: {
+            champion: { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+            podium: [
+              { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+              { team: '曼城', coach: '小明', rank: 2, needsPlayoff: false },
+              { team: '巴塞罗那', coach: '小红', rank: 3, needsPlayoff: false },
+            ],
+            topScorers: [{ name: '张三', team: '皇家马德里', coach: '小明', goals: 5 }],
+            topAssists: [{ name: '王五', team: '皇家马德里', coach: '小明', assists: 3 }],
+            fmvp: { name: '张三', team: '皇家马德里', coach: '小明' },
+          },
+        })],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const card = view.querySelector('.season-card');
+    const text = textOf(card);
+    expect(text).toContain('亚军 曼城（小明）');
+    expect(text).toContain('季军 巴塞罗那（小红）');
+    expect(text).toContain('FMVP 张三（皇家马德里，小明）');
+    expect(text).toContain('总进球');
+    expect(text).not.toContain('undefined');
+    const roster = card.querySelectorAll('.arc-roster-row');
+    expect(roster.map(textOf)).toEqual(['小明皇家马德里、曼城', '小红巴塞罗那']);
+  });
+
+  it('enriches coach cards with highlight stats, a form bar and a season log', () => {
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [archiveSeasonFixture()] },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    expect(view.querySelector('.arc-overview').querySelectorAll('.arc-tile')).toHaveLength(5);
+    expect(textOf(view)).toContain('世界总进球');
+
+    const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
+    expect(ming.querySelector('.arc-stat-grid').querySelectorAll('.arc-tile')).toHaveLength(5);
+    expect(ming.querySelector('.arc-wdl')).toBeTruthy();
+    const log = ming.querySelector('.arc-season-log').querySelectorAll('.arc-log-row');
+    expect(log).toHaveLength(1);
+    expect(textOf(log[0])).toContain('第 1 赛季');
+    expect(textOf(log[0])).toContain('皇家马德里');
+    expect(textOf(log[0])).toContain('🏆');
+  });
 });
 
 describe('setup coach history', () => {
@@ -721,5 +785,17 @@ describe('setup coach history', () => {
   it('hides the coach pills before any season has been archived', () => {
     const view = renderSetupView({ onStart: () => {}, coaches: [] });
     expect(view.querySelectorAll('.coach-pick').length).toBe(0);
+  });
+
+  it('gives the world archive a standalone entry above the setup form', () => {
+    const opened = [];
+    const view = renderSetupView({ onStart: () => {}, coaches: [], archiveCount: 2, onOpenArchive: () => opened.push(true) });
+    const hero = view.querySelector('.world-hero');
+    expect(hero).toBeTruthy();
+    expect(textOf(hero)).toContain('足球世界 · 档案');
+    const enter = hero.querySelector('.world-hero-enter');
+    expect(textOf(enter)).toContain('档案');
+    enter.click();
+    expect(opened).toHaveLength(1);
   });
 });
