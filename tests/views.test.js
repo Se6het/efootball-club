@@ -1018,8 +1018,8 @@ describe('archive view', () => {
     expect(rows).toHaveLength(3);
 
     const madrid = rows.find((node) => textOf(node).includes('皇家马德里'));
-    expect(textOf(madrid)).toContain('第 1 赛季');
-    expect(textOf(madrid)).toContain('第 2 赛季');
+    // 连续两届压成一段区间文字，列宽不会再被季数撑爆。
+    expect(textOf(madrid)).toContain('第 1–2 赛季');
     expect(textOf(madrid)).toContain('2 季');
     expect(textOf(madrid)).toContain('冠军 ×2');
     expect(madrid.className).toContain('is-champ');
@@ -1031,6 +1031,53 @@ describe('archive view', () => {
     expect(bayern.className).not.toContain('is-champ');
     expect(textOf(bayern)).not.toContain('冠军');
     expect(textOf(ming)).not.toContain('[object ');
+  });
+
+  it('keeps many seasons on one compact line, consecutive or scattered', () => {
+    const team = (name, coach, rank) => ({ team: name, coach, rank, needsPlayoff: false, played: 3, wins: 3, draws: 0, losses: 0, goalsFor: 9, goalsAgainst: 1, goalDifference: 8, points: 9 });
+    // 7 个赛季：小明只在奇数届带皇马（1、3、5、7），在 2–4 届带拜仁。
+    const seasonAt = (ordinal) => {
+      const rows = [ordinal % 2 === 1 ? team('皇家马德里', '小明', 1) : team('皇家马德里', '小红', 1)];
+      rows.push(ordinal >= 2 && ordinal <= 4 ? team('拜仁慕尼黑', '小明', 2) : team('巴塞罗那', '小红', 2));
+      return archiveSeasonFixture({
+        id: `s-${ordinal}`,
+        sourceId: `src-${ordinal}`,
+        archivedAt: `2026-${String(ordinal).padStart(2, '0')}-01T00:00:00.000Z`,
+        coaches: [...new Set(rows.map((row) => row.coach))],
+        standings: rows,
+        awards: {
+          champion: { team: rows[0].team, coach: rows[0].coach, rank: 1, needsPlayoff: false },
+          podium: rows.map((row) => ({ team: row.team, coach: row.coach, rank: row.rank, needsPlayoff: false })),
+          topScorers: [],
+          topAssists: [],
+          fmvp: null,
+        },
+      });
+    };
+
+    const view = renderArchiveView({
+      world: { version: 1, seasons: [1, 2, 3, 4, 5, 6, 7].map(seasonAt) },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+
+    const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
+    const rows = ming.querySelector('.club-table').querySelectorAll('tr');
+
+    // 断续届号连成一串，不是一季一枚胶囊。
+    const madrid = rows.find((node) => textOf(node).includes('皇家马德里'));
+    expect(textOf(madrid)).toContain('第 1、3、5、7 赛季');
+    expect(textOf(madrid)).toContain('4 季');
+    expect(textOf(madrid)).toContain('冠军 ×4');
+
+    // 连续届号收成区间。
+    const bayern = rows.find((node) => textOf(node).includes('拜仁慕尼黑'));
+    expect(textOf(bayern)).toContain('第 2–4 赛季');
+    expect(textOf(bayern)).toContain('3 季');
   });
 
   it('shows a dash for a club with no honours yet', () => {

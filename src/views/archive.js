@@ -203,6 +203,31 @@ function seasonLogBlock(profile) {
   }));
 }
 
+// 届号压成一串紧凑文字：连续段写成区间（1–3），断续用顿号连起来（1、3、5、7），
+// 整串在格子里自然折行，不像一排胶囊那样把列宽顶爆。
+function seasonLabel(ordinals) {
+  const sorted = [...(ordinals ?? [])].map(Number).filter(Number.isFinite).sort((left, right) => left - right);
+  const parts = [];
+  let start = null;
+  let prev = null;
+  for (const value of sorted) {
+    if (start === null) {
+      start = value;
+      prev = value;
+      continue;
+    }
+    if (value === prev + 1) {
+      prev = value;
+      continue;
+    }
+    parts.push(start === prev ? String(start) : `${start}–${prev}`);
+    start = value;
+    prev = value;
+  }
+  if (start !== null) parts.push(start === prev ? String(start) : `${start}–${prev}`);
+  return parts.length > 0 ? `第 ${parts.join('、')} 赛季` : '';
+}
+
 // 一支俱乐部拿过的荣誉：图标 + 次数，鼠标悬停才展开具体是哪几届拿的。
 function clubHonors(club) {
   const defs = [
@@ -217,7 +242,7 @@ function clubHonors(club) {
     .filter(([key]) => (club.honors[key] ?? []).length > 0)
     .map(([key, icon, label]) => {
       const seasons = club.honors[key];
-      return el('span', { className: `club-honor h-${key}`, title: `第 ${seasons.join('、')} 赛季` }, [
+      return el('span', { className: `club-honor h-${key}`, title: seasonLabel(seasons) }, [
         el('span', { className: 'club-honor-icon', text: icon }),
         el('span', { text: seasons.length > 1 ? `${label} ×${seasons.length}` : label }),
       ]);
@@ -241,9 +266,7 @@ function clubTable(profile) {
         el('tr', { className: (club.honors.champion ?? []).length > 0 ? 'is-champ' : null }, [
           el('td', { className: 'club-col-team' }, [teamChip(club.team)]),
           el('td', { className: 'club-col-seasons' }, [
-            el('div', { className: 'club-seasons' }, club.ordinals.map((ordinal) =>
-              el('span', { className: 'club-season-pill', text: `第 ${ordinal} 赛季` })
-            )),
+            el('span', { className: 'club-seasons-text', text: seasonLabel(club.ordinals) || '—' }),
           ]),
           el('td', { className: 'club-col-count', text: `${club.count} 季` }),
           el('td', { className: 'club-col-honors' }, [

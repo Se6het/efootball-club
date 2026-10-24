@@ -3836,9 +3836,14 @@ tbody tr.row-medal-bronze {
 }
 
 .club-table {
-  min-width: 420px;
+  min-width: 360px;
   width: 100%;
   font-size: 13px;
+}
+
+/* 赛季列留一点底宽，别被荣誉列挤成一条缝（届号已压成紧凑文字）。 */
+.club-table .club-col-seasons {
+  min-width: 96px;
 }
 
 .club-table th,
@@ -3869,7 +3874,6 @@ tbody tr.row-medal-bronze {
   font-variant-numeric: tabular-nums;
 }
 
-.club-seasons,
 .club-honors {
   display: flex;
   flex-wrap: wrap;
@@ -3877,13 +3881,9 @@ tbody tr.row-medal-bronze {
   gap: 4px 6px;
 }
 
-.club-season-pill {
-  padding: 2px 7px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--panel);
+/* 带过的赛季：一整串紧凑文字，格子窄了就自然折行。 */
+.club-seasons-text {
   color: var(--muted);
-  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
