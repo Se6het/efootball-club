@@ -912,6 +912,50 @@ describe('archive view', () => {
     expect(textOf(log[0])).toContain('皇家马德里');
     expect(textOf(log[0])).toContain('🏆');
   });
+
+  it('pins each season honour to the team that earned it', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [archiveSeasonFixture({
+          standings: [
+            { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 3, wins: 3, draws: 0, losses: 0, goalsFor: 9, goalsAgainst: 1, goalDifference: 8, points: 9 },
+            { team: '拜仁慕尼黑', coach: '小明', rank: 2, needsPlayoff: false, played: 3, wins: 2, draws: 0, losses: 1, goalsFor: 6, goalsAgainst: 3, goalDifference: 3, points: 6 },
+            { team: '巴塞罗那', coach: '小红', rank: 3, needsPlayoff: false, played: 3, wins: 0, draws: 0, losses: 3, goalsFor: 1, goalsAgainst: 9, goalDifference: -8, points: 0 },
+          ],
+          awards: {
+            champion: { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+            podium: [
+              { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+              { team: '拜仁慕尼黑', coach: '小明', rank: 2, needsPlayoff: false },
+              { team: '巴塞罗那', coach: '小红', rank: 3, needsPlayoff: false },
+            ],
+            topScorers: [{ name: '张三', team: '拜仁慕尼黑', coach: '小明', goals: 5 }],
+            topAssists: [{ name: '王五', team: '皇家马德里', coach: '小明', assists: 3 }],
+            fmvp: null,
+          },
+        })],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
+    const teams = ming.querySelector('.arc-season-log').querySelectorAll('.arc-log-team');
+    expect(teams).toHaveLength(2);
+
+    // 冠军只挂在皇马那一行，拜仁带着自己的亚军与金靴。
+    const champions = teams.filter((node) => textOf(node).includes('🏆 冠军'));
+    expect(champions).toHaveLength(1);
+    expect(textOf(champions[0])).toContain('皇家马德里');
+
+    const bayern = teams.find((node) => textOf(node).includes('拜仁慕尼黑'));
+    expect(textOf(bayern)).toContain('🥈 亚军');
+    expect(bayern.querySelector('.arc-log-mark')).toBeTruthy();
+  });
 });
 
 describe('setup coach history', () => {

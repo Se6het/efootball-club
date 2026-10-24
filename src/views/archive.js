@@ -35,18 +35,6 @@ function teamChip(team) {
   ]);
 }
 
-// 一串球队：顿号分隔，每支都带队徽。
-function teamChipList(teams) {
-  const nodes = [];
-  teams.forEach((team, index) => {
-    if (index > 0) {
-      nodes.push(el('span', { className: 'arc-team-sep', text: '、' }));
-    }
-    nodes.push(teamChip(team));
-  });
-  return nodes;
-}
-
 function seasonNumber(label) {
   return String(label).replace(/^第\s*/, '').replace(/\s*赛季$/, '');
 }
@@ -154,15 +142,7 @@ function coachStats(profile) {
   ]);
 }
 
-// 名次的两种写法：赛季履历里写全「🏆 冠军」，积分榜里只放紧凑奖牌。
-function rankLabel(rank, complete) {
-  if (!complete || rank === null) return el('span', { className: 'arc-rank muted', text: complete ? '—' : '未完赛' });
-  if (rank === 1) return el('span', { className: 'arc-rank is-1', text: '🏆 冠军' });
-  if (rank === 2) return el('span', { className: 'arc-rank is-2', text: '🥈 亚军' });
-  if (rank === 3) return el('span', { className: 'arc-rank is-3', text: '🥉 季军' });
-  return el('span', { className: 'arc-rank', text: `第 ${rank} 名` });
-}
-
+// 积分榜里的紧凑奖牌：前三放奖杯，其余写名次。
 function rankMedal(rank) {
   if (rank <= 3) {
     return el('span', { className: 'rank-num rank-num-medal', text: ['🏆', '🥈', '🥉'][rank - 1] });
@@ -170,20 +150,57 @@ function rankMedal(rank) {
   return el('span', { className: 'rank-num', text: String(rank) });
 }
 
+// 一支队在本赛季名次上的荣誉：冠军金黄、亚军银灰、季军铜色，其余淡色写名次。
+function teamHonorTag(row) {
+  if (row.champion) return el('span', { className: 'arc-rank is-1', text: '🏆 冠军' });
+  if (row.runnerUp) return el('span', { className: 'arc-rank is-2', text: '🥈 亚军' });
+  if (row.third) return el('span', { className: 'arc-rank is-3', text: '🥉 季军' });
+  if (Number.isFinite(row.rank)) return el('span', { className: 'arc-rank muted', text: `第 ${row.rank} 名` });
+  return null;
+}
+
+// 队内球员奖项也是这支队的荣誉：金靴 / 助攻王 / FMVP，用图标低调挂在队名后面。
+function awardMarks(row) {
+  const marks = [];
+  if (row.goldenBoot) marks.push(['👟', '金靴']);
+  if (row.assistCrown) marks.push(['🎯', '助攻王']);
+  if (row.fmvp) marks.push(['⭐', 'FMVP']);
+  if (marks.length === 0) {
+    return null;
+  }
+  return el('span', { className: 'arc-log-marks' }, marks.map(([icon, label]) =>
+    el('span', { className: 'arc-log-mark', title: label, text: icon })
+  ));
+}
+
+// 赛季履历：每季列出带过的球队，名次与奖项都挂在对应球队后面，
+// 一眼就能看清「哪一季、带的谁、带谁上了台」。
 function seasonLogBlock(profile) {
   const entries = [...profile.seasonEntries].sort((left, right) => left.ordinal - right.ordinal);
   if (entries.length === 0) {
     return null;
   }
-  return el('ul', { className: 'arc-season-log' }, entries.map((entry) =>
-    el('li', { className: entry.champion ? 'arc-log-row champ' : 'arc-log-row' }, [
+  return el('ul', { className: 'arc-season-log' }, entries.map((entry) => {
+    const rows = Array.isArray(entry.teamRows) && entry.teamRows.length > 0
+      ? entry.teamRows
+      : (entry.teams ?? []).map((team, index) => ({ team, rank: entry.ranks?.[index] ?? null }));
+    const teams = rows.length > 0
+      ? rows.flatMap((row, index) => [
+          index > 0 ? el('span', { className: 'arc-team-sep', text: '、' }) : null,
+          el('span', { className: 'arc-log-team' }, [
+            teamChip(row.team),
+            entry.complete ? teamHonorTag(row) : null,
+            entry.complete ? awardMarks(row) : null,
+          ]),
+        ]).filter(Boolean)
+      : [el('span', { className: 'muted', text: '未带任何球队' })];
+
+    return el('li', { className: entry.champion ? 'arc-log-row champ' : 'arc-log-row' }, [
       el('span', { className: 'arc-log-season', text: `第 ${entry.ordinal} 赛季` }),
-      el('span', { className: 'arc-log-teams' }, entry.teams.length > 0
-        ? teamChipList(entry.teams)
-        : [el('span', { className: 'muted', text: '未带任何球队' })]),
-      rankLabel(entry.bestRank, entry.complete),
-    ])
-  ));
+      el('span', { className: 'arc-log-teams' }, teams),
+      entry.complete ? null : el('span', { className: 'arc-log-pending muted', text: '未完赛' }),
+    ]);
+  }));
 }
 
 function coachCard(profile) {

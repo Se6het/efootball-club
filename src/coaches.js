@@ -624,7 +624,8 @@ export function computeCoachRecords(world) {
       }
     }
 
-    // 每位教练在本赛季的履历：带了哪些队、最好名次、是否封王。赛季多了也能一眼看清谁带过哪些队。
+    // 每位教练在本赛季的履历：带了哪些队，每支队拿了什么荣誉。
+    // 荣誉按「队」归属，赛季多了也能一眼看清谁带过哪些队、带哪支队上过台。
     const teamsByCoach = new Map();
     for (const row of season.standings) {
       if (!isText(row.coach)) continue;
@@ -632,6 +633,12 @@ export function computeCoachRecords(world) {
       teamsByCoach.get(row.coach).push(row);
     }
     const seasonChampion = season.complete && season.awards.champion ? season.awards.champion.coach : null;
+    const championTeam = season.complete && season.awards.champion ? season.awards.champion.team : null;
+    const runnerUpTeam = season.complete ? season.awards.podium.find((entry) => entry.rank === 2)?.team ?? null : null;
+    const thirdTeam = season.complete ? season.awards.podium.find((entry) => entry.rank === 3)?.team ?? null : null;
+    const goldenBootTeams = new Set(season.awards.topScorers.map((entry) => entry.team));
+    const assistCrownTeams = new Set(season.awards.topAssists.map((entry) => entry.team));
+    const fmvpTeam = season.complete && season.awards.fmvp ? season.awards.fmvp.team : null;
     for (const name of season.coaches) {
       const profile = profiles.get(name);
       if (!profile) continue;
@@ -645,6 +652,16 @@ export function computeCoachRecords(world) {
         ranks: rows.map((item) => item.rank),
         bestRank: season.complete && rows.length > 0 ? rows[0].rank : null,
         champion: seasonChampion === name,
+        teamRows: rows.map((item) => ({
+          team: item.team,
+          rank: item.rank,
+          champion: item.team === championTeam,
+          runnerUp: item.team === runnerUpTeam,
+          third: item.team === thirdTeam,
+          goldenBoot: goldenBootTeams.has(item.team),
+          assistCrown: assistCrownTeams.has(item.team),
+          fmvp: item.team === fmvpTeam,
+        })),
       });
     }
 

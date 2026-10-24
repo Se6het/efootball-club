@@ -658,6 +658,41 @@ describe('computeCoachRecords', () => {
     });
   });
 
+  it('ties each season honour to the exact team the coach led', () => {
+    const world = worldOf(seasonOf({
+      id: 's-multi',
+      standings: [
+        row('皇马', '小明', 1),
+        row('拜仁', '小明', 2),
+        row('巴萨', '小红', 3),
+        row('海港', '小红', 4),
+      ],
+      awards: {
+        champion: { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+        podium: [
+          { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+          { team: '拜仁', coach: '小明', rank: 2, needsPlayoff: false },
+          { team: '巴萨', coach: '小红', rank: 3, needsPlayoff: false },
+        ],
+        // 金靴、FMVP 给拜仁、助攻王给皇马：每个奖项都落在与冠军不同的球队上，
+        // 这样「奖项挂到正确球队」能被独立验证，不会和冠军那支队重合而失效。
+        topScorers: [{ name: '凯恩', team: '拜仁', coach: '小明', goals: 5 }],
+        topAssists: [{ name: '维尼修斯', team: '皇马', coach: '小明', assists: 4 }],
+        fmvp: { name: '凯恩', team: '拜仁', coach: '小明' },
+      },
+    }));
+    const ming = computeCoachRecords(world).coaches.find((coach) => coach.name === '小明');
+    const [entry] = ming.seasonEntries;
+    const byTeam = Object.fromEntries(entry.teamRows.map((item) => [item.team, item]));
+
+    // 冠军 + 助攻王挂在皇马，金靴 + FMVP + 亚军挂在拜仁，各归各队，不能笼统算给整季。
+    expect(byTeam['皇马']).toMatchObject({ champion: true, runnerUp: false, third: false, goldenBoot: false, assistCrown: true, fmvp: false });
+    expect(byTeam['拜仁']).toMatchObject({ champion: false, runnerUp: true, third: false, goldenBoot: true, assistCrown: false, fmvp: true });
+    // 对手的球队不进入这位教练的履历。
+    expect(byTeam['巴萨']).toBeUndefined();
+    expect(entry.champion).toBe(true);
+  });
+
   it('adds sharper and deeper world records', () => {
     const strongRow = row('皇马', '小明', 1, { played: 6, wins: 5, draws: 0, losses: 1, goalsFor: 18, goalsAgainst: 4, points: 15 });
     const weakRow = row('巴萨', '小红', 2, { played: 6, wins: 1, draws: 0, losses: 5, goalsFor: 4, goalsAgainst: 18, points: 3 });

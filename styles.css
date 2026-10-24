@@ -3700,6 +3700,30 @@ tbody tr.row-medal-bronze {
   margin: 0 1px;
 }
 
+/* 赛季履历里的一支队：队徽队名 + 名次荣誉 + 球员奖项图标。 */
+.arc-log-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.arc-log-marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.arc-log-mark {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.arc-log-pending {
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* 荣誉栏：金牌面板。冠军逐季单列、金条加重；亚军季军只在底部留一行小字，不与冠军同级。 */
 .arc-honors {
   border: 1px solid rgba(201, 162, 43, 0.5);
