@@ -57,8 +57,41 @@ function storyRow(entry) {
   ]);
 }
 
+// 更多看点按「跟谁有关」归堆：同一支队的新闻排在一起（用队徽当小标题），
+// 联赛级放最后，交锋类单独一组，免得同一支队刷太多。
+function storyGroups(items) {
+  const teams = new Map();
+  const league = [];
+  const cross = [];
+  for (const entry of items) {
+    const owned = (entry.teams ?? []).filter(Boolean);
+    if (owned.length === 0) league.push(entry);
+    else if (owned.length > 1) cross.push(entry);
+    else {
+      const [team] = owned;
+      if (!teams.has(team)) teams.set(team, []);
+      teams.get(team).push(entry);
+    }
+  }
+  const groups = [...teams.entries()].map(([team, list]) => ({ label: team, team, items: list }));
+  if (league.length > 0) groups.push({ label: '联赛', team: null, items: league });
+  if (cross.length > 0) groups.push({ label: '交锋看点', team: null, items: cross });
+  return groups;
+}
+
+function storyGroup({ label, team, items }) {
+  return el('section', { className: 'news-group' }, [
+    el('div', { className: 'news-group-head' }, [
+      team ? teamBadge(team) : null,
+      el('span', { text: label }),
+      el('span', { className: 'news-group-count', text: `${items.length} 条` }),
+    ]),
+    el('ul', { className: 'news-list' }, items.map(storyRow)),
+  ]);
+}
+
 function headlineSection(items, playedCount) {
-  const { headlines, more } = splitNews(items, 3);
+  const { headlines, more } = splitNews(items, 7);
   const body = [];
 
   body.push(
@@ -82,7 +115,7 @@ function headlineSection(items, playedCount) {
           el('h3', { text: '更多看点' }),
           el('span', { className: 'muted news-count', text: `${more.length} 条` }),
         ]),
-        el('ul', { className: 'news-list' }, more.map(storyRow)),
+        ...storyGroups(more).map(storyGroup),
       ])
     );
   }

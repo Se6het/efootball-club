@@ -33,12 +33,12 @@ export const NEWS_CATEGORIES = Object.freeze({
 // 一条看点最多挂多久（按轮次算）；赛季还没打满 NEWS_WINDOW 轮时不会误杀。
 const NEWS_WINDOW = 3;
 
-// 一屏看点总数上限：头条 3 条 + 更多若干条。放宽到 28，让赛季中后期有足够内容可看。
+// 一屏看点总数上限：头条 7 条 + 更多若干条。放宽到 28，让赛季中后期有足够内容可看。
 const MAX_ITEMS = 28;
 
 // 同一名球员/同一支球队最多贡献几条，避免一个人刷满整个列表。
 const MAX_PER_PLAYER = 2;
-const MAX_PER_TEAM = 4;
+const MAX_PER_TEAM = 8;
 
 function num(value) {
   const n = Number(value);
@@ -1213,6 +1213,26 @@ function rankItems(items) {
   );
 }
 
+// 每个「分区」最多留 limit 条：单队专属按球队算，交锋类（同时挂两队）合成一个「交锋」分区。
+// 联赛级（不挂任何球队）不设限，条数本来就少。
+function capPerGroup(items, limit) {
+  const counts = new Map();
+  const kept = [];
+  for (const entry of items) {
+    const owned = (entry.teams ?? []).filter(Boolean);
+    const key = owned.length === 0 ? null : owned.length === 1 ? owned[0] : '交锋';
+    if (!key) {
+      kept.push(entry);
+      continue;
+    }
+    const used = counts.get(key) ?? 0;
+    if (used >= limit) continue;
+    counts.set(key, used + 1);
+    kept.push(entry);
+  }
+  return kept;
+}
+
 // 主入口：返回按主次排好的看点列表（太久以前的旧闻会被丢掉）。
 export function computeNews({ config, matches, leaders } = {}) {
   const played = playedMatches(matches);
@@ -1230,7 +1250,7 @@ export function computeNews({ config, matches, leaders } = {}) {
   const latestRound = Math.max(...played.map(roundOf));
   const fresh = items.filter((entry) => latestRound - entry.round < NEWS_WINDOW);
 
-  return rankItems(fresh).slice(0, MAX_ITEMS);
+  return capPerGroup(rankItems(fresh), MAX_PER_TEAM).slice(0, MAX_ITEMS);
 }
 
 // 头条 / 更多看点的切分：头条取前 headCount 条。

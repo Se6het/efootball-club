@@ -2853,7 +2853,7 @@ tbody tr.row-medal-bronze {
 
 .news-headlines {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -3006,6 +3006,37 @@ tbody tr.row-medal-bronze {
   font-size: 12px;
 }
 
+/* 更多看点按球队归堆：细虚线分隔 + 一个小队徽标题，存在感压低。 */
+.news-group + .news-group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.news-group-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 15px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.news-group-head .team-crest {
+  --s: 18px;
+}
+
+.news-group-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.news-group .news-list {
+  padding-top: 4px;
+}
+
 .news-odds {
   display: grid;
   gap: 12px;
@@ -3058,6 +3089,12 @@ tbody tr.row-medal-bronze {
 
 .player-team {
   font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .news-headlines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {

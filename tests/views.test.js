@@ -267,6 +267,40 @@ describe('view smoke tests', () => {
     expect(view.querySelectorAll('.news-card')).toHaveLength(2);
   });
 
+  it('keeps seven headlines on top and groups the rest by team', () => {
+    const make = (id, teams, index) => ({
+      id,
+      category: 'team',
+      icon: '⚽',
+      tier: 'rare',
+      title: `看点 ${index}`,
+      detail: '细节',
+      metric: 1,
+      teams,
+      round: 1,
+    });
+    const news = [
+      ...Array.from({ length: 7 }, (unused, index) => make(`h${index}`, ['甲队'], index)),
+      make('m1', ['甲队'], 7),
+      make('m2', ['乙队'], 8),
+      make('m3', ['甲队'], 9),
+      make('m4', [], 10),
+      make('m5', ['甲队', '乙队'], 11),
+    ];
+    const view = renderNewsView({ news });
+
+    // 头条固定 7 张，第一张是跨行的大卡。
+    expect(view.querySelector('.news-headlines').querySelectorAll('.news-card')).toHaveLength(7);
+    expect(view.querySelectorAll('.is-lead')).toHaveLength(1);
+    expect(view.querySelector('.is-lead').className).toContain('news-card');
+    // 其余按球队归堆：甲队 / 乙队 / 联赛 / 交锋看点，共 4 组。
+    const groups = view.querySelectorAll('.news-group');
+    expect(groups).toHaveLength(4);
+    expect(textOf(groups[0].querySelector('.news-group-head'))).toContain('甲队');
+    expect(textOf(groups[3].querySelector('.news-group-head'))).toContain('交锋看点');
+    expect(view.querySelectorAll('.news-row')).toHaveLength(5);
+  });
+
   it('renders the news view safely with no data at all', () => {
     const view = renderNewsView({});
     const text = textOf(view);

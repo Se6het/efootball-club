@@ -139,8 +139,8 @@ describe('record generators', () => {
   it('detects a player scoring in consecutive matches', () => {
     const matches = [
       fixture(1, 1, '甲队', '乙队', 1, 0, { homeScorers: [{ name: '张三', count: 1 }] }),
-      fixture(2, 2, '乙队', '甲队', 0, 2, { awayScorers: [{ name: '张三', count: 2 }] }),
-      fixture(3, 3, '甲队', '乙队', 3, 0, { homeScorers: [{ name: '张三', count: 3 }] }),
+      fixture(2, 2, '乙队', '甲队', 1, 2, { awayScorers: [{ name: '张三', count: 2 }] }),
+      fixture(3, 3, '甲队', '乙队', 1, 3, { homeScorers: [{ name: '张三', count: 1 }] }),
     ];
     expect(titles(computeNews({ config, matches, leaders }))).toContain('张三 连续 3 场进球');
   });
@@ -337,6 +337,38 @@ describe('record generators', () => {
       leaders,
     }).map((entry) => entry.id);
     expect(ids).toContain('quirk-all-hands:甲队');
+  });
+
+  it('caps how many stories a single team can own', () => {
+    const names = ['甲A', '甲B', '甲C', '甲D', '甲E', '甲F'];
+    const matches = [];
+    for (let round = 1; round <= 10; round += 1) {
+      matches.push(fixture(round, round, '甲队', '乙队', 6, 0, {
+        homeScorers: names.map((name) => ({ name, count: 1 })),
+      }));
+    }
+    const items = computeNews({ config, matches, leaders });
+    // 同队专属（只挂一支队）的条目最多 8 条；生成器本可以给出十几条。
+    const owned = items.filter((entry) => (entry.teams ?? []).filter(Boolean).length === 1 && entry.teams[0] === '甲队');
+    expect(owned).toHaveLength(8);
+    expect(items.length).toBeLessThanOrEqual(28);
+  });
+
+  it('caps the head-to-head section as well', () => {
+    const fourTeamConfig = { teamsA: ['T1', 'T2'], teamsB: ['T3', 'T4'] };
+    const matches = [];
+    let n = 1;
+    for (let round = 1; round <= 5; round += 1) {
+      matches.push(fixture(n++, round, 'T1', 'T2', 3, 0));
+      matches.push(fixture(n++, round, 'T3', 'T4', 2, 0));
+      matches.push(fixture(n++, round, 'T1', 'T3', 1, 1));
+      matches.push(fixture(n++, round, 'T2', 'T4', 0, 0));
+    }
+    const items = computeNews({ config: fourTeamConfig, matches, leaders });
+    // 交锋类（同时挂两队）合成一组，同样封顶 8 条。
+    const cross = items.filter((entry) => (entry.teams ?? []).filter(Boolean).length > 1);
+    expect(cross.length).toBeLessThanOrEqual(8);
+    expect(cross.length).toBeGreaterThan(0);
   });
 
   it('fills more than twenty stories (up to 28) in a deep season', () => {
