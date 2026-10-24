@@ -46,18 +46,25 @@ function renderRoundTable(matches, onEdit, ownerByTeam) {
 }
 
 export function renderScheduleView(matches, onEdit, ownerByTeam = {}) {
+  // 即将进行的那一轮：第一场还没打的比赛所在的轮次。
+  const nextRound = (matches.find((match) => !match.isPlayed) ?? {}).round;
+
   return el('div', { className: 'panel' }, [
     el('h2', { text: '总赛程' }),
     matches.length
-      ? el('div', { className: 'schedule-rounds' }, groupByRound(matches).map(({ round, matches: roundMatches }) =>
-          el('details', { className: 'round-group', open: true }, [
+      ? el('div', { className: 'schedule-rounds' }, groupByRound(matches).map(({ round, matches: roundMatches }) => {
+          // 已全部打完的轮次默认收起，点进赛程第一眼就是即将进行的下一轮。
+          const finished = roundMatches.every((match) => match.isPlayed);
+          const classes = ['round-group'];
+          if (round === nextRound) classes.push('is-next');
+          return el('details', { className: classes.join(' '), open: finished ? null : true }, [
             el('summary', {}, [
               el('span', { className: 'round-title', text: `第 ${round} 轮` }),
               el('span', { className: 'round-count', text: `${roundMatches.length} 场` }),
             ]),
             el('div', { className: 'table-wrap' }, [renderRoundTable(roundMatches, onEdit, ownerByTeam)]),
-          ])
-        ))
+          ]);
+        }))
       : emptyState('📅', '还没有赛程', '在赛前配置里生成赛程后会显示在这里'),
   ]);
 }

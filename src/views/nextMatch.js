@@ -1,4 +1,4 @@
-import { el, emptyState, teamCell } from '../ui.js';
+import { el, emptyState, teamBadge, teamCell } from '../ui.js';
 
 function formPill(result) {
   return el('span', { className: `form-pill ${result === '胜' ? 'win' : result === '负' ? 'loss' : 'draw'}`, text: result });
@@ -82,6 +82,10 @@ export function renderHeadToHead(h2h) {
           el('div', { className: 'h2h-chips' }, highlights.map((item) =>
             el('span', { className: 'h2h-chip' }, [
               el('span', { className: 'h2h-chip-icon', text: item.icon }),
+              // 跟新闻页一样，看点里提到谁就挂谁的队徽。
+              (item.teams ?? []).length > 0
+                ? el('span', { className: 'h2h-chip-crests' }, item.teams.map((team) => teamBadge(team)))
+                : null,
               el('span', { text: item.text }),
             ])
           )),

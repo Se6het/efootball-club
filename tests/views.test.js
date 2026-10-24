@@ -280,6 +280,29 @@ describe('view smoke tests', () => {
     expect(textOf(renderScheduleView(matches, () => {}))).toContain('总赛程');
   });
 
+  it('collapses finished rounds and keeps the upcoming round open', () => {
+    const view = renderScheduleView(matches, () => {});
+    const groups = view.querySelectorAll('.round-group');
+    expect(groups).toHaveLength(3);
+    // 第 1、2 轮都打完了：默认收起。
+    expect(groups[0].getAttribute('open')).toBeUndefined();
+    expect(groups[1].getAttribute('open')).toBeUndefined();
+    // 第 3 轮是下一轮：展开并高亮。
+    expect(String(groups[2].getAttribute('open'))).toBe('true');
+    expect(groups[2].className).toContain('is-next');
+    expect(groups[0].className).not.toContain('is-next');
+  });
+
+  it('puts team crests on every head-to-head highlight', () => {
+    const h2h = computeHeadToHead(matches, nextMatch);
+    expect(h2h.highlights.length).toBeGreaterThan(0);
+    expect(h2h.highlights.every((item) => Array.isArray(item.teams) && item.teams.length > 0)).toBe(true);
+    const view = renderNextMatchView(nextMatch, () => {}, [], { h2h });
+    const crestStrips = view.querySelectorAll('.h2h-chip-crests');
+    expect(crestStrips.length).toBe(h2h.highlights.length);
+    expect(crestStrips[0].querySelectorAll('img').length).toBeGreaterThan(0);
+  });
+
   it('renders the setup form', () => {
     const view = renderSetupView({ onStart: () => {}, sampleConfig: null, onImport: () => {} });
     expect(textOf(view)).toContain('赛前配置');

@@ -115,9 +115,9 @@ function buildHighlights(rawMatches, meetings, teamHome, teamAway) {
   const highlights = [];
   const seenPlayers = new Set();
 
-  const addHighlight = (icon, text) => {
+  const addHighlight = (icon, text, teams = []) => {
     if (highlights.length >= MAX_HIGHLIGHTS) return;
-    highlights.push({ icon, text });
+    highlights.push({ icon, text, teams: teams.filter(Boolean) });
   };
   const claimPlayer = (entry) => {
     const key = `${entry.team}::${entry.name}`;
@@ -134,25 +134,25 @@ function buildHighlights(rawMatches, meetings, teamHome, teamAway) {
     .sort((left, right) => right.streak - left.streak || right.total - left.total);
   for (const entry of streakEntries) {
     if (!claimPlayer(entry)) continue;
-    addHighlight('🔥', `${entry.name}（${entry.team}）连续 ${entry.streak} 场面对 ${opponentOf(entry.team)} 取得进球`);
+    addHighlight('🔥', `${entry.name}（${entry.team}）连续 ${entry.streak} 场面对 ${opponentOf(entry.team)} 取得进球`, [entry.team]);
   }
 
   // 2) 交锋射手王。
   const topScorer = [...goals.values()].sort((left, right) => right.total - left.total || left.name.localeCompare(right.name, 'zh-Hans-CN'))[0];
   if (topScorer && topScorer.total >= 1 && claimPlayer(topScorer)) {
-    addHighlight('⚽', `${topScorer.name}（${topScorer.team}）已在两队交锋中打入 ${topScorer.total} 球`);
+    addHighlight('⚽', `${topScorer.name}（${topScorer.team}）已在两队交锋中打入 ${topScorer.total} 球`, [topScorer.team]);
   }
 
   // 3) 交锋助攻王。
   const topAssister = [...assists.values()].sort((left, right) => right.total - left.total || left.name.localeCompare(right.name, 'zh-Hans-CN'))[0];
   if (topAssister && topAssister.total >= 2 && claimPlayer(topAssister)) {
-    addHighlight('🅰️', `${topAssister.name}（${topAssister.team}）面对 ${opponentOf(topAssister.team)} 已送出 ${topAssister.total} 次助攻`);
+    addHighlight('🅰️', `${topAssister.name}（${topAssister.team}）面对 ${opponentOf(topAssister.team)} 已送出 ${topAssister.total} 次助攻`, [topAssister.team]);
   }
 
   // 4) 交锋最佳球员。
   const topMvp = [...mvps.values()].sort((left, right) => right.total - left.total || left.name.localeCompare(right.name, 'zh-Hans-CN'))[0];
   if (topMvp && topMvp.total >= 1 && claimPlayer(topMvp)) {
-    addHighlight('⭐', `${topMvp.name}（${topMvp.team}）在双方交锋中 ${topMvp.total} 次当选全场最佳`);
+    addHighlight('⭐', `${topMvp.name}（${topMvp.team}）在双方交锋中 ${topMvp.total} 次当选全场最佳`, [topMvp.team]);
   }
 
   // 5) 球队连胜 / 不败纪录。
@@ -164,19 +164,19 @@ function buildHighlights(rawMatches, meetings, teamHome, teamAway) {
   const totalAwayWins = meetings.filter((match) => match.winner === 'away').length;
 
   if (homeWins >= 2) {
-    addHighlight('⚡', `${teamHome} 已连续 ${homeWins} 场击败 ${teamAway}`);
+    addHighlight('⚡', `${teamHome} 已连续 ${homeWins} 场击败 ${teamAway}`, [teamHome]);
   } else if (awayWins >= 2) {
-    addHighlight('⚡', `${teamAway} 已连续 ${awayWins} 场击败 ${teamHome}`);
+    addHighlight('⚡', `${teamAway} 已连续 ${awayWins} 场击败 ${teamHome}`, [teamAway]);
   } else if (homeUnbeaten >= 3) {
-    addHighlight('🛡️', `${teamHome} 面对 ${teamAway} 已连续 ${homeUnbeaten} 场不败`);
+    addHighlight('🛡️', `${teamHome} 面对 ${teamAway} 已连续 ${homeUnbeaten} 场不败`, [teamHome]);
   } else if (awayUnbeaten >= 3) {
-    addHighlight('🛡️', `${teamAway} 面对 ${teamHome} 已连续 ${awayUnbeaten} 场不败`);
+    addHighlight('🛡️', `${teamAway} 面对 ${teamHome} 已连续 ${awayUnbeaten} 场不败`, [teamAway]);
   }
 
   if (meetings.length >= 3 && totalHomeWins === 0) {
-    addHighlight('😅', `${teamHome} 至今还未战胜过 ${teamAway}`);
+    addHighlight('😅', `${teamHome} 至今还未战胜过 ${teamAway}`, [teamHome, teamAway]);
   } else if (meetings.length >= 3 && totalAwayWins === 0) {
-    addHighlight('😅', `${teamAway} 至今还未战胜过 ${teamHome}`);
+    addHighlight('😅', `${teamAway} 至今还未战胜过 ${teamHome}`, [teamAway, teamHome]);
   }
 
   return highlights;

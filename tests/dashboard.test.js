@@ -59,14 +59,15 @@ function tileTitles(view) {
 }
 
 describe('dashboard view', () => {
-  it('renders five tiles with news spanning the full width', () => {
+  it('renders five tiles with news first and spanning the full width', () => {
     const view = render();
     expect(view.querySelectorAll('.tile')).toHaveLength(5);
-    expect(tileTitles(view)).toEqual(['下一场', '赛程', '球队榜', '球员榜', '新闻']);
+    expect(tileTitles(view)).toEqual(['新闻', '下一场', '赛程', '球队榜', '球员榜']);
     expect(view.querySelectorAll('.tile-wide')).toHaveLength(1);
     expect(view.querySelectorAll('.mini-news')).toHaveLength(2);
     // 层级只上色（tier-*），再挂上相关球队的队徽。
     expect(view.querySelector('.mini-news').className).toContain('tier-legend');
+    expect(view.querySelector('.mini-news').className).toContain('lead');
     expect(view.querySelectorAll('.mini-news-crests')).toHaveLength(2);
   });
 
@@ -87,14 +88,15 @@ describe('dashboard view', () => {
     const opened = [];
     const view = render({ onOpen: (key) => opened.push(key) });
     view.querySelectorAll('.tile').forEach((tile) => tile.click());
-    expect(opened).toEqual(['next', 'schedule', 'standings', 'leaders', 'news']);
+    expect(opened).toEqual(['news', 'next', 'schedule', 'standings', 'leaders']);
   });
 
   it('swaps in the awards tile once the season is over', () => {
     const opened = [];
     const view = render({ nextMatch: null, seasonFinished: true, onOpen: (key) => opened.push(key) });
-    expect(tileTitles(view)).toEqual(['赛季颁奖', '赛程', '球队榜', '球员榜', '新闻']);
-    view.querySelectorAll('.tile')[0].click();
+    expect(tileTitles(view)).toEqual(['新闻', '赛季颁奖', '赛程', '球队榜', '球员榜']);
+    const awardsTile = view.querySelectorAll('.tile').find((tile) => textOf(tile.querySelector('.tile-title')) === '赛季颁奖');
+    awardsTile.click();
     expect(opened).toEqual(['awards']);
     expect(textOf(view)).toContain('冠军');
   });

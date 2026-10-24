@@ -297,6 +297,66 @@ describe('record generators', () => {
     expect(list).not.toContain('甲队 是唯一还没赢过球的球队');
   });
 
+  it('adds fresh quirky angles: no draws, away form, draw streaks and droughts', () => {
+    const idsOf = (matches) => computeNews({ config, matches, leaders }).map((entry) => entry.id);
+
+    expect(idsOf([
+      fixture(1, 1, '甲队', '乙队', 2, 1),
+      fixture(2, 2, '甲队', '乙队', 1, 0),
+      fixture(3, 3, '乙队', '甲队', 0, 2),
+    ])).toContain('quirk-no-draw:甲队');
+
+    expect(idsOf([
+      fixture(1, 1, '甲队', '乙队', 0, 1),
+      fixture(2, 2, '甲队', '乙队', 0, 2),
+      fixture(3, 3, '乙队', '甲队', 0, 3),
+      fixture(4, 4, '乙队', '甲队', 1, 4),
+    ])).toContain('quirk-road-warrior:甲队');
+
+    expect(idsOf([
+      fixture(1, 1, '甲队', '乙队', 1, 1),
+      fixture(2, 2, '乙队', '甲队', 2, 2),
+      fixture(3, 3, '甲队', '乙队', 0, 0),
+    ])).toContain('quirk-draw-streak:甲队');
+
+    expect(idsOf([
+      fixture(1, 1, '甲队', '乙队', 1, 1),
+      fixture(2, 2, '乙队', '甲队', 0, 1),
+      fixture(3, 3, '乙队', '甲队', 0, 2),
+      fixture(4, 4, '甲队', '乙队', 1, 0),
+    ])).toContain('quirk-goal-drought:乙队');
+  });
+
+  it('spots the team spreading its goals around (all hands on deck)', () => {
+    const ids = computeNews({
+      config,
+      matches: [
+        fixture(1, 1, '甲队', '乙队', 4, 0, { homeScorers: [{ name: '甲A', count: 2 }, { name: '甲B', count: 2 }] }),
+        fixture(2, 2, '乙队', '甲队', 0, 4, { awayScorers: [{ name: '甲C', count: 2 }, { name: '甲D', count: 2 }] }),
+      ],
+      leaders,
+    }).map((entry) => entry.id);
+    expect(ids).toContain('quirk-all-hands:甲队');
+  });
+
+  it('fills more than twenty stories (up to 28) in a deep season', () => {
+    const teams = ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4'];
+    const matches = [];
+    let n = 1;
+    for (let i = 0; i < teams.length; i += 1) {
+      for (let j = 1; j <= 3; j += 1) {
+        matches.push(fixture(n, 1, teams[i], teams[(i + j) % teams.length], 2, 1, {
+          homeCards: { yellow: 3, red: 1 },
+          awayCards: { yellow: 3, red: 1 },
+        }));
+        n += 1;
+      }
+    }
+    const items = computeNews({ config: { teamsA: teams.slice(0, 4), teamsB: teams.slice(4) }, matches, leaders });
+    expect(items.length).toBeGreaterThan(20);
+    expect(items.length).toBeLessThanOrEqual(28);
+  });
+
   it('keeps the feed bounded and drops stale news', () => {
     const matches = [
       fixture(1, 1, '甲队', '乙队', 9, 0, { homeScorers: [{ name: '张三', count: 5 }] }),

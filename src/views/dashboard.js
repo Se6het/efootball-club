@@ -14,8 +14,10 @@ function tileHead(icon, title) {
 }
 
 function tile(key, icon, title, body, onOpen, extraClass = '') {
+  const classes = ['tile', `tile-${key}`];
+  if (extraClass) classes.push(extraClass);
   return el('button', {
-    className: extraClass ? `tile ${extraClass}` : 'tile',
+    className: classes.join(' '),
     type: 'button',
     'aria-label': `展开${title}`,
     onClick: () => onOpen(key),
@@ -110,16 +112,16 @@ function leadersBody(leaders) {
   ]));
 }
 
-// 新闻格子横跨整行：里面塞几条头条摘要，一眼能扫到。
+// 新闻格子横跨整行、摆在最上面：里面塞几条头条摘要，一眼能扫到。
 // 层级只用颜色区分（tier-*），再配上相关球队的队徽，不写「传说」这类字。
 function newsBody(news) {
-  const top = (news ?? []).slice(0, 3);
+  const top = (news ?? []).slice(0, 4);
   if (!top.length) {
     return [el('span', { className: 'muted', text: '录入比分后这里会出现看点与赔率' })];
   }
-  return top.map((entry) => {
+  return top.map((entry, index) => {
     const crests = (entry.teams ?? []).filter(Boolean);
-    return el('span', { className: `mini-news tier-${entry.tier}` }, [
+    return el('span', { className: index === 0 ? `mini-news lead tier-${entry.tier}` : `mini-news tier-${entry.tier}` }, [
       el('span', { className: 'mini-news-icon', text: entry.icon }),
       crests.length > 0
         ? el('span', { className: 'mini-news-crests' }, crests.map((team) => teamBadge(team)))
@@ -134,11 +136,12 @@ export function renderDashboard({ nextMatch, matches, rankedTeams, leaders, news
     ? tile('awards', '🏅', '赛季颁奖', awardBody(rankedTeams), onOpen)
     : tile('next', '⚽', '下一场', nextBody(nextMatch), onOpen);
 
+  // 新闻是重头戏，摆第一行、横跨整行。
   return el('div', { className: 'dashboard' }, [
+    tile('news', '📰', '新闻', newsBody(news), onOpen, 'tile-wide tile-lead'),
     leadTile,
     tile('schedule', '🗓️', '赛程', scheduleBody(matches), onOpen),
     tile('standings', '🏆', '球队榜', standingsBody(rankedTeams), onOpen),
     tile('leaders', '👟', '球员榜', leadersBody(leaders), onOpen),
-    tile('news', '📰', '新闻', newsBody(news), onOpen, 'tile-wide'),
   ]);
 }

@@ -29,8 +29,9 @@ function difficultyBar(entry) {
   ]);
 }
 
-function headlineCard(entry) {
-  return el('article', { className: `news-card tier-${entry.tier}` }, [
+// 头条卡：第一条给足版面（.is-lead 横跨整行），当作新闻界面的门面。
+function headlineCard(entry, index = 0) {
+  return el('article', { className: index === 0 ? `news-card is-lead tier-${entry.tier}` : `news-card tier-${entry.tier}` }, [
     el('div', { className: 'news-card-top' }, [
       crestStrip(entry.teams),
       el('span', { className: 'news-cat', text: NEWS_CATEGORIES[entry.category] ?? '看点' }),
@@ -72,7 +73,7 @@ function headlineSection(items, playedCount) {
     return el('section', { className: 'news-hero' }, body);
   }
 
-  body.push(el('div', { className: 'news-headlines' }, headlines.map(headlineCard)));
+  body.push(el('div', { className: 'news-headlines' }, headlines.map((entry, index) => headlineCard(entry, index))));
 
   if (more.length > 0) {
     body.push(

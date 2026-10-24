@@ -33,8 +33,8 @@ export const NEWS_CATEGORIES = Object.freeze({
 // 一条看点最多挂多久（按轮次算）；赛季还没打满 NEWS_WINDOW 轮时不会误杀。
 const NEWS_WINDOW = 3;
 
-// 一屏看点总数上限：头条 3 条 + 更多若干条。放宽到 20，让赛季中后期有足够内容可看。
-const MAX_ITEMS = 20;
+// 一屏看点总数上限：头条 3 条 + 更多若干条。放宽到 28，让赛季中后期有足够内容可看。
+const MAX_ITEMS = 28;
 
 // 同一名球员/同一支球队最多贡献几条，避免一个人刷满整个列表。
 const MAX_PER_PLAYER = 2;
@@ -971,6 +971,76 @@ function quirkItems(played, config) {
         }));
       }
     }
+
+    // 零平局：踢了不少场，一场平局都没有（「场场都有进球」已归在球队类里，这里不重复）。
+    const drawCount = list.filter((match) => outcomeFor(match, team) === 'draw').length;
+    if (list.length >= 3 && drawCount === 0) {
+      push(team, item({
+        id: `quirk-no-draw:${team}`,
+        category: 'quirk',
+        icon: '🚫',
+        tier: 'rare',
+        title: `${team} 一场平局都没有`,
+        detail: `${list.length} 场比赛场场分出胜负，从不拖泥带水`,
+        metric: list.length,
+        teams: [team],
+        round,
+      }));
+    }
+
+    // 客场狂魔：客场战绩反倒比主场好。
+    const homeGames = list.filter((match) => match.homeTeam === team);
+    const awayGames = list.filter((match) => match.awayTeam === team);
+    if (homeGames.length >= 2 && awayGames.length >= 2) {
+      const winRate = (games) => games.filter((match) => outcomeFor(match, team) === 'win').length / games.length;
+      const homeRate = winRate(homeGames);
+      const awayRate = winRate(awayGames);
+      if (awayRate >= 0.5 && awayRate - homeRate >= 0.5) {
+        push(team, item({
+          id: `quirk-road-warrior:${team}`,
+          category: 'quirk',
+          icon: '✈️',
+          tier: 'rare',
+          title: `${team} 客场比主场还猛`,
+          detail: `客场 ${awayGames.length} 场拿下 ${Math.round(awayRate * 100)}%，主场才 ${Math.round(homeRate * 100)}%`,
+          metric: Math.round(awayRate * 100),
+          teams: [team],
+          round,
+        }));
+      }
+    }
+
+    // 平局连庄：连着踢平。
+    const drawStreak = trailingStreak(list, (match) => outcomeFor(match, team) === 'draw');
+    if (drawStreak >= 3) {
+      push(team, item({
+        id: `quirk-draw-streak:${team}`,
+        category: 'quirk',
+        icon: '🤝',
+        tier: 'rare',
+        title: `${team} 已经连续 ${drawStreak} 场踢平`,
+        detail: '平局连庄，谁也奈何不了谁',
+        metric: drawStreak,
+        teams: [team],
+        round,
+      }));
+    }
+
+    // 进球荒：连着好几场一球未进（全季零进球的另有条目，这里不重复）。
+    const drought = trailingStreak(list, (match) => goalsFor(match, team) === 0);
+    if (scored > 0 && drought >= 3) {
+      push(team, item({
+        id: `quirk-goal-drought:${team}`,
+        category: 'quirk',
+        icon: '🥶',
+        tier: 'rare',
+        title: `${team} 已经连续 ${drought} 场没进球`,
+        detail: '进攻断电，前锋集体失忆',
+        metric: drought,
+        teams: [team],
+        round,
+      }));
+    }
   }
 
   for (const bucket of buckets.values()) {
@@ -1006,6 +1076,38 @@ function quirkItems(played, config) {
       metric: solo.top[1],
       teams: [solo.team],
       round: lastRoundOf(matchesOfTeam(played, solo.team)),
+    }));
+  }
+
+  // 全民皆兵：进球摊得最开的那支球队，只取最分散的一支，和「独角戏」正好一正一反。
+  const allHands = teams
+    .map((team) => {
+      const list = matchesOfTeam(played, team);
+      const scored = list.reduce((sum, match) => sum + goalsFor(match, team), 0);
+      const byScorer = new Map();
+      for (const match of list) {
+        for (const entry of entryList(match, team, 'Scorers')) {
+          const name = nameOf(entry?.name);
+          if (!name) continue;
+          byScorer.set(name, (byScorer.get(name) ?? 0) + num(entry?.count));
+        }
+      }
+      const top = [...byScorer.entries()].sort((left, right) => right[1] - left[1])[0];
+      return { team, scored, contributors: byScorer.size, topShare: top && scored > 0 ? top[1] / scored : 1 };
+    })
+    .filter((row) => row.scored >= 8 && row.contributors >= 4 && row.topShare <= 0.25)
+    .sort((left, right) => left.topShare - right.topShare || right.contributors - left.contributors)[0];
+  if (allHands) {
+    items.push(item({
+      id: `quirk-all-hands:${allHands.team}`,
+      category: 'quirk',
+      icon: '👥',
+      tier: 'rare',
+      title: `${allHands.team} 全民皆兵`,
+      detail: `${allHands.scored} 个进球由 ${allHands.contributors} 名球员分担，防谁都防不住`,
+      metric: allHands.contributors,
+      teams: [allHands.team],
+      round: lastRoundOf(matchesOfTeam(played, allHands.team)),
     }));
   }
 
