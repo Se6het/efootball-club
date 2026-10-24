@@ -33,10 +33,7 @@ export const NEWS_CATEGORIES = Object.freeze({
 // 一条看点最多挂多久（按轮次算）；赛季还没打满 NEWS_WINDOW 轮时不会误杀。
 const NEWS_WINDOW = 3;
 
-// 一屏看点总数上限：头条 7 条 + 更多若干条。放宽到 28，让赛季中后期有足够内容可看。
-const MAX_ITEMS = 28;
-
-// 同一名球员/同一支球队最多贡献几条，避免一个人刷满整个列表。
+// 同一名球员最多贡献几条；同一支球队（分区）最多 8 条，总量不设上限。
 const MAX_PER_PLAYER = 2;
 const MAX_PER_TEAM = 8;
 
@@ -1250,7 +1247,7 @@ export function computeNews({ config, matches, leaders } = {}) {
   const latestRound = Math.max(...played.map(roundOf));
   const fresh = items.filter((entry) => latestRound - entry.round < NEWS_WINDOW);
 
-  return capPerGroup(rankItems(fresh), MAX_PER_TEAM).slice(0, MAX_ITEMS);
+  return capPerGroup(rankItems(fresh), MAX_PER_TEAM);
 }
 
 // 头条 / 更多看点的切分：头条取前 headCount 条。

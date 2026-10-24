@@ -351,7 +351,6 @@ describe('record generators', () => {
     // 同队专属（只挂一支队）的条目最多 8 条；生成器本可以给出十几条。
     const owned = items.filter((entry) => (entry.teams ?? []).filter(Boolean).length === 1 && entry.teams[0] === '甲队');
     expect(owned).toHaveLength(8);
-    expect(items.length).toBeLessThanOrEqual(28);
   });
 
   it('caps the head-to-head section as well', () => {
@@ -371,7 +370,7 @@ describe('record generators', () => {
     expect(cross.length).toBeGreaterThan(0);
   });
 
-  it('fills more than twenty stories (up to 28) in a deep season', () => {
+  it('grows past the old 28-item ceiling in a deep season', () => {
     const teams = ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4'];
     const matches = [];
     let n = 1;
@@ -385,8 +384,8 @@ describe('record generators', () => {
       }
     }
     const items = computeNews({ config: { teamsA: teams.slice(0, 4), teamsB: teams.slice(4) }, matches, leaders });
-    expect(items.length).toBeGreaterThan(20);
-    expect(items.length).toBeLessThanOrEqual(28);
+    // 总量不再封顶，只按球队分区限制，所以能超过旧上限。
+    expect(items.length).toBeGreaterThan(28);
   });
 
   it('keeps the feed bounded and drops stale news', () => {
