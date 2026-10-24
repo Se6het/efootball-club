@@ -3597,18 +3597,6 @@ tbody tr.row-medal-bronze {
   font-weight: 600;
 }
 
-.coach-clubs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 12px;
-  font-size: 13px;
-}
-
-.coach-clubs-label {
-  font-weight: 700;
-}
-
 .coach-block {
   display: grid;
   gap: 8px;
@@ -3842,27 +3830,82 @@ tbody tr.row-medal-bronze {
 .arc-rank.is-2 { color: #7d8aa6; }
 .arc-rank.is-3 { color: #b07a45; }
 
-/* 执教过的俱乐部：每支一枚徽章胶囊，右侧淡色赛季数。 */
-.club-chip {
-  display: inline-flex;
+/* 执教过的球队：一支一行，列出带过的赛季、届数与荣誉。 */
+.club-table-wrap {
+  overflow-x: auto;
+}
+
+.club-table {
+  min-width: 420px;
+  width: 100%;
+  font-size: 13px;
+}
+
+.club-table th,
+.club-table td {
+  padding: 7px 8px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.club-table th {
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.club-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.club-table tr.is-champ {
+  background: linear-gradient(90deg, #fff8e2, rgba(255, 248, 226, 0));
+}
+
+.club-table .club-col-count {
+  white-space: nowrap;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.club-seasons,
+.club-honors {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 6px;
+  gap: 4px 6px;
+}
+
+.club-season-pill {
+  padding: 2px 7px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--panel);
-}
-
-.club-chip .team-crest {
-  --s: 20px;
-}
-
-.club-chip-count {
-  font-size: 12px;
-  font-weight: 700;
   color: var(--muted);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+.club-honor {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.club-honor-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.club-honor.h-champion { color: #b8860b; background: rgba(201, 162, 43, 0.16); }
+.club-honor.h-runnerUp { color: #6f7c97; background: rgba(125, 138, 166, 0.16); }
+.club-honor.h-third { color: #b07a45; background: rgba(176, 122, 69, 0.16); }
 
 /* 过往赛季：整张积分榜 */
 .season-standings {

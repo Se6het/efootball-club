@@ -956,6 +956,105 @@ describe('archive view', () => {
     expect(textOf(bayern)).toContain('🥈 亚军');
     expect(bayern.querySelector('.arc-log-mark')).toBeTruthy();
   });
+
+  it('lists every club the coach managed in a tidy table', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [
+          archiveSeasonFixture({
+            standings: [
+              { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 3, wins: 3, draws: 0, losses: 0, goalsFor: 9, goalsAgainst: 1, goalDifference: 8, points: 9 },
+              { team: '拜仁慕尼黑', coach: '小明', rank: 2, needsPlayoff: false, played: 3, wins: 2, draws: 0, losses: 1, goalsFor: 6, goalsAgainst: 3, goalDifference: 3, points: 6 },
+              { team: '巴塞罗那', coach: '小红', rank: 3, needsPlayoff: false, played: 3, wins: 0, draws: 0, losses: 3, goalsFor: 1, goalsAgainst: 9, goalDifference: -8, points: 0 },
+            ],
+            awards: {
+              champion: { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+              podium: [
+                { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+                { team: '拜仁慕尼黑', coach: '小明', rank: 2, needsPlayoff: false },
+                { team: '巴塞罗那', coach: '小红', rank: 3, needsPlayoff: false },
+              ],
+              topScorers: [{ name: '张三', team: '拜仁慕尼黑', coach: '小明', goals: 5 }],
+              topAssists: [],
+              fmvp: null,
+            },
+          }),
+          archiveSeasonFixture({
+            id: 's-2',
+            sourceId: 'src-2',
+            archivedAt: '2026-02-01T00:00:00.000Z',
+            standings: [
+              { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false, played: 3, wins: 3, draws: 0, losses: 0, goalsFor: 9, goalsAgainst: 1, goalDifference: 8, points: 9 },
+              { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false, played: 3, wins: 0, draws: 0, losses: 3, goalsFor: 1, goalsAgainst: 9, goalDifference: -8, points: 0 },
+            ],
+            awards: {
+              champion: { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+              podium: [
+                { team: '皇家马德里', coach: '小明', rank: 1, needsPlayoff: false },
+                { team: '巴塞罗那', coach: '小红', rank: 2, needsPlayoff: false },
+              ],
+              topScorers: [],
+              topAssists: [],
+              fmvp: null,
+            },
+          }),
+        ],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+
+    const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
+    // 旧的扁平胶囊已被表格取代。
+    expect(ming.querySelector('.club-chip')).toBeNull();
+
+    const rows = ming.querySelector('.club-table').querySelectorAll('tr');
+    // 表头一行 + 每支球队一行。
+    expect(rows).toHaveLength(3);
+
+    const madrid = rows.find((node) => textOf(node).includes('皇家马德里'));
+    expect(textOf(madrid)).toContain('第 1 赛季');
+    expect(textOf(madrid)).toContain('第 2 赛季');
+    expect(textOf(madrid)).toContain('2 季');
+    expect(textOf(madrid)).toContain('冠军 ×2');
+    expect(madrid.className).toContain('is-champ');
+
+    const bayern = rows.find((node) => textOf(node).includes('拜仁慕尼黑'));
+    expect(textOf(bayern)).toContain('1 季');
+    expect(textOf(bayern)).toContain('亚军');
+    expect(textOf(bayern)).toContain('金靴');
+    expect(bayern.className).not.toContain('is-champ');
+    expect(textOf(bayern)).not.toContain('冠军');
+    expect(textOf(ming)).not.toContain('[object ');
+  });
+
+  it('shows a dash for a club with no honours yet', () => {
+    const view = renderArchiveView({
+      world: {
+        version: 1,
+        seasons: [archiveSeasonFixture({
+          complete: false,
+          awards: { champion: null, podium: [], topScorers: [], topAssists: [], fmvp: null },
+        })],
+      },
+      onArchive: () => {},
+      onBack: () => {},
+      onExportWorld: () => {},
+      onImportWorld: () => {},
+      onExportSeason: () => {},
+      onRemoveSeason: () => {},
+    });
+    const ming = view.querySelectorAll('.coach-card').find((card) => textOf(card.querySelector('.coach-name')) === '小明');
+    const row = ming.querySelector('.club-table').querySelectorAll('tr').find((node) => textOf(node).includes('皇家马德里'));
+    expect(textOf(row)).toContain('1 季');
+    expect(textOf(row)).toContain('—');
+    expect(row.querySelectorAll('.club-honor')).toHaveLength(0);
+  });
 });
 
 describe('setup coach history', () => {

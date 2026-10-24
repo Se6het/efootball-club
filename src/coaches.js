@@ -356,6 +356,31 @@ function emptyProfile(name) {
   };
 }
 
+// 一支俱乐部随身携带的荣誉项：只认赛季结束后的结算结果。
+const CLUB_HONOR_KEYS = ['champion', 'runnerUp', 'third', 'goldenBoot', 'assistCrown', 'fmvp'];
+
+// 把「哪一季带哪支队、拿了什么」按俱乐部汇总成一行：
+// 表格里就能直接读出带过哪些届、共几届、拿过哪些荣誉，而不用去赛季履历里逐季翻。
+function buildClubRows(profile) {
+  const byTeam = new Map();
+  for (const entry of profile.seasonEntries) {
+    const rows = Array.isArray(entry.teamRows) ? entry.teamRows : [];
+    for (const row of rows) {
+      if (!byTeam.has(row.team)) {
+        byTeam.set(row.team, { team: row.team, ordinals: [], count: 0, honors: {} });
+      }
+      const club = byTeam.get(row.team);
+      club.ordinals.push(entry.ordinal);
+      club.count += 1;
+      if (!entry.complete) continue;
+      for (const key of CLUB_HONOR_KEYS) {
+        if (row[key]) (club.honors[key] ??= []).push(entry.ordinal);
+      }
+    }
+  }
+  return [...byTeam.values()].sort((left, right) => right.count - left.count || byName(left.team, right.team));
+}
+
 function decorate(profile) {
   profile.titlesCount = profile.titles.length;
   profile.runnerUpCount = profile.runnerUps.length;
@@ -377,6 +402,7 @@ function decorate(profile) {
     .sort((left, right) => right.count - left.count || byName(left.team, right.team));
   profile.clubCount = profile.clubList.length;
   profile.clubSeasons = profile.clubList.reduce((max, item) => Math.max(max, item.count), 0);
+  profile.clubRows = buildClubRows(profile);
   if (profile.titles.length > 0) {
     const lastTitleId = profile.titles[profile.titles.length - 1].seasonId;
     const index = profile.seasonOrder.lastIndexOf(lastTitleId);

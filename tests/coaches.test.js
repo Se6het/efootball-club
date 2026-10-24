@@ -693,6 +693,63 @@ describe('computeCoachRecords', () => {
     expect(entry.champion).toBe(true);
   });
 
+  it('aggregates each club into seasons and honours for the club table', () => {
+    const world = worldOf(
+      seasonOf({
+        id: 's-1',
+        standings: [row('皇马', '小明', 1), row('拜仁', '小明', 2), row('巴萨', '小红', 3)],
+        awards: {
+          champion: { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+          podium: [
+            { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+            { team: '拜仁', coach: '小明', rank: 2, needsPlayoff: false },
+            { team: '巴萨', coach: '小红', rank: 3, needsPlayoff: false },
+          ],
+          topScorers: [{ name: '凯恩', team: '拜仁', coach: '小明', goals: 5 }],
+          topAssists: [{ name: '维尼修斯', team: '皇马', coach: '小明', assists: 4 }],
+          fmvp: { name: '凯恩', team: '拜仁', coach: '小明' },
+        },
+      }),
+      seasonOf({
+        id: 's-2',
+        standings: [row('皇马', '小明', 1), row('巴萨', '小红', 2)],
+        awards: {
+          champion: { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+          podium: [
+            { team: '皇马', coach: '小明', rank: 1, needsPlayoff: false },
+            { team: '巴萨', coach: '小红', rank: 2, needsPlayoff: false },
+          ],
+          topScorers: [],
+          topAssists: [],
+          fmvp: null,
+        },
+      }),
+      // 未完赛赛季只累计届数，荣誉不结算（金靴暂挂在皇马也不算数）。
+      seasonOf({
+        id: 's-3',
+        complete: false,
+        coaches: ['小明'],
+        standings: [row('皇马', '小明', 1)],
+        awards: {
+          champion: null,
+          podium: [],
+          topScorers: [{ name: '临时射手', team: '皇马', coach: '小明', goals: 3 }],
+          topAssists: [],
+          fmvp: null,
+        },
+      }),
+    );
+
+    const ming = computeCoachRecords(world).coaches.find((coach) => coach.name === '小明');
+    expect(ming.clubRows.map((club) => club.team)).toEqual(['皇马', '拜仁']);
+
+    const [madrid, bayern] = ming.clubRows;
+    expect(madrid).toMatchObject({ count: 3, ordinals: [1, 2, 3] });
+    expect(madrid.honors).toEqual({ champion: [1, 2], assistCrown: [1] });
+    expect(bayern).toMatchObject({ count: 1, ordinals: [1] });
+    expect(bayern.honors).toEqual({ runnerUp: [1], goldenBoot: [1], fmvp: [1] });
+  });
+
   it('adds sharper and deeper world records', () => {
     const strongRow = row('皇马', '小明', 1, { played: 6, wins: 5, draws: 0, losses: 1, goalsFor: 18, goalsAgainst: 4, points: 15 });
     const weakRow = row('巴萨', '小红', 2, { played: 6, wins: 1, draws: 0, losses: 5, goalsFor: 4, goalsAgainst: 18, points: 3 });

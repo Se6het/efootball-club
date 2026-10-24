@@ -203,6 +203,58 @@ function seasonLogBlock(profile) {
   }));
 }
 
+// 一支俱乐部拿过的荣誉：图标 + 次数，鼠标悬停才展开具体是哪几届拿的。
+function clubHonors(club) {
+  const defs = [
+    ['champion', '🏆', '冠军'],
+    ['runnerUp', '🥈', '亚军'],
+    ['third', '🥉', '季军'],
+    ['goldenBoot', '👟', '金靴'],
+    ['assistCrown', '🎯', '助攻王'],
+    ['fmvp', '⭐', 'FMVP'],
+  ];
+  const tags = defs
+    .filter(([key]) => (club.honors[key] ?? []).length > 0)
+    .map(([key, icon, label]) => {
+      const seasons = club.honors[key];
+      return el('span', { className: `club-honor h-${key}`, title: `第 ${seasons.join('、')} 赛季` }, [
+        el('span', { className: 'club-honor-icon', text: icon }),
+        el('span', { text: seasons.length > 1 ? `${label} ×${seasons.length}` : label }),
+      ]);
+    });
+  return tags.length > 0 ? tags : [el('span', { className: 'club-honor-none muted', text: '—' })];
+}
+
+// 执教过的球队一览：一支一行，把「带过哪些届、共几届、拿过哪些荣誉」摆进一张表里。
+function clubTable(profile) {
+  const rows = profile.clubRows ?? [];
+  if (rows.length === 0) return null;
+  return el('div', { className: 'club-table-wrap' }, [
+    el('table', { className: 'club-table' }, [
+      el('thead', {}, [el('tr', {}, [
+        el('th', { className: 'club-col-team', text: '俱乐部' }),
+        el('th', { className: 'club-col-seasons', text: '带过的赛季' }),
+        el('th', { className: 'club-col-count', text: '赛季数' }),
+        el('th', { className: 'club-col-honors', text: '荣誉' }),
+      ])]),
+      el('tbody', {}, rows.map((club) =>
+        el('tr', { className: (club.honors.champion ?? []).length > 0 ? 'is-champ' : null }, [
+          el('td', { className: 'club-col-team' }, [teamChip(club.team)]),
+          el('td', { className: 'club-col-seasons' }, [
+            el('div', { className: 'club-seasons' }, club.ordinals.map((ordinal) =>
+              el('span', { className: 'club-season-pill', text: `第 ${ordinal} 赛季` })
+            )),
+          ]),
+          el('td', { className: 'club-col-count', text: `${club.count} 季` }),
+          el('td', { className: 'club-col-honors' }, [
+            el('div', { className: 'club-honors' }, clubHonors(club)),
+          ]),
+        ])
+      )),
+    ]),
+  ]);
+}
+
 function coachCard(profile) {
   const rivals = profile.rivals.filter((rival) => rival.played > 0);
 
@@ -251,16 +303,7 @@ function coachCard(profile) {
           ? el('span', { className: 'coach-drought', text: `已 ${profile.seasons} 个赛季无冠` })
           : null,
       ]),
-      profile.clubCount > 0
-        ? el('div', { className: 'coach-clubs' }, [
-            el('span', { className: 'coach-clubs-label', text: '执教过' }),
-            ...profile.clubList.map((item) => el('span', { className: 'club-chip' }, [
-              teamBadge(item.team),
-              el('span', { className: 'club-chip-name', text: item.team }),
-              el('span', { className: 'club-chip-count', text: `${item.count} 季` }),
-            ])),
-          ])
-        : null,
+      listBlock('执教过', clubTable(profile), '还没有执教过任何俱乐部'),
       listBlock('赛季履历', seasonLogBlock(profile), '还没有执教记录'),
       listBlock('交手', rivalNode, '还没有与世界里的其他教练交过手'),
     ]),
