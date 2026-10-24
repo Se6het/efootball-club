@@ -200,6 +200,27 @@ if (archiveCurrentButton) {
 const archiveBack = [...app.querySelectorAll('button')].find((button) => button.textContent.includes('返回'));
 if (archiveBack) archiveBack.click();
 
+// 积分榜同分展开：单独用一组「三队同分」的数据渲染一次，点开开关检查迷你表。
+{
+  const { renderStandingsView } = await import('./src/views/standings.js');
+  const { rankTeams, computeTieGroups } = await import('./src/standings.js');
+  const tieConfig = { teamsA: ['甲队', '乙队'], teamsB: ['丙队', '丁队'] };
+  const tieMatches = [
+    match('t-1', 1, 1, '甲队', '乙队', 2, 0, true),
+    match('t-2', 2, 1, '乙队', '丙队', 2, 0, true),
+    match('t-3', 3, 2, '丙队', '甲队', 1, 0, true),
+    match('t-4', 4, 2, '丁队', '甲队', 0, 1, true),
+    match('t-5', 5, 3, '丁队', '乙队', 0, 1, true),
+    match('t-6', 6, 3, '丁队', '丙队', 0, 1, true),
+  ];
+  const host = window.document.createElement('div');
+  host.appendChild(renderStandingsView(rankTeams(tieConfig, tieMatches), () => {}, {
+    tieGroups: computeTieGroups(tieConfig, tieMatches),
+  }));
+  host.querySelector('.tie-toggle')?.click();
+  captures['十二-积分榜同分展开'] = host.innerHTML;
+}
+
 const firstRender = { innerHTML: dashboardHtml };
 const tileTitles = [...firstRender.innerHTML.matchAll(/tile-title">([^<]*)</g)].map((match) => match[1]);
 console.log('\n四宫格格子顺序:', tileTitles.join(' / ') || '(none)');
@@ -212,7 +233,7 @@ for (const [name, html] of Object.entries(captures)) {
   if (/NaN/.test(html)) flags.push('含 NaN');
   if (/\[object /.test(html)) flags.push('含 [object ...]');
   report += `\n### ${name}  (${html.length} chars)${flags.length ? '  ⚠ ' + flags.join(',') : '  ✓'}\n`;
-  report += `  key markers: ` + ['tile', 'tile-lead', 'mini-versus', 'mini-fix', 'mini-row', 'mini-news', 'team-crest', 'team-link', 'player-link', 'points-chip', 'form-pill', 'h2h-chip', 'h2h-chip-crests', 'h2h-meeting', 'round-group', 'is-next', 'rank-num-medal', 'form-summary-pill', 'upcoming-row', 'row-idle', 'stat-tile-goals', 'news-view', 'news-card', 'is-lead', 'news-group', 'odds-table', 'odd-value', 'shanghai-port', 'row-bg-海港', 'world-strip', 'world-hero', 'archive-panel', 'archive-current', 'archive-columns', 'arc-tile', 'arc-wdl', 'arc-season-log', 'season-table', 'honor-title', 'club-table', 'arc-rank', 'season-card', 'season-summary', 'season-champ', 'season-badge', 'coach-card', 'coach-pick', 'fact-row', 'coach-rivals']
+  report += `  key markers: ` + ['tile', 'tile-lead', 'mini-versus', 'mini-fix', 'mini-row', 'mini-news', 'team-crest', 'team-link', 'player-link', 'points-chip', 'form-pill', 'h2h-chip', 'h2h-chip-crests', 'h2h-meeting', 'round-group', 'is-next', 'rank-num-medal', 'form-summary-pill', 'upcoming-row', 'row-idle', 'stat-tile-goals', 'news-view', 'news-card', 'is-lead', 'news-group', 'odds-table', 'odd-value', 'shanghai-port', 'row-bg-海港', 'world-strip', 'world-hero', 'archive-panel', 'archive-current', 'archive-columns', 'arc-tile', 'arc-wdl', 'arc-season-log', 'season-table', 'honor-title', 'club-table', 'arc-rank', 'season-card', 'season-summary', 'season-champ', 'season-badge', 'coach-card', 'coach-pick', 'fact-row', 'coach-rivals', 'tie-toggle', 'tie-mini-table']
     .filter((marker) => html.includes(marker))
     .join(', ') + '\n';
   if (html.includes('team-avatar')) report += '  ⚠ 仍出现旧队徽外圈类 team-avatar\n';

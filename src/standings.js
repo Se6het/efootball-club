@@ -214,6 +214,38 @@ export function computeRankProgression(config, matches, team) {
   return progression;
 }
 
+// 同分集团：积分相同的球队归成一组，附上它们「相互之间」的迷你积分榜，
+// 积分榜视图可以展开它，一眼看清同分时谁凭什么排在前面。
+export function computeTieGroups(config, matches) {
+  const ranked = rankTeams(config, matches);
+  const groups = [];
+
+  let index = 0;
+  while (index < ranked.length) {
+    const start = index;
+    const points = ranked[index].points;
+    index += 1;
+    while (index < ranked.length && ranked[index].points === points) {
+      index += 1;
+    }
+
+    const members = ranked.slice(start, index);
+    if (members.length < 2) {
+      continue;
+    }
+    // 赛季还没开打时所有队都是 0 分，排成一个大集团；这种「空同分」没有可比性，跳过。
+    if (members.every((item) => item.played === 0)) {
+      continue;
+    }
+
+    const miniStats = createMiniTable(members, matches);
+    const rows = members.map((item) => ({ ...miniStats.get(item.team), rank: item.rank }));
+    groups.push({ points, teams: members.map((item) => item.team), rows });
+  }
+
+  return groups;
+}
+
 export function rankTeams(config, matches) {
   const standings = computeStandings(config, matches);
   const ordered = standings.slice().sort(compareOverall);

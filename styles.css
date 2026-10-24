@@ -1308,6 +1308,82 @@ tbody tr.row-medal-bronze {
   color: #8a5b00;
 }
 
+/* 同分小组：行里的展开开关 + 展开后的相互战绩小表 */
+.note-cell {
+  white-space: nowrap;
+}
+
+.tie-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tie-toggle:hover {
+  border-color: var(--primary);
+}
+
+.tie-toggle .tie-caret {
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.tie-toggle.is-open {
+  background: var(--primary-weak);
+  border-color: var(--primary);
+}
+
+.tie-toggle.is-open .tie-caret {
+  transform: rotate(180deg);
+}
+
+.tie-detail-row > .tie-detail-cell {
+  padding: 0;
+  text-align: left;
+  background: rgba(36, 87, 214, 0.05);
+  border-bottom: 2px solid var(--primary-weak);
+}
+
+.tie-mini {
+  padding: 10px 12px 12px;
+}
+
+.tie-mini-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.tie-mini-hint {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.tie-mini-table {
+  min-width: 520px;
+  background: var(--surface, #fff);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tie-mini-table th,
+.tie-mini-table td {
+  padding: 6px 10px;
+}
+
 /* 近期状态小色块 */
 .form-cell {
   text-align: center;

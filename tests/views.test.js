@@ -18,7 +18,7 @@ const { computeHeadToHead } = await import('../src/h2h.js');
 const { computeTeamForm, computeUpcomingFixtures, computeTeamFormMap } = await import('../src/form.js');
 const { computeLeaders, computePlayerDetail, computeTeamLeaders } = await import('../src/leaders.js');
 const { buildAwardSummary } = await import('../src/awards.js');
-const { computeRankProgression, rankTeams } = await import('../src/standings.js');
+const { computeRankProgression, computeTieGroups, rankTeams } = await import('../src/standings.js');
 const { computeTeamDiscipline } = await import('../src/discipline.js');
 const { computeNews } = await import('../src/news.js');
 const { computeOdds } = await import('../src/odds.js');
@@ -110,6 +110,37 @@ describe('view smoke tests', () => {
 
   it('renders the standings empty state', () => {
     expect(textOf(renderStandingsView([], null))).toContain('还没有球队数据');
+  });
+
+  it('expands a head-to-head mini table for tied teams', () => {
+    const tieConfig = { teamsA: ['甲', '乙'], teamsB: ['丙', '丁'] };
+    const tieMatches = [
+      fixture('t1', 1, 1, '甲', '乙', 2, 0, true),
+      fixture('t2', 2, 1, '乙', '丙', 2, 0, true),
+      fixture('t3', 3, 2, '丙', '甲', 1, 0, true),
+      fixture('t4', 4, 2, '丁', '甲', 0, 1, true),
+      fixture('t5', 5, 3, '丁', '乙', 0, 1, true),
+      fixture('t6', 6, 3, '丁', '丙', 0, 1, true),
+    ];
+    const ranked = rankTeams(tieConfig, tieMatches);
+    const view = renderStandingsView(ranked, () => {}, {
+      tieGroups: computeTieGroups(tieConfig, tieMatches),
+    });
+
+    // 默认收起：没有迷你表，只有一个「同分」开关。
+    expect(textOf(view)).not.toContain('同分球队相互战绩');
+    const toggle = view.querySelector('.tie-toggle');
+    expect(toggle).not.toBeNull();
+
+    toggle.click();
+    const text = textOf(view);
+    expect(text).toContain('同分球队相互战绩 · 6 分 · 3 队');
+    expect(view.querySelectorAll('.tie-mini-table').length).toBe(1);
+    expect(view.querySelectorAll('.tie-detail-row').length).toBe(1);
+
+    // 再点一次收起。
+    view.querySelector('.tie-toggle').click();
+    expect(textOf(view)).not.toContain('同分球队相互战绩');
   });
 
   it('renders the leaderboards', () => {

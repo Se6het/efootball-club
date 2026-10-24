@@ -104,12 +104,12 @@ function buildStrength(stats, teams, leagueAvg) {
     const entry = stats.get(team) ?? { played: 0, goalsFor: 0, goalsAgainst: 0, recent: [] };
     const recent = entry.recent.slice(-3);
 
-    // 最近场次按 1:2:3 加权（越近越重）。
+    // 最近场次按 1:1.75:2.5 加权（越近越重，但别让最后一场压过一切）。
     let weightSum = 0;
     let recentFor = 0;
     let recentAgainst = 0;
     recent.forEach((game, index) => {
-      const weight = index + 1;
+      const weight = 1 + index * 0.75;
       weightSum += weight;
       recentFor += game.gf * weight;
       recentAgainst += game.ga * weight;
@@ -120,8 +120,9 @@ function buildStrength(stats, teams, leagueAvg) {
     const recentForPerGame = weightSum > 0 ? recentFor / weightSum : rawFor;
     const recentAgainstPerGame = weightSum > 0 ? recentAgainst / weightSum : rawAgainst;
 
-    let attack = 0.65 * rawFor + 0.35 * recentForPerGame;
-    let defence = 0.65 * rawAgainst + 0.35 * recentAgainstPerGame;
+    // 赛季总表现的权重略高于最近状态，避免一场爆发把赔率拉飞。
+    let attack = 0.70 * rawFor + 0.30 * recentForPerGame;
+    let defence = 0.70 * rawAgainst + 0.30 * recentAgainstPerGame;
 
     // 向联赛均值收缩：打得越少越保守。
     const shrink = entry.played / (entry.played + 3);

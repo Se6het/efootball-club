@@ -143,6 +143,22 @@ function trailingStreak(list, predicate) {
   return count;
 }
 
+// 当前的「荒」有多长（连续多少场不满足 predicate），以及这段荒之前
+// 连续满足过多少场。用来判断一个球员是不是「先火过、如今哑了」。
+function droughtAndPriorRun(list, predicate) {
+  let drought = 0;
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    if (predicate(list[index])) break;
+    drought += 1;
+  }
+  let priorRun = 0;
+  for (let index = list.length - 1 - drought; index >= 0; index -= 1) {
+    if (!predicate(list[index])) break;
+    priorRun += 1;
+  }
+  return { drought, priorRun };
+}
+
 // 连续场次 → 稀有度：thresholds 给了 rare/epic/legend 的下限。
 function tierForStreak(value, { rare = 3, epic = 4, legend = 5 } = {}) {
   if (value >= legend) return 'legend';
@@ -330,6 +346,40 @@ function playerItems(played, config, leaders) {
           title: `${playerName} 已 ${mvpTally} 次当选 MVP`,
           detail: `${team} · 全队的定海神针`,
           metric: mvpTally,
+          teams: [team],
+          round,
+        }));
+      }
+
+      // 8) 进球荒：能进球的球员（不是后卫）先火过一段，如今连着哑火。
+      const totalGoals = gameCounts.reduce((sum, game) => sum + game.goals, 0);
+      const goalDrought = droughtAndPriorRun(gameCounts, (game) => game.goals > 0);
+      if (totalGoals >= 3 && goalDrought.priorRun >= 2 && goalDrought.drought >= 3) {
+        mine.push(item({
+          id: `player-goal-drought:${team}:${playerName}`,
+          category: 'player',
+          icon: '❄️',
+          tier: tierForStreak(goalDrought.drought, { rare: 3, epic: 5, legend: 7 }),
+          title: `${playerName} 陷入进球荒`,
+          detail: `${team} · 此前连续 ${goalDrought.priorRun} 场破门，如今已 ${goalDrought.drought} 场哑火`,
+          metric: goalDrought.drought,
+          teams: [team],
+          round,
+        }));
+      }
+
+      // 9) 参与进球荒：进球+助攻一起算，连着几场都插不上手。
+      const totalInvolved = gameCounts.reduce((sum, game) => sum + (game.involved ? 1 : 0), 0);
+      const involvementDrought = droughtAndPriorRun(gameCounts, (game) => game.involved);
+      if (totalInvolved >= 5 && involvementDrought.priorRun >= 3 && involvementDrought.drought >= 4) {
+        mine.push(item({
+          id: `player-involvement-drought:${team}:${playerName}`,
+          category: 'player',
+          icon: '💤',
+          tier: tierForStreak(involvementDrought.drought, { rare: 4, epic: 6, legend: 8 }),
+          title: `${playerName} 陷入参与进球荒`,
+          detail: `${team} · 之前连续 ${involvementDrought.priorRun} 场参与进球，近 ${involvementDrought.drought} 场断了`,
+          metric: involvementDrought.drought,
           teams: [team],
           round,
         }));

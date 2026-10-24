@@ -525,3 +525,62 @@ describe('record generators', () => {
     expect(ids).toContain('quirk-mvp-monopoly:甲队');
   });
 });
+
+describe('球员球荒', () => {
+  it('reports a goal drought for a proven scorer who has gone cold', () => {
+    // 张三先连续 3 场破门（共 5 球），随后连 4 场哑火。
+    const matches = [
+      fixture(1, 1, '甲队', '乙队', 2, 0, { homeScorers: [{ name: '张三', count: 2 }] }),
+      fixture(2, 2, '甲队', '乙队', 1, 0, { homeScorers: [{ name: '张三', count: 1 }] }),
+      fixture(3, 3, '甲队', '乙队', 2, 0, { homeScorers: [{ name: '张三', count: 2 }] }),
+      fixture(4, 4, '甲队', '乙队', 0, 1),
+      fixture(5, 5, '甲队', '乙队', 0, 1),
+      fixture(6, 6, '甲队', '乙队', 0, 1),
+      fixture(7, 7, '甲队', '乙队', 0, 1),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const ids = items.map((entry) => entry.id);
+    expect(ids).toContain('player-goal-drought:甲队:张三');
+    const drought = items.find((entry) => entry.id === 'player-goal-drought:甲队:张三');
+    expect(drought.title).toBe('张三 陷入进球荒');
+    expect(drought.detail).toContain('此前连续 3 场破门');
+    expect(drought.detail).toContain('4 场哑火');
+    expect(drought.category).toBe('player');
+  });
+
+  it('stays quiet for a defender or a low-output player', () => {
+    const matches = [
+      // 后卫全程零贡献：不该被报球荒。
+      fixture(1, 1, '甲队', '乙队', 1, 0, { homeScorers: [{ name: '后卫', count: 0 }] }),
+      // 赵六整季只进过 1 球，之后哑火：数据不够好，也不报。
+      fixture(2, 2, '甲队', '乙队', 1, 0, { homeScorers: [{ name: '赵六', count: 1 }] }),
+      fixture(3, 3, '甲队', '乙队', 0, 1),
+      fixture(4, 4, '甲队', '乙队', 0, 1),
+      fixture(5, 5, '甲队', '乙队', 0, 1),
+      fixture(6, 6, '甲队', '乙队', 0, 1),
+    ];
+    const ids = computeNews({ config, matches, leaders }).map((entry) => entry.id);
+    expect(ids).not.toContain('player-goal-drought:甲队:后卫');
+    expect(ids).not.toContain('player-goal-drought:甲队:赵六');
+  });
+
+  it('reports an involvement drought for a playmaker', () => {
+    // 王五连续 5 场参与进球，之后 4 场彻底插不上手。
+    const rounds = [1, 2, 3, 4, 5];
+    const matches = [
+      ...rounds.map((n) => fixture(n, n, '甲队', '乙队', 1, 0, {
+        homeScorers: [{ name: '队友', count: 1 }],
+        homeAssists: [{ name: '王五', count: 1 }],
+      })),
+      fixture(6, 6, '甲队', '乙队', 0, 1),
+      fixture(7, 7, '甲队', '乙队', 0, 1),
+      fixture(8, 8, '甲队', '乙队', 0, 1),
+      fixture(9, 9, '甲队', '乙队', 0, 1),
+    ];
+    const items = computeNews({ config, matches, leaders });
+    const drought = items.find((entry) => entry.id === 'player-involvement-drought:甲队:王五');
+    expect(drought).toBeTruthy();
+    expect(drought.title).toBe('王五 陷入参与进球荒');
+    expect(drought.detail).toContain('近 4 场断了');
+  });
+});

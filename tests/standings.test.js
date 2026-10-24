@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeRankProgression, computeStandings, rankTeams } from '../src/standings.js';
+import { computeRankProgression, computeStandings, computeTieGroups, rankTeams } from '../src/standings.js';
 
 function createMatch(homeTeam, awayTeam, homeGoals, awayGoals, homeCards = { yellow: 0, red: 0 }, awayCards = { yellow: 0, red: 0 }, round = 1) {
   return {
@@ -131,6 +131,65 @@ describe('rankTeams', () => {
     );
 
     expect(ranked.every((team) => team.needsPlayoff)).toBe(true);
+  });
+});
+
+describe('computeTieGroups', () => {
+  it('groups equal-points teams and builds a head-to-head mini table', () => {
+    const groups = computeTieGroups(
+      { teamsA: ['A', 'B'], teamsB: ['C', 'D'] },
+      [
+        createMatch('A', 'B', 2, 0),
+        createMatch('B', 'C', 2, 0),
+        createMatch('C', 'A', 1, 0),
+        createMatch('D', 'A', 0, 1),
+        createMatch('D', 'B', 0, 1),
+        createMatch('D', 'C', 0, 1),
+      ]
+    );
+
+    expect(groups).toHaveLength(1);
+    const group = groups[0];
+    expect(group.points).toBe(6);
+    expect(group.teams).toEqual(['A', 'B', 'C']);
+    // 迷你表只看相互交手：三队各拿 3 分，靠相互净胜球分出 A(+1) > B(0) > C(-1)。
+    expect(group.rows.map((row) => row.team)).toEqual(['A', 'B', 'C']);
+    expect(group.rows.every((row) => row.played === 2 && row.points === 3)).toBe(true);
+    expect(group.rows.map((row) => row.goalDifference)).toEqual([1, 0, -1]);
+    // 名次沿用官方排名。
+    expect(group.rows.map((row) => row.rank)).toEqual([1, 2, 3]);
+  });
+
+  it('keeps a two-team tiebreak in its official order', () => {
+    // 互有胜负 -> 同积 3 分，A 靠相互净胜球（+1 / -1）占先。
+    const groups = computeTieGroups(
+      { teamsA: ['A'], teamsB: ['B'] },
+      [createMatch('A', 'B', 3, 1), createMatch('B', 'A', 2, 1)]
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].teams).toEqual(['A', 'B']);
+    expect(groups[0].rows.map((row) => [row.team, row.points, row.goalDifference]))
+      .toEqual([['A', 3, 1], ['B', 3, -1]]);
+  });
+
+  it('returns nothing when every points tally is distinct', () => {
+    const groups = computeTieGroups(
+      { teamsA: ['A'], teamsB: ['B'] },
+      [createMatch('A', 'B', 2, 0)]
+    );
+
+    expect(groups).toEqual([]);
+  });
+
+  it('skips the all-zero group before the season kicks off', () => {
+    const config = { teamsA: ['A', 'B'], teamsB: ['C', 'D'] };
+    const unplayed = [
+      { ...createMatch('A', 'B', 0, 0), isPlayed: false },
+      { ...createMatch('C', 'D', 0, 0), isPlayed: false },
+    ];
+
+    expect(computeTieGroups(config, unplayed)).toEqual([]);
   });
 });
 

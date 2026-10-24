@@ -18,7 +18,7 @@ import { renderPlayerDetailView } from './views/playerDetail.js';
 import { renderArchiveView } from './views/archive.js';
 import { openMatchForm } from './views/matchForm.js';
 import { addSeason, buildSeasonRecord, loadWorld, makeSeasonId, mergeSeasons, parseWorldBackup, previousCoaches, removeSeason, saveWorld, worldStats } from './coaches.js';
-import { computeRankProgression, rankTeams } from './standings.js';
+import { computeRankProgression, computeTieGroups, rankTeams } from './standings.js';
 import { computeTeamForm, computeTeamFormMap, computeUpcomingFixtures } from './form.js';
 import { computeHeadToHead } from './h2h.js';
 import { computeNews } from './news.js';
@@ -444,7 +444,11 @@ function renderLeague() {
         }
       : {}),
     schedule: () => renderScheduleView(state.matches, openEditor, ownerByTeam),
-    standings: () => renderStandingsView(rankedTeams, openTeamDetail, { formByTeam, ownerByTeam }),
+    standings: () => renderStandingsView(rankedTeams, openTeamDetail, {
+      formByTeam,
+      ownerByTeam,
+      tieGroups: computeTieGroups(state.config, state.matches),
+    }),
     leaders: () => renderLeadersView(leaders, openPlayerDetail),
     news: () => renderNewsView({ news, odds, playedCount }),
     awards: () => renderAwardsView({
